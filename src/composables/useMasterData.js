@@ -5,7 +5,7 @@ export function useMasterData(endpoint) {
   const { loading, error, paginate, create, update, remove } = useApi()
   const items = ref([])
   const currentPage = ref(1)
-  const perPage = ref(15)
+  const perPage = ref(2)
   const totalItems = ref(0)
   const lastPage = ref(1)
 

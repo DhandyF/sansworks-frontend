@@ -14,6 +14,7 @@ const menuGroups = [
       { name: 'Brands', route: 'brands' },
       { name: 'Tailors', route: 'tailors' },
       { name: 'Sizes', route: 'sizes' },
+      { name: 'Articles', route: 'articles' },
     ],
   },
 ]

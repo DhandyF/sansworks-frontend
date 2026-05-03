@@ -1,16 +1,32 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useMasterData } from '@/composables/useMasterData'
-import { Button, Card, Table, Badge, Input, Modal } from 'ui-assets'
+import { useApi } from '@/composables/useApi'
+import { Button, Card, Table, Badge, Input, Modal, SearchableDropdown } from 'ui-assets'
 
-const { items, loading, currentPage, totalItems, lastPage, fetchData, addItem, editItem, deleteItem } = useMasterData('/users')
+const { items, loading, currentPage, totalItems, lastPage, fetchData, addItem, editItem, deleteItem } = useMasterData('/articles')
+
+const { request } = useApi()
+const brands = ref([])
+const brandsLoading = ref(false)
+const brandsLoaded = ref(false)
+
+async function fetchBrands() {
+  if (brandsLoaded.value) return
+  brandsLoading.value = true
+  try {
+    const res = await request('/brands?per_page=1000')
+    brands.value = res.data.map(b => ({ value: b.id, label: b.name }))
+    brandsLoaded.value = true
+  } finally {
+    brandsLoading.value = false
+  }
+}
 
 const columns = [
   { key: 'name', label: 'Name' },
-  { key: 'username', label: 'Username' },
-  { key: 'phone', label: 'Phone' },
-  { key: 'role', label: 'Role' },
-  { key: 'status', label: 'Status' },
+  { key: 'brand', label: 'Brand' },
+  { key: 'description', label: 'Description' },
   { key: 'actions', label: 'Actions' },
 ]
 
@@ -21,21 +37,36 @@ const deletingItem = ref(null)
 const formError = ref('')
 const submitting = ref(false)
 
-const form = ref({ name: '', username: '', password: '', phone: '', role: 'operator', status: 'active' })
+const form = ref({ brand_id: '', name: '', description: '' })
 
-function upper(v) { return typeof v === 'string' ? v.toUpperCase() : v }
+const brandArticles = ref([])
+const brandArticlesLoading = ref(false)
+
+watch(() => form.value.brand_id, async (newBrandId) => {
+  brandArticles.value = []
+  if (!newBrandId) return
+  brandArticlesLoading.value = true
+  try {
+    const res = await request(`/articles?brand_id=${newBrandId}&per_page=1000`)
+    brandArticles.value = res.data || []
+  } catch { /* ignore */ } finally {
+    brandArticlesLoading.value = false
+  }
+})
 
 function openAddForm() {
   editing.value = null
-  form.value = { name: '', username: '', password: '', phone: '', role: 'operator', status: 'active' }
+  form.value = { brand_id: '', name: '', description: '' }
   formError.value = ''
+  fetchBrands()
   showForm.value = true
 }
 
 function openEditForm(item) {
   editing.value = item
-  form.value = { name: item.name, username: item.username, password: '', phone: item.phone || '', role: item.role, status: item.status }
+  form.value = { brand_id: item.brand_id, name: item.name, description: item.description || '' }
   formError.value = ''
+  fetchBrands()
   showForm.value = true
 }
 
@@ -48,12 +79,10 @@ async function handleSubmit() {
   formError.value = ''
   submitting.value = true
   try {
-    const payload = { ...form.value }
     if (editing.value) {
-      if (!payload.password) delete payload.password
-      await editItem(editing.value.id, payload)
+      await editItem(editing.value.id, form.value)
     } else {
-      await addItem(payload)
+      await addItem(form.value)
     }
     showForm.value = false
   } catch (e) {
@@ -67,9 +96,7 @@ async function handleDelete() {
   if (!deletingItem.value) return
   try {
     await deleteItem(deletingItem.value.id)
-  } catch (e) {
-    // ignore
-  }
+  } catch (e) { /* ignore */ }
   showDeleteModal.value = false
   deletingItem.value = null
 }
@@ -88,10 +115,10 @@ function formatPageNumbers(current, last) {
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-surface-900">Users</h1>
-        <p class="mt-1 text-sm text-surface-500">Manage user accounts and roles</p>
+        <h1 class="text-2xl font-bold text-surface-900">Articles</h1>
+        <p class="mt-1 text-sm text-surface-500">Manage articles and their brands</p>
       </div>
-      <Button @click="openAddForm">+ Add User</Button>
+      <Button @click="openAddForm">+ Add Article</Button>
     </div>
 
     <Card variant="bordered">
@@ -102,15 +129,15 @@ function formatPageNumbers(current, last) {
         </svg>
       </div>
       <div v-else-if="items.length === 0" class="text-center py-12">
-        <p class="text-surface-500">No users found</p>
+        <p class="text-surface-500">No articles found</p>
       </div>
       <template v-else>
         <Table :columns="columns" :rows="items">
-          <template #status="{ value }">
-            <Badge :variant="value === 'active' ? 'success' : 'danger'" size="sm">{{ value }}</Badge>
+          <template #brand="{ row }">
+            <Badge variant="primary" size="sm">{{ row.brand?.name || '-' }}</Badge>
           </template>
-          <template #role="{ value }">
-            <Badge variant="primary" size="sm">{{ value }}</Badge>
+          <template #description="{ value }">
+            <span class="text-surface-500 line-clamp-2">{{ value || '-' }}</span>
           </template>
           <template #actions="{ row }">
             <div class="flex items-center gap-1">
@@ -135,31 +162,26 @@ function formatPageNumbers(current, last) {
       </template>
     </Card>
 
-    <!-- Add/Edit Modal -->
-    <Modal v-model="showForm" :title="editing ? 'Edit User' : 'Add User'" size="md">
-      <form @submit.prevent="handleSubmit" class="space-y-4">
+    <Modal v-model="showForm" :title="editing ? 'Edit Article' : 'Add Article'" size="md">
+      <div class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
-        <Input :model-value="form.name" @update:model-value="v => form.name = upper(v)" label="Name" placeholder="Full name" required />
-        <Input :model-value="form.username" @update:model-value="v => form.username = upper(v)" label="Username" placeholder="Username" required />
-        <Input v-if="!editing" v-model="form.password" type="password" label="Password" placeholder="Min 8 characters" required />
-        <Input v-else v-model="form.password" type="password" label="Password" placeholder="Leave blank to keep current" />
-        <Input :model-value="form.phone" @update:model-value="v => form.phone = upper(v)" label="Phone" placeholder="Phone number" />
-        <div class="space-y-1">
-          <label class="block text-sm font-medium text-surface-700">Role</label>
-          <select v-model="form.role" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500">
-            <option value="admin">Admin</option>
-            <option value="client">Client</option>
-            <option value="operator">Operator</option>
-          </select>
+        <SearchableDropdown
+          v-model="form.brand_id"
+          :options="brands"
+          label="Brand"
+          placeholder="Select a brand"
+          required
+        />
+        <div v-if="brandArticlesLoading" class="text-sm text-surface-400">Loading articles...</div>
+        <div v-else-if="brandArticles.length > 0" class="space-y-1">
+          <p class="text-sm font-medium text-surface-700">Existing articles for this brand:</p>
+          <div class="flex flex-wrap gap-1.5">
+            <Badge v-for="article in brandArticles" :key="article.id" variant="default" size="sm">{{ article.name }}</Badge>
+          </div>
         </div>
-        <div class="space-y-1">
-          <label class="block text-sm font-medium text-surface-700">Status</label>
-          <select v-model="form.status" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-      </form>
+        <Input :model-value="form.name" @update:model-value="v => form.name = v.toUpperCase()" label="Article Name" placeholder="Article name" required />
+        <Input v-model="form.description" label="Description" type="textarea" placeholder="Optional description" />
+      </div>
       <template #footer>
         <div class="flex justify-end gap-3">
           <Button variant="outline" @click="showForm = false">Cancel</Button>
@@ -168,8 +190,7 @@ function formatPageNumbers(current, last) {
       </template>
     </Modal>
 
-    <!-- Delete Confirmation -->
-    <Modal v-model="showDeleteModal" title="Delete User" size="sm">
+    <Modal v-model="showDeleteModal" title="Delete Article" size="sm">
       <p class="text-surface-700">Are you sure you want to delete <strong>{{ deletingItem?.name }}</strong>? This action cannot be undone.</p>
       <template #footer>
         <div class="flex justify-end gap-3">

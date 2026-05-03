@@ -34,6 +34,11 @@ const routes = [
         name: 'sizes',
         component: () => import('@/views/master-data/SizesView.vue'),
       },
+      {
+        path: 'articles',
+        name: 'articles',
+        component: () => import('@/views/master-data/ArticlesView.vue'),
+      },
     ],
   },
 ]
