@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useMasterData } from '@/composables/useMasterData'
 import { Button, Card, Table, Input, Modal } from 'ui-assets'
 
-const { items, loading, currentPage, totalItems, lastPage, fetchData, addItem, editItem, deleteItem } = useMasterData('/sizes')
+const { items, loading, pagination, fetchData, addItem, editItem, deleteItem } = useMasterData('/sizes')
 
 const columns = [
   { key: 'name', label: 'Name' },
@@ -67,14 +67,7 @@ async function handleDelete() {
   deletingItem.value = null
 }
 
-function formatPageNumbers(current, last) {
-  const pages = []
-  const delta = 2
-  const start = Math.max(1, current - delta)
-  const end = Math.min(last, current + delta)
-  for (let i = start; i <= end; i++) pages.push(i)
-  return pages
-}
+
 </script>
 
 <template>
@@ -98,7 +91,7 @@ function formatPageNumbers(current, last) {
         <p class="text-surface-500">No sizes found</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="items">
+        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData">
           <template #actions="{ row }">
             <div class="flex items-center gap-1">
               <button @click="openEditForm(row)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" title="Edit">
@@ -110,15 +103,6 @@ function formatPageNumbers(current, last) {
             </div>
           </template>
         </Table>
-
-        <div v-if="lastPage > 1" class="flex items-center justify-between border-t border-surface-200 pt-4 mt-4">
-          <p class="text-sm text-surface-500">Showing {{ items.length }} of {{ totalItems }} results</p>
-          <div class="flex gap-1">
-            <button :disabled="currentPage === 1" @click="fetchData(currentPage - 1)" class="px-4 py-2 text-sm rounded-lg border border-surface-200 bg-white text-surface-700 hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Previous</button>
-            <button v-for="page in formatPageNumbers(currentPage, lastPage)" :key="page" @click="fetchData(page)" :class="['px-3 py-2 text-sm rounded-lg border transition-colors', page === currentPage ? 'bg-primary-600 text-white border-primary-600' : 'border-surface-200 bg-white text-surface-700 hover:bg-surface-50']">{{ page }}</button>
-            <button :disabled="currentPage === lastPage" @click="fetchData(currentPage + 1)" class="px-4 py-2 text-sm rounded-lg border border-surface-200 bg-white text-surface-700 hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Next</button>
-          </div>
-        </div>
       </template>
     </Card>
 
