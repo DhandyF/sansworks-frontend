@@ -19,6 +19,10 @@ const menuGroups = [
   },
 ]
 
+const directLinks = [
+  { name: 'Pre-Order', route: 'pre-orders' },
+]
+
 function navigate(routeName) {
   router.push({ name: routeName })
 }
@@ -64,6 +68,15 @@ async function handleLogout() {
                   {{ item.name }}
                 </DropdownItem>
               </Dropdown>
+
+              <button
+                v-for="link in directLinks"
+                :key="link.route"
+                @click="navigate(link.route)"
+                class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors text-surface-600 hover:bg-surface-100 hover:text-surface-900"
+              >
+                {{ link.name }}
+              </button>
             </div>
           </div>
 

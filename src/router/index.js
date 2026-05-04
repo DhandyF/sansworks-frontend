@@ -39,6 +39,11 @@ const routes = [
         name: 'articles',
         component: () => import('@/views/master-data/ArticlesView.vue'),
       },
+      {
+        path: 'pre-orders',
+        name: 'pre-orders',
+        component: () => import('@/views/pre-order/PreOrdersView.vue'),
+      },
     ],
   },
 ]
