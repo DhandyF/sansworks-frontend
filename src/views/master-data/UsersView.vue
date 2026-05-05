@@ -1,9 +1,15 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useMasterData } from '@/composables/useMasterData'
+import { useDebounce } from '@/composables/useDebounce'
 import { Button, Card, Table, Badge, Input, Modal } from 'ui-assets'
 
-const { items, loading, pagination, fetchData, addItem, editItem, deleteItem } = useMasterData('/users')
+const search = ref('')
+const { debounce } = useDebounce(500)
+
+const { items, loading, pagination, fetchData, addItem, editItem, deleteItem } = useMasterData('/users', () => ({ search: search.value }))
+
+watch(search, () => debounce(() => fetchData(1)))
 
 const columns = [
   { key: 'name', label: 'Name' },
@@ -85,6 +91,10 @@ async function handleDelete() {
         <p class="mt-1 text-sm text-surface-500">Manage user accounts and roles</p>
       </div>
       <Button @click="openAddForm">+ Add User</Button>
+    </div>
+
+    <div class="mb-4">
+      <Input v-model="search" label="" placeholder="Search by name..." />
     </div>
 
     <Card variant="bordered">

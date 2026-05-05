@@ -1,8 +1,8 @@
 import { ref, onMounted } from 'vue'
 import { useApi } from '@/composables/useApi'
 
-export function useMasterData(endpoint) {
-  const { loading, error, paginate, create, update, remove } = useApi()
+export function useMasterData(endpoint, buildParams = null) {
+  const { loading, error, request, create, update, remove } = useApi()
   const items = ref([])
   const currentPage = ref(1)
   const perPage = ref(15)
@@ -19,7 +19,16 @@ export function useMasterData(endpoint) {
 
   async function fetchData(page = 1) {
     currentPage.value = page
-    const res = await paginate(endpoint, page, perPage.value)
+    let url = `${endpoint}?page=${page}&per_page=${perPage.value}`
+    if (buildParams) {
+      const params = buildParams()
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== '' && value !== null && value !== undefined) {
+          url += `&${key}=${encodeURIComponent(value)}`
+        }
+      }
+    }
+    const res = await request(url)
     items.value = res.data
     totalItems.value = res.total
     lastPage.value = res.last_page

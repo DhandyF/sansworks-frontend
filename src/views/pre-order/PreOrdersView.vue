@@ -1,16 +1,36 @@
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useMasterData } from '@/composables/useMasterData'
 import { useApi } from '@/composables/useApi'
+import { useDebounce } from '@/composables/useDebounce'
 import { Button, Card, Table, Badge, Input, Modal, SearchableDropdown } from 'ui-assets'
 
-const { items, loading, fetchData, deleteItem } = useMasterData('/pre-orders')
+const search = ref('')
+const brandFilter = ref('')
+const { debounce } = useDebounce(500)
+
+const { items, loading, fetchData, deleteItem } = useMasterData('/pre-orders', () => ({ search: search.value, brand_filter: brandFilter.value }))
+
+watch([search, brandFilter], () => debounce(() => fetchData(1)))
 
 const { request } = useApi()
 const brands = ref([])
 const sizes = ref([])
 const articles = ref([])
 const nextName = ref('')
+
+let filterBrandsLoaded = false
+const filterBrands = ref([])
+
+onMounted(async () => {
+  if (!filterBrandsLoaded) {
+    try {
+      const res = await request('/brands?per_page=1000')
+      filterBrands.value = res.data.map(b => ({ value: b.id, label: b.name }))
+      filterBrandsLoaded = true
+    } catch { /* ignore */ }
+  }
+})
 
 async function fetchOptions() {
   if (brands.value.length) return
@@ -193,6 +213,21 @@ async function handleDelete() {
         <p class="mt-1 text-sm text-surface-500">Manage pre-orders for production</p>
       </div>
       <Button @click="openAddForm">+ Add Pre-Order</Button>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3 mb-4">
+      <div class="sm:w-64">
+        <SearchableDropdown
+          v-model="brandFilter"
+          :options="filterBrands"
+          label=""
+          placeholder="All brands"
+          clearable
+        />
+      </div>
+      <div class="flex-1">
+        <Input v-model="search" label="" placeholder="Search by pre-order name..." />
+      </div>
     </div>
 
     <Card variant="bordered">

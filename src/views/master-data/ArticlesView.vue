@@ -1,10 +1,17 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useMasterData } from '@/composables/useMasterData'
 import { useApi } from '@/composables/useApi'
+import { useDebounce } from '@/composables/useDebounce'
 import { Button, Card, Table, Badge, Input, Modal, SearchableDropdown } from 'ui-assets'
 
-const { items, loading, pagination, fetchData, addItem, editItem, deleteItem } = useMasterData('/articles')
+const search = ref('')
+const brandFilter = ref('')
+const { debounce } = useDebounce(500)
+
+const { items, loading, pagination, fetchData, addItem, editItem, deleteItem } = useMasterData('/articles', () => ({ search: search.value, brand_filter: brandFilter.value }))
+
+watch([search, brandFilter], () => debounce(() => fetchData(1)))
 
 const { request } = useApi()
 const brands = ref([])
@@ -41,6 +48,8 @@ const form = ref({ brand_id: '', name: '', description: '' })
 
 const brandArticles = ref([])
 const brandArticlesLoading = ref(false)
+
+onMounted(fetchBrands)
 
 watch(() => form.value.brand_id, async (newBrandId) => {
   brandArticles.value = []
@@ -112,6 +121,21 @@ async function handleDelete() {
         <p class="mt-1 text-sm text-surface-500">Manage articles and their brands</p>
       </div>
       <Button @click="openAddForm">+ Add Article</Button>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3 mb-4">
+      <div class="sm:w-64">
+        <SearchableDropdown
+          v-model="brandFilter"
+          :options="brands"
+          label=""
+          placeholder="All brands"
+          clearable
+        />
+      </div>
+      <div class="flex-1">
+        <Input v-model="search" label="" placeholder="Search by article name..." />
+      </div>
     </div>
 
     <Card variant="bordered">
