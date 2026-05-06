@@ -23,7 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await fetch(`${API_BASE}/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'ngrok-skip-browser-warning': 'true' },
         body: JSON.stringify({ username, password }),
       })
 
@@ -49,6 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
           'Content-Type': 'application/json',
           Accept: 'application/json',
           Authorization: `Bearer ${token.value}`,
+          'ngrok-skip-browser-warning': 'true',
         },
       })
     } catch {
@@ -68,6 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
         headers: {
           Accept: 'application/json',
           Authorization: `Bearer ${token.value}`,
+          'ngrok-skip-browser-warning': 'true',
         },
       })
 
