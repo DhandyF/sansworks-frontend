@@ -29,6 +29,8 @@ const submitting = ref(false)
 
 const form = ref({ name: '', username: '', password: '', phone: '', role: 'operator', status: 'active' })
 
+const showPassword = ref(false)
+
 function upper(v) { return typeof v === 'string' ? v.toUpperCase() : v }
 
 function openAddForm() {
@@ -135,8 +137,24 @@ async function handleDelete() {
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
         <Input :model-value="form.name" @update:model-value="v => form.name = upper(v)" label="Name" placeholder="Full name" required />
         <Input :model-value="form.username" @update:model-value="v => form.username = upper(v)" label="Username" placeholder="Username" required />
-        <Input v-if="!editing" v-model="form.password" type="password" label="Password" placeholder="Min 8 characters" required />
-        <Input v-else v-model="form.password" type="password" label="Password" placeholder="Leave blank to keep current" />
+        <div class="relative">
+          <Input v-if="!editing" v-model="form.password" :type="showPassword ? 'text' : 'password'" label="Password" placeholder="Min 8 characters" required>
+            <template #rightIcon>
+              <button type="button" @click="showPassword = !showPassword" class="cursor-pointer">
+                <svg v-if="!showPassword" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+              </button>
+            </template>
+          </Input>
+          <Input v-else v-model="form.password" :type="showPassword ? 'text' : 'password'" label="Password" placeholder="Leave blank to keep current">
+            <template #rightIcon>
+              <button type="button" @click="showPassword = !showPassword" class="cursor-pointer">
+                <svg v-if="!showPassword" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+              </button>
+            </template>
+          </Input>
+        </div>
         <Input :model-value="form.phone" @update:model-value="v => form.phone = upper(v)" label="Phone" placeholder="Phone number" />
         <div class="space-y-1">
           <label class="block text-sm font-medium text-surface-700">Role</label>
