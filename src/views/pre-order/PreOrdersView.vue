@@ -68,13 +68,15 @@ const groupedOrders = computed(() => {
         pre_order_date: item.pre_order_date,
         deadline_date: item.deadline_date,
         total_pcs: 0,
+        total_remaining: 0,
         entries: [],
         rawIds: [],
       })
     }
     const group = map.get(key)
-    group.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs })
+    group.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs, cut_qty: item.cut_qty ?? 0, remaining: item.remaining ?? item.total_pcs })
     group.total_pcs += Number(item.total_pcs)
+    group.total_remaining += Number(item.remaining ?? item.total_pcs)
     group.rawIds.push(item.id)
   }
   return Array.from(map.values())
@@ -87,6 +89,7 @@ const columns = [
   { key: 'deadline_date', label: 'Deadline' },
   { key: 'article', label: 'Article' },
   { key: 'total_pcs', label: 'Total Pcs' },
+  { key: 'total_remaining', label: 'Remaining' },
   { key: 'actions', label: 'Actions' },
 ]
 
@@ -299,6 +302,9 @@ async function handleDelete() {
           <template #article="{ row }">
             {{ row.article?.name || '-' }}
           </template>
+          <template #total_remaining="{ value }">
+            <Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge>
+          </template>
           <template #actions="{ row }">
             <div class="flex items-center gap-1">
               <button @click.stop="openEditForm(row)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" title="Edit">
@@ -315,12 +321,16 @@ async function handleDelete() {
                 <tr class="border-b border-surface-200">
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">Size</th>
                   <th class="py-1.5 px-3 text-right font-medium text-surface-500">Total Pcs</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Cut Qty</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Remaining</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="entry in row.entries" :key="entry.id" class="border-b border-surface-100 last:border-0">
                   <td class="py-1.5 px-3"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
                   <td class="py-1.5 px-3 text-right">{{ entry.total_pcs }}</td>
+                  <td class="py-1.5 px-3 text-right">{{ entry.cut_qty }}</td>
+                  <td class="py-1.5 px-3 text-right"><Badge :variant="entry.remaining > 0 ? 'success' : 'danger'" size="sm">{{ entry.remaining }}</Badge></td>
                 </tr>
               </tbody>
             </table>
