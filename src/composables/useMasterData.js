@@ -1,7 +1,7 @@
 import { ref, onMounted } from 'vue'
 import { useApi } from '@/composables/useApi'
 
-export function useMasterData(endpoint, buildParams = null) {
+export function useMasterData(endpoint, buildParams = null, autoFetch = true) {
   const { loading, error, request, create, update, remove } = useApi()
   const items = ref([])
   const currentPage = ref(1)
@@ -59,7 +59,9 @@ export function useMasterData(endpoint, buildParams = null) {
     await fetchData(1)
   }
 
-  onMounted(() => fetchData(1))
+  if (autoFetch) {
+    onMounted(() => fetchData(1))
+  }
 
   return {
     items, loading, error, currentPage, perPage, totalItems, lastPage,

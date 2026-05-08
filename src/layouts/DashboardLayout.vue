@@ -10,17 +10,18 @@ const menuGroups = [
   {
     label: 'Management',
     items: [
-      { name: 'Users', route: 'users' },
       { name: 'Brands', route: 'brands' },
+      { name: 'Articles', route: 'articles' },
+      { name: 'Users', route: 'users' },
       { name: 'Tailors', route: 'tailors' },
       { name: 'Sizes', route: 'sizes' },
-      { name: 'Articles', route: 'articles' },
     ],
   },
 ]
 
 const directLinks = [
   { name: 'Pre-Order', route: 'pre-orders' },
+  { name: 'Production', route: 'production' },
 ]
 
 function navigate(routeName) {
