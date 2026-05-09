@@ -75,7 +75,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (response.ok) {
         const data = await response.json()
-        setUser(data.data)
+        setUser(data)
       } else {
         token.value = ''
         localStorage.removeItem('token')
