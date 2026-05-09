@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed, onMounted, nextTick } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useMasterData } from '@/composables/useMasterData'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
@@ -19,10 +19,122 @@ const sizes = ref([])
 const articles = ref([])
 const nextName = ref('')
 
+const cuttingForm = ref(null)
+const cuttingSubmitting = ref(false)
+const cuttingError = ref('')
+const cuttingFormStyle = ref({})
+
+const tooltipData = ref(null)
+const tooltipStyle = ref({})
+
+function showTooltip(entry, event) {
+  if (!entry.cutting_results || entry.cutting_results.length === 0) return
+  const rect = event.currentTarget.getBoundingClientRect()
+  tooltipData.value = entry.cutting_results
+  tooltipStyle.value = {
+    top: `${rect.bottom + 6}px`,
+    left: `${Math.max(8, rect.left - 40)}px`,
+  }
+}
+
+function hideTooltip() {
+  tooltipData.value = null
+  tooltipStyle.value = {}
+}
+
+function openCuttingForm(entry, group, event) {
+  cuttingForm.value = {
+    pre_order_id: entry.id,
+    brand_id: group.brand_id,
+    article_id: group.articles.find(a => a.entries.some(e => e.id === entry.id))?.article_id || '',
+    size_id: entry.size_id,
+    total_pcs: entry.total_pcs,
+    cut_qty: entry.cut_qty ?? 0,
+    remaining: entry.remaining ?? entry.total_pcs,
+    total_cutting: '',
+    cutting_date: '',
+  }
+  cuttingError.value = ''
+  nextTick(() => positionCuttingForm(event))
+}
+
+function positionCuttingForm(event) {
+  const rect = event.currentTarget.getBoundingClientRect()
+  cuttingFormStyle.value = {
+    top: `${rect.bottom + 4}px`,
+    left: `${rect.left}px`,
+  }
+}
+
+function closeCuttingForm() {
+  cuttingForm.value = null
+  cuttingSubmitting.value = false
+  cuttingError.value = ''
+  cuttingFormStyle.value = {}
+}
+
+async function submitCuttingResult() {
+  if (!cuttingForm.value) return
+  const f = cuttingForm.value
+  if (!f.total_cutting || Number(f.total_cutting) <= 0) {
+    cuttingError.value = 'Cutting qty must be greater than 0'
+    return
+  }
+  if (Number(f.total_cutting) > f.remaining) {
+    cuttingError.value = `Cutting qty (${f.total_cutting}) exceeds remaining (${f.remaining})`
+    return
+  }
+  if (!f.cutting_date) {
+    cuttingError.value = 'Cutting date is required'
+    return
+  }
+  cuttingSubmitting.value = true
+  cuttingError.value = ''
+  try {
+    const res = await request('/cutting-results', {
+      method: 'POST',
+      body: JSON.stringify({
+        pre_order_id: f.pre_order_id,
+        article_id: f.article_id,
+        size_id: f.size_id,
+        total_cutting: Number(f.total_cutting),
+        cutting_date: f.cutting_date,
+      }),
+    })
+    const qty = Number(f.total_cutting)
+    const item = items.value.find(i => i.id === f.pre_order_id)
+    if (item) {
+      item.cut_qty = (item.cut_qty ?? 0) + qty
+      item.remaining = (item.remaining ?? item.total_pcs) - qty
+      if (!item.cutting_results) item.cutting_results = []
+      item.cutting_results.push({
+        id: res.id,
+        total_cutting: qty,
+        cutting_date: f.cutting_date,
+      })
+    }
+    closeCuttingForm()
+  } catch (e) {
+    cuttingError.value = e.message
+  } finally {
+    cuttingSubmitting.value = false
+  }
+}
+
+const cuttingFormRef = ref(null)
+
+function handleCuttingFormClickOutside() {
+  // Don't close on outside click - only close via Save, Cancel, or + button toggle
+}
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleCuttingFormClickOutside, true)
+})
 let filterBrandsLoaded = false
 const filterBrands = ref([])
 
 onMounted(async () => {
+  document.addEventListener('click', handleCuttingFormClickOutside, true)
   if (!filterBrandsLoaded) {
     try {
       const res = await request('/brands?per_page=1000')
@@ -77,7 +189,7 @@ const groupedOrders = computed(() => {
       articleGroup = { article_id: item.article_id, article: item.article, entries: [] }
       group.articles.push(articleGroup)
     }
-    articleGroup.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs, cut_qty: item.cut_qty ?? 0, remaining: item.remaining ?? item.total_pcs })
+    articleGroup.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs, cut_qty: item.cut_qty ?? 0, remaining: item.remaining ?? item.total_pcs, cutting_results: item.cutting_results || [] })
     group.total_pcs += Number(item.total_pcs)
     group.total_remaining += Number(item.remaining ?? item.total_pcs)
     group.rawIds.push(item.id)
@@ -337,7 +449,27 @@ async function handleDelete() {
                     <tr v-for="entry in ag.entries" :key="entry.id" class="border-b border-surface-100 last:border-0">
                       <td class="py-1.5 px-4"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
                       <td class="py-1.5 px-4 text-right">{{ entry.total_pcs }}</td>
-                      <td class="py-1.5 px-4 text-right">{{ entry.cut_qty }}</td>
+                      <td class="py-1.5 px-4">
+                        <div class="flex items-center justify-end gap-1.5">
+                          <span
+                            v-if="entry.cutting_results && entry.cutting_results.length > 0"
+                            class="cursor-help text-surface-800 font-medium"
+                            @mouseenter="showTooltip(entry, $event)"
+                            @mouseleave="hideTooltip"
+                          >{{ entry.cut_qty }}</span>
+                          <span v-else class="text-surface-800 font-medium">{{ entry.cut_qty }}</span>
+                          <button
+                            data-cutting-btn
+                            @click="entry.remaining > 0 && cuttingForm?.pre_order_id !== entry.id ? openCuttingForm(entry, row, $event) : (cuttingForm?.pre_order_id === entry.id ? closeCuttingForm() : null)"
+                            :disabled="entry.remaining <= 0"
+                            class="p-1 rounded-md transition-colors cursor-pointer"
+                            :class="entry.remaining > 0 ? 'text-primary-600 hover:bg-primary-50' : 'text-surface-300 cursor-not-allowed'"
+                            title="Add cutting result"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                          </button>
+                        </div>
+                      </td>
                       <td class="py-1.5 px-4 text-right"><Badge :variant="entry.remaining > 0 ? 'success' : 'danger'" size="sm">{{ entry.remaining }}</Badge></td>
                     </tr>
                   </tbody>
@@ -444,5 +576,26 @@ async function handleDelete() {
         </div>
       </template>
     </Modal>
+
+    <Teleport to="body">
+      <div v-if="cuttingForm" ref="cuttingFormRef" class="fixed z-50 bg-white rounded-lg shadow-xl border border-surface-200 p-4 w-72" :style="cuttingFormStyle">
+        <div v-if="cuttingError" class="p-2 mb-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{{ cuttingError }}</div>
+        <div class="space-y-3">
+          <Input v-model="cuttingForm.cutting_date" label="Cutting Date" type="date" required />
+          <Input v-model="cuttingForm.total_cutting" label="Cutting Qty" type="number" placeholder="0" required />
+          <p class="text-xs text-surface-500">Remaining available: <strong>{{ cuttingForm.remaining }}</strong></p>
+          <div class="flex items-center gap-2 pt-1">
+            <Button :loading="cuttingSubmitting" @click="submitCuttingResult" size="sm">Save</Button>
+            <Button variant="outline" @click="closeCuttingForm" size="sm">Cancel</Button>
+          </div>
+        </div>
+      </div>
+      <div v-if="tooltipData" class="fixed z-50 w-56 p-2 bg-black/80 text-white rounded-lg shadow-lg text-xs" :style="tooltipStyle" @mouseenter="() => {}" @mouseleave="hideTooltip">
+        <div v-for="cr in tooltipData" :key="cr.id" class="flex justify-between py-0.5">
+          <span>{{ cr.cutting_date ? formatDate(cr.cutting_date) : '-' }}</span>
+          <span class="font-medium">{{ cr.total_cutting }} pcs</span>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
