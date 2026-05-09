@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
-import { Card, Badge } from 'ui-assets'
+import { Card, Badge, Table } from 'ui-assets'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,6 +12,19 @@ const loading = ref(true)
 const brand = ref(null)
 const summary = ref(null)
 const preOrders = ref([])
+
+const columns = [
+  { key: 'name', label: 'Pre-Order' },
+  { key: 'article', label: 'Article' },
+  { key: 'size', label: 'Size' },
+  { key: 'total_pcs', label: 'Total Pcs' },
+  { key: 'cut_qty', label: 'Cutting Done' },
+  { key: 'cutting_remaining', label: 'Remaining' },
+  { key: 'distributed_qty', label: 'Distributed' },
+  { key: 'deposited_qty', label: 'Deposited' },
+  { key: 'deadline_date', label: 'Deadline' },
+  { key: 'status', label: 'Status' },
+]
 
 onMounted(async () => {
   try {
@@ -36,6 +49,10 @@ const statusLabel = (status) => {
   if (status === 'done') return 'Done'
   if (status === 'overdue') return 'Overdue'
   return 'In Progress'
+}
+
+const formatDate = (date) => {
+  return date ? new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
 }
 </script>
 
@@ -100,38 +117,18 @@ const statusLabel = (status) => {
         <div v-if="preOrders.length === 0" class="text-center py-12">
           <p class="text-surface-500">No pre-orders found</p>
         </div>
-        <div v-else class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-surface-200 bg-surface-50">
-                <th class="px-4 py-2.5 text-left font-semibold text-surface-600">Pre-Order</th>
-                <th class="px-4 py-2.5 text-left font-semibold text-surface-600">Article</th>
-                <th class="px-4 py-2.5 text-left font-semibold text-surface-600">Size</th>
-                <th class="px-4 py-2.5 text-right font-semibold text-surface-600">Total Pcs</th>
-                <th class="px-4 py-2.5 text-right font-semibold text-surface-600">Cutting Done</th>
-                <th class="px-4 py-2.5 text-right font-semibold text-surface-600">Remaining</th>
-                <th class="px-4 py-2.5 text-right font-semibold text-surface-600">Distributed</th>
-                <th class="px-4 py-2.5 text-right font-semibold text-surface-600">Deposited</th>
-                <th class="px-4 py-2.5 text-left font-semibold text-surface-600">Deadline</th>
-                <th class="px-4 py-2.5 text-left font-semibold text-surface-600">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="po in preOrders" :key="po.id" class="border-b border-surface-100 hover:bg-surface-50/50 transition-colors">
-                <td class="px-4 py-2.5 whitespace-nowrap min-w-[160px] font-medium text-surface-800">{{ po.name }}</td>
-                <td class="px-4 py-2.5">{{ po.article?.name || '-' }}</td>
-                <td class="px-4 py-2.5"><Badge variant="default" size="sm">{{ po.size?.abbreviation || '-' }}</Badge></td>
-                <td class="px-4 py-2.5 text-right">{{ po.total_pcs }}</td>
-                <td class="px-4 py-2.5 text-right">{{ po.cut_qty }}</td>
-                <td class="px-4 py-2.5 text-right"><Badge :variant="po.cutting_remaining > 0 ? 'success' : 'danger'" size="sm">{{ po.cutting_remaining }}</Badge></td>
-                <td class="px-4 py-2.5 text-right">{{ po.distributed_qty }}</td>
-                <td class="px-4 py-2.5 text-right">{{ po.deposited_qty }}</td>
-                <td class="px-4 py-2.5 whitespace-nowrap">{{ po.deadline_date ? new Date(po.deadline_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' }}</td>
-                <td class="px-4 py-2.5"><Badge :variant="statusBadge(po.status)" size="sm">{{ statusLabel(po.status) }}</Badge></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <Table v-else :columns="columns" :rows="preOrders" :per-page="15">
+          <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
+          <template #article="{ value }">{{ value?.name || '-' }}</template>
+          <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
+          <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
+          <template #cut_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
+          <template #cutting_remaining="{ value }"><span class="block text-right"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></span></template>
+          <template #distributed_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
+          <template #deposited_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
+          <template #deadline_date="{ value }"><span class="whitespace-nowrap">{{ formatDate(value) }}</span></template>
+          <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
+        </Table>
       </Card>
     </template>
   </div>
