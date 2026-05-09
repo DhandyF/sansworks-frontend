@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import { Card, Badge, Table } from 'ui-assets'
@@ -12,6 +12,27 @@ const loading = ref(true)
 const preOrder = ref(null)
 const summary = ref(null)
 const entries = ref([])
+const statusFilter = ref('')
+
+const filteredEntries = computed(() => {
+  if (!statusFilter.value) return entries.value
+  return entries.value.filter(e => e.status === statusFilter.value)
+})
+
+const statusFilters = [
+  { value: '', label: 'All' },
+  { value: 'done', label: 'Done' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'overdue', label: 'Overdue' },
+]
+
+function filterBadgeVariant(filter) {
+  if (filter === statusFilter.value) {
+    if (filter === '') return 'primary'
+    return statusBadge(filter)
+  }
+  return 'default'
+}
 
 const columns = [
   { key: 'name', label: 'Pre-Order' },
@@ -120,18 +141,25 @@ const formatDate = (date) => {
         <div v-if="entries.length === 0" class="text-center py-12">
           <p class="text-surface-500">No entries found</p>
         </div>
-        <Table v-else :columns="columns" :rows="entries" :per-page="15">
-          <template #name="{ value }"><span class="whitespace-nowrap min-w-[160px] inline-block font-medium text-surface-800">{{ value }}</span></template>
-          <template #article="{ value }">{{ value?.name || '-' }}</template>
-          <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
-          <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
-          <template #cut_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
-          <template #cutting_remaining="{ value }"><span class="block text-right"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></span></template>
-          <template #distributed_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
-          <template #deposited_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
-          <template #deadline_date="{ value }"><span class="whitespace-nowrap">{{ formatDate(value) }}</span></template>
-          <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
-        </Table>
+        <template v-else>
+          <div class="px-4 py-4 flex items-center gap-2 border-b border-surface-200">
+            <button v-for="f in statusFilters" :key="f.value" @click="statusFilter = f.value" class="cursor-pointer">
+              <Badge :variant="filterBadgeVariant(f.value)" size="lg">{{ f.label }}</Badge>
+            </button>
+          </div>
+          <Table :columns="columns" :rows="filteredEntries" :per-page="15">
+            <template #name="{ value }"><span class="whitespace-nowrap min-w-[160px] inline-block font-medium text-surface-800">{{ value }}</span></template>
+            <template #article="{ value }">{{ value?.name || '-' }}</template>
+            <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
+            <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
+            <template #cut_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
+            <template #cutting_remaining="{ value }"><span class="block text-right"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></span></template>
+            <template #distributed_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
+            <template #deposited_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
+            <template #deadline_date="{ value }"><span class="whitespace-nowrap">{{ formatDate(value) }}</span></template>
+            <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
+          </Table>
+        </template>
       </Card>
     </template>
   </div>
