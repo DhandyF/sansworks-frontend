@@ -275,7 +275,7 @@ function positionCrPicker() {
       </Table>
     </Card>
 
-    <Modal v-model="showForm" :title="editing ? 'Edit Distribution' : 'Add Distribution'" size="lg" :closeOnOverlay="false">
+    <Modal v-model="showForm" :title="editing ? 'Edit Distribution' : 'Add Distribution'" size="lg" contentClass="h-[80vh]" :closeOnOverlay="false">
       <div class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
         <div class="relative" ref="crPickerRef">

@@ -298,7 +298,7 @@ async function handleDelete() {
       </Table>
     </Card>
 
-    <Modal v-model="showForm" :title="editing ? 'Edit Cutting Result' : 'Add Cutting Result'" size="lg" :closeOnOverlay="false">
+    <Modal v-model="showForm" :title="editing ? 'Edit Cutting Result' : 'Add Cutting Result'" size="lg" contentClass="h-[80vh]" :closeOnOverlay="false">
       <div class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

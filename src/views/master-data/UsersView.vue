@@ -132,7 +132,7 @@ async function handleDelete() {
     </Card>
 
     <!-- Add/Edit Modal -->
-    <Modal v-model="showForm" :title="editing ? 'Edit User' : 'Add User'" size="md" :closeOnOverlay="false">
+    <Modal v-model="showForm" :title="editing ? 'Edit User' : 'Add User'" size="md" contentClass="h-[80vh]" :closeOnOverlay="false">
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
         <Input :model-value="form.name" @update:model-value="v => form.name = upper(v)" label="Name" placeholder="Full name" required />
