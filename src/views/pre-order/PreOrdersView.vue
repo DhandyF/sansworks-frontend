@@ -59,11 +59,29 @@ function openCuttingForm(entry, group, event) {
 }
 
 function positionCuttingForm(event) {
-  const rect = event.currentTarget.getBoundingClientRect()
+  const btnRect = event.currentTarget.getBoundingClientRect()
   cuttingFormStyle.value = {
-    top: `${rect.bottom + 4}px`,
-    left: `${rect.left}px`,
+    top: `${btnRect.bottom + 4}px`,
+    left: `${Math.max(8, Math.min(btnRect.left, window.innerWidth - 288))}px`,
   }
+  nextTick(() => {
+    if (!cuttingFormRef.value) return
+    const formRect = cuttingFormRef.value.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - btnRect.bottom
+    const spaceAbove = btnRect.top
+    let top
+    if (spaceBelow >= formRect.height) {
+      top = btnRect.bottom + 4
+    } else if (spaceAbove >= formRect.height) {
+      top = btnRect.top - formRect.height - 4
+    } else {
+      top = Math.max(8, window.innerHeight - formRect.height - 8)
+    }
+    cuttingFormStyle.value = {
+      top: `${top}px`,
+      left: `${Math.max(8, Math.min(btnRect.left, window.innerWidth - 288))}px`,
+    }
+  })
 }
 
 function closeCuttingForm() {
@@ -578,7 +596,7 @@ async function handleDelete() {
     </Modal>
 
     <Teleport to="body">
-      <div v-if="cuttingForm" ref="cuttingFormRef" class="fixed z-50 bg-white rounded-lg shadow-xl border border-surface-200 p-4 w-72" :style="cuttingFormStyle">
+      <div v-if="cuttingForm" ref="cuttingFormRef" class="fixed z-50 bg-white rounded-lg border border-surface-200 p-4 w-72" :style="cuttingFormStyle">
         <div v-if="cuttingError" class="p-2 mb-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{{ cuttingError }}</div>
         <div class="space-y-3">
           <Input v-model="cuttingForm.cutting_date" label="Cutting Date" type="date" required />
