@@ -160,7 +160,7 @@ const formatDate = (date) => {
             <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
             <template #expanded="{ row }">
               <div v-if="row.distributions && row.distributions.length > 0" class="space-y-3">
-                <Card v-for="dist in row.distributions" :key="dist.id" variant="bordered" class="!shadow-none">
+                <Card v-for="dist in row.distributions" :key="dist.id" variant="bordered" class="shadow-none!">
                   <div class="px-4 py-3 border-b border-surface-200 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                       <span class="text-sm font-medium text-surface-800">{{ dist.tailor?.name || '-' }}</span>

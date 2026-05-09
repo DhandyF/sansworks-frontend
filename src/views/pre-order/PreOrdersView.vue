@@ -56,25 +56,28 @@ async function fetchArticles(brandId) {
 const groupedOrders = computed(() => {
   const map = new Map()
   for (const item of items.value) {
-    const key = `${item.name}_${item.brand_id}_${item.article_id}`
-    if (!map.has(key)) {
-      map.set(key, {
-        id: key,
+    if (!map.has(item.name)) {
+      map.set(item.name, {
+        id: item.id,
         name: item.name,
         brand: item.brand,
-        article: item.article,
         brand_id: item.brand_id,
-        article_id: item.article_id,
         pre_order_date: item.pre_order_date,
         deadline_date: item.deadline_date,
         total_pcs: 0,
         total_remaining: 0,
-        entries: [],
+        articles: [],
         rawIds: [],
       })
     }
-    const group = map.get(key)
-    group.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs, cut_qty: item.cut_qty ?? 0, remaining: item.remaining ?? item.total_pcs })
+    const group = map.get(item.name)
+
+    let articleGroup = group.articles.find(a => a.article_id === item.article_id)
+    if (!articleGroup) {
+      articleGroup = { article_id: item.article_id, article: item.article, entries: [] }
+      group.articles.push(articleGroup)
+    }
+    articleGroup.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs, cut_qty: item.cut_qty ?? 0, remaining: item.remaining ?? item.total_pcs })
     group.total_pcs += Number(item.total_pcs)
     group.total_remaining += Number(item.remaining ?? item.total_pcs)
     group.rawIds.push(item.id)
@@ -87,7 +90,6 @@ const columns = [
   { key: 'name', label: 'Pre-Order Name' },
   { key: 'pre_order_date', label: 'Order Date' },
   { key: 'deadline_date', label: 'Deadline' },
-  { key: 'article', label: 'Article' },
   { key: 'total_pcs', label: 'Total Pcs' },
   { key: 'total_remaining', label: 'Remaining' },
   { key: 'actions', label: 'Actions' },
@@ -173,17 +175,9 @@ async function openEditForm(group) {
   editing.value = group
   skipArticleReset.value = true
 
-  const sizesByArticle = {}
-  for (const entry of group.entries) {
-    if (!sizesByArticle[group.article_id]) {
-      sizesByArticle[group.article_id] = []
-    }
-    sizesByArticle[group.article_id].push({ size_id: entry.size_id, total_pcs: String(entry.total_pcs) })
-  }
-
-  const articlesArr = Object.entries(sizesByArticle).map(([articleId, sizes]) => ({
-    article_id: articleId,
-    sizes,
+  const articlesArr = group.articles.map(ag => ({
+    article_id: ag.article_id,
+    sizes: ag.entries.map(e => ({ size_id: e.size_id, total_pcs: String(e.total_pcs) })),
   }))
 
   form.value = {
@@ -290,8 +284,8 @@ async function handleDelete() {
       </div>
       <template v-else>
         <Table :columns="columns" :rows="groupedOrders" expandable :per-page="15">
-<template #name="{ row }">
-            <span class="whitespace-nowrap min-w-50 inline-block">{{ row.name }}</span>
+          <template #name="{ row }">
+            <span class="whitespace-nowrap min-w-40 inline-block">{{ row.name }}</span>
           </template>
           <template #brand="{ row }">
             <Badge variant="primary" size="sm">{{ row.brand?.name || '-' }}</Badge>
@@ -301,9 +295,6 @@ async function handleDelete() {
           </template>
           <template #deadline_date="{ row }">
             {{ formatDate(row.deadline_date) }}
-          </template>
-          <template #article="{ row }">
-            <span class="whitespace-nowrap min-w-30 inline-block">{{ row.article?.name || '-' }}</span>
           </template>
           <template #total_remaining="{ value }">
             <Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge>
@@ -319,24 +310,31 @@ async function handleDelete() {
             </div>
           </template>
           <template #expanded="{ row }">
-            <table class="w-14/15 mx-auto text-sm">
-              <thead>
-                <tr class="border-b border-surface-200">
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Size</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Total Pcs</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Cut Qty</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Remaining</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="entry in row.entries" :key="entry.id" class="border-b border-surface-100 last:border-0">
-                  <td class="py-1.5 px-3"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
-                  <td class="py-1.5 px-3 text-right">{{ entry.total_pcs }}</td>
-                  <td class="py-1.5 px-3 text-right">{{ entry.cut_qty }}</td>
-                  <td class="py-1.5 px-3 text-right"><Badge :variant="entry.remaining > 0 ? 'success' : 'danger'" size="sm">{{ entry.remaining }}</Badge></td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="space-y-3">
+              <Card v-for="ag in row.articles" :key="ag.article_id" variant="bordered" class="shadow-none!">
+                <div class="px-4 py-2 border-b border-surface-200">
+                  <span class="text-sm font-medium text-surface-800">{{ ag.article?.name || '-' }}</span>
+                </div>
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-surface-200">
+                      <th class="py-1.5 px-4 text-left font-medium text-surface-500">Size</th>
+                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">Total Pcs</th>
+                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">Cut Qty</th>
+                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">Remaining</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="entry in ag.entries" :key="entry.id" class="border-b border-surface-100 last:border-0">
+                      <td class="py-1.5 px-4"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
+                      <td class="py-1.5 px-4 text-right">{{ entry.total_pcs }}</td>
+                      <td class="py-1.5 px-4 text-right">{{ entry.cut_qty }}</td>
+                      <td class="py-1.5 px-4 text-right"><Badge :variant="entry.remaining > 0 ? 'success' : 'danger'" size="sm">{{ entry.remaining }}</Badge></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </Card>
+            </div>
           </template>
         </Table>
       </template>
