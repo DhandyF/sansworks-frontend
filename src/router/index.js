@@ -50,6 +50,11 @@ const routes = [
         component: () => import('@/views/pre-order/PreOrdersView.vue'),
       },
       {
+        path: 'pre-orders/:id',
+        name: 'pre-order-detail',
+        component: () => import('@/views/pre-order/PreOrderDetailView.vue'),
+      },
+      {
         path: 'production',
         name: 'production',
         component: () => import('@/views/production/ProductionView.vue'),
