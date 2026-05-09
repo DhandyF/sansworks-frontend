@@ -290,6 +290,9 @@ async function handleDelete() {
       </div>
       <template v-else>
         <Table :columns="columns" :rows="groupedOrders" expandable :per-page="15">
+<template #name="{ row }">
+            <span class="block max-w-32 sm:max-w-48 lg:max-w-64 truncate" :title="row.name">{{ row.name }}</span>
+          </template>
           <template #brand="{ row }">
             <Badge variant="primary" size="sm">{{ row.brand?.name || '-' }}</Badge>
           </template>

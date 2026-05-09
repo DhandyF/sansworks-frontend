@@ -260,6 +260,7 @@ async function handleDelete() {
         <p class="text-surface-500">No cutting results found</p>
       </div>
       <Table v-else :columns="columns" :rows="groupedResults" expandable :per-page="15">
+        <template #name="{ value }"><span class="block max-w-32 sm:max-w-48 lg:max-w-64 truncate" :title="value">{{ value }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #pre_order="{ value }">{{ value?.name || '-' }}</template>
         <template #remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>

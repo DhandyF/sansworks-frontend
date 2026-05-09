@@ -235,6 +235,7 @@ function positionCrPicker() {
         <p class="text-surface-500">No distributions found</p>
       </div>
       <Table v-else :columns="columns" :rows="groupedDistributions" expandable :per-page="15">
+        <template #name="{ value }"><span class="block max-w-32 sm:max-w-48 lg:max-w-64 truncate" :title="value">{{ value }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
@@ -299,7 +300,7 @@ function positionCrPicker() {
               <div
                 v-if="showCrPicker"
                 ref="crDropdownRef"
-                class="fixed z-[9999] bg-white border border-surface-200 rounded-xl shadow-lg overflow-hidden"
+                class="fixed z-9999 bg-white border border-surface-200 rounded-xl shadow-lg overflow-hidden"
               >
                 <div class="border-b border-surface-200 p-2">
                   <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-50 rounded-lg">
