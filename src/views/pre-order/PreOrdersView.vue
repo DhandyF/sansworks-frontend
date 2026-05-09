@@ -291,7 +291,7 @@ async function handleDelete() {
       <template v-else>
         <Table :columns="columns" :rows="groupedOrders" expandable :per-page="15">
 <template #name="{ row }">
-            <span class="block max-w-32 sm:max-w-48 lg:max-w-64 truncate" :title="row.name">{{ row.name }}</span>
+            <span class="whitespace-nowrap min-w-50 inline-block">{{ row.name }}</span>
           </template>
           <template #brand="{ row }">
             <Badge variant="primary" size="sm">{{ row.brand?.name || '-' }}</Badge>
@@ -303,7 +303,7 @@ async function handleDelete() {
             {{ formatDate(row.deadline_date) }}
           </template>
           <template #article="{ row }">
-            {{ row.article?.name || '-' }}
+            <span class="whitespace-nowrap min-w-30 inline-block">{{ row.article?.name || '-' }}</span>
           </template>
           <template #total_remaining="{ value }">
             <Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge>

@@ -221,11 +221,11 @@ function positionDistPicker() {
         <p class="text-surface-500">No deposits found</p>
       </div>
       <Table v-else :columns="columns" :rows="items" :per-page="15">
-        <template #name="{ value }"><span class="block max-w-32 sm:max-w-48 lg:max-w-64 truncate" :title="value">{{ value }}</span></template>
+        <template #name="{ value }"><span class="whitespace-nowrap min-w-50 inline-block">{{ value }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
-        <template #pre_order="{ row }">{{ row.cutting_distribution?.cutting_result?.pre_order?.name || '-' }}</template>
+        <template #pre_order="{ row }"><span class="whitespace-nowrap min-w-40 inline-block">{{ row.cutting_distribution?.cutting_result?.pre_order?.name || '-' }}</span></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
-        <template #article="{ value }">{{ value?.name || '-' }}</template>
+        <template #article="{ value }"><span class="whitespace-nowrap min-w-30 inline-block">{{ value?.name || '-' }}</span></template>
         <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
         <template #deposit_date="{ value }">{{ formatDate(value) }}</template>
         <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ value }}</Badge></template>
