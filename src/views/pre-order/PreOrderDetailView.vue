@@ -175,7 +175,8 @@ const formatDate = (date) => {
                   <div class="px-4 py-2">
                     <div v-if="dist.deposits && dist.deposits.length > 0" class="space-y-1">
                       <div v-for="dep in dist.deposits" :key="dep.id" class="flex items-center gap-3 text-sm py-1">
-                        <span class="text-surface-700">{{ dep.total_sewing_result }} pcs</span>
+                        <span class="text-surface-700">{{ formatDate(dep.deposit_date) }}</span>
+                        <span class="text-surface-700 font-bold">{{ dep.total_sewing_result }} pcs</span>
                         <Badge :variant="statusBadge(dep.status)" size="sm">{{ statusLabel(dep.status) }}</Badge>
                       </div>
                     </div>
