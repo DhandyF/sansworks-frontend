@@ -316,7 +316,7 @@ async function handleDelete() {
             </div>
           </template>
           <template #expanded="{ row }">
-            <table class="w-[85vw] mx-auto text-sm">
+            <table class="w-14/15 mx-auto text-sm">
               <thead>
                 <tr class="border-b border-surface-200">
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">Size</th>
