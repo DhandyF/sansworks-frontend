@@ -25,6 +25,11 @@ const routes = [
         component: () => import('@/views/master-data/BrandsView.vue'),
       },
       {
+        path: 'brands/:id',
+        name: 'brand-detail',
+        component: () => import('@/views/master-data/BrandDetailView.vue'),
+      },
+      {
         path: 'tailors',
         name: 'tailors',
         component: () => import('@/views/master-data/TailorsView.vue'),
