@@ -103,7 +103,7 @@ function goToPreOrder(row) {
           <p class="text-surface-500">No pre-orders found</p>
         </div>
         <Table v-else :columns="columns" :rows="preOrders" :per-page="15" clickable @row-click="goToPreOrder">
-          <template #name="{ value }"><span class="whitespace-nowrap min-w-[160px] inline-block font-medium text-surface-800">{{ value }}</span></template>
+          <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
           <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
           <template #cut_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
           <template #distributed_qty="{ value }"><span class="block text-right">{{ value }}</span></template>

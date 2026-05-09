@@ -142,13 +142,13 @@ const formatDate = (date) => {
           <p class="text-surface-500">No entries found</p>
         </div>
         <template v-else>
-          <div class="px-4 py-4 flex items-center gap-2 border-b border-surface-200">
+          <div class="px-4 py-2 flex items-center gap-2 border-b border-surface-200">
             <button v-for="f in statusFilters" :key="f.value" @click="statusFilter = f.value" class="cursor-pointer">
-              <Badge :variant="filterBadgeVariant(f.value)" size="lg">{{ f.label }}</Badge>
+              <Badge :variant="filterBadgeVariant(f.value)" size="sm">{{ f.label }}</Badge>
             </button>
           </div>
-          <Table :columns="columns" :rows="filteredEntries" :per-page="15">
-            <template #name="{ value }"><span class="whitespace-nowrap min-w-[160px] inline-block font-medium text-surface-800">{{ value }}</span></template>
+          <Table :columns="columns" :rows="filteredEntries" :per-page="15" expandable>
+            <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
             <template #article="{ value }">{{ value?.name || '-' }}</template>
             <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
             <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
@@ -158,6 +158,33 @@ const formatDate = (date) => {
             <template #deposited_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
             <template #deadline_date="{ value }"><span class="whitespace-nowrap">{{ formatDate(value) }}</span></template>
             <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
+            <template #expanded="{ row }">
+              <div v-if="row.distributions && row.distributions.length > 0" class="space-y-3">
+                <Card v-for="dist in row.distributions" :key="dist.id" variant="bordered" class="!shadow-none">
+                  <div class="px-4 py-3 border-b border-surface-200 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <span class="text-sm font-medium text-surface-800">{{ dist.tailor?.name || '-' }}</span>
+                      <Badge :variant="statusBadge(dist.status)" size="sm">{{ statusLabel(dist.status) }}</Badge>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm">
+                      <span class="text-surface-500">Distributed: <span class="text-surface-800 font-medium">{{ dist.total_cutting }}</span></span>
+                      <span class="text-surface-500">Deposited: <span class="text-surface-800 font-medium">{{ dist.total_cutting - dist.deposit_remaining }}</span></span>
+                      <span class="text-surface-500">Remaining: <Badge :variant="dist.deposit_remaining > 0 ? 'warning' : 'success'" size="sm">{{ dist.deposit_remaining }}</Badge></span>
+                    </div>
+                  </div>
+                  <div class="px-4 py-2">
+                    <div v-if="dist.deposits && dist.deposits.length > 0" class="space-y-1">
+                      <div v-for="dep in dist.deposits" :key="dep.id" class="flex items-center gap-3 text-sm py-1">
+                        <span class="text-surface-700">{{ dep.total_sewing_result }} pcs</span>
+                        <Badge :variant="statusBadge(dep.status)" size="sm">{{ statusLabel(dep.status) }}</Badge>
+                      </div>
+                    </div>
+                    <p v-else class="text-xs text-surface-400 py-1">No deposits yet</p>
+                  </div>
+                </Card>
+              </div>
+              <div v-else class="text-sm text-surface-400">No distributions yet</div>
+            </template>
           </Table>
         </template>
       </Card>
