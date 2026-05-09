@@ -1,10 +1,12 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Button, Dropdown, DropdownItem } from 'ui-assets'
 
 const router = useRouter()
 const auth = useAuthStore()
+const mobileMenuOpen = ref(false)
 
 const menuGroups = [
   {
@@ -26,6 +28,7 @@ const directLinks = [
 
 function navigate(routeName) {
   router.push({ name: routeName })
+  mobileMenuOpen.value = false
 }
 
 async function handleLogout() {
@@ -83,7 +86,42 @@ async function handleLogout() {
           <div class="flex items-center gap-3">
             <span class="text-sm text-surface-500 hidden sm:block">{{ auth.user?.username || 'User' }}</span>
             <Button variant="ghost" size="sm" @click="handleLogout">Sign Out</Button>
+            <button
+              class="md:hidden p-2 rounded-lg text-surface-600 hover:bg-surface-100 transition-colors cursor-pointer"
+              @click="mobileMenuOpen = !mobileMenuOpen"
+            >
+              <svg v-if="!mobileMenuOpen" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              <svg v-else class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
+        </div>
+      </div>
+
+      <div v-if="mobileMenuOpen" class="md:hidden border-t border-surface-200 bg-white">
+        <div class="px-4 py-3 space-y-1">
+          <button
+            v-for="link in directLinks"
+            :key="link.route"
+            @click="navigate(link.route)"
+            class="block w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-surface-700 hover:bg-surface-100 transition-colors cursor-pointer"
+          >
+            {{ link.name }}
+          </button>
+          <template v-for="group in menuGroups" :key="group.label">
+            <div class="px-3 pt-2 pb-1 text-xs font-semibold text-surface-400 uppercase tracking-wider">{{ group.label }}</div>
+            <button
+              v-for="item in group.items"
+              :key="item.route"
+              @click="navigate(item.route)"
+              class="block w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-surface-600 hover:bg-surface-100 transition-colors cursor-pointer pl-6"
+            >
+              {{ item.name }}
+            </button>
+          </template>
         </div>
       </div>
     </nav>
