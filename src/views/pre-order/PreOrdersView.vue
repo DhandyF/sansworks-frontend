@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed, onMounted, nextTick } from 'vue'
 import { useMasterData } from '@/composables/useMasterData'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
@@ -137,6 +137,11 @@ watch(() => form.value.brand_id, (newBrandId) => {
 
 function addArticle() {
   form.value.articles.push(createEmptyArticle())
+  nextTick(() => {
+    const idx = form.value.articles.length - 1
+    const el = document.querySelector(`[data-article="${idx}"] button`)
+    if (el) el.click()
+  })
 }
 
 function removeArticle(index) {
@@ -147,6 +152,10 @@ function removeArticle(index) {
 
 function addSizeRow(articleIndex) {
   form.value.articles[articleIndex].sizes.push({ size_id: '', total_pcs: '' })
+  nextTick(() => {
+    const el = document.querySelector(`[data-size="${articleIndex}-${form.value.articles[articleIndex].sizes.length - 1}"] button`)
+    if (el) el.click()
+  })
 }
 
 function removeSizeRow(articleIndex, sizeIndex) {
@@ -370,7 +379,7 @@ async function handleDelete() {
             </button>
           </div>
 
-          <div v-for="(article, aIndex) in form.articles" :key="aIndex" class="mb-4 p-4 bg-surface-50 rounded-lg border border-surface-200">
+          <div v-for="(article, aIndex) in form.articles" :key="aIndex" :data-article="aIndex" class="mb-4 p-4 bg-surface-50 rounded-lg border border-surface-200">
             <div class="flex items-center justify-between mb-3">
               <span class="text-sm font-medium text-surface-700">Article {{ form.articles.length > 1 ? aIndex + 1 : '' }}</span>
               <button v-if="form.articles.length > 1" @click="removeArticle(aIndex)" type="button" class="text-red-500 hover:text-red-700 text-sm cursor-pointer">
@@ -397,7 +406,7 @@ async function handleDelete() {
                   Add Size
                 </button>
               </div>
-              <div v-for="(sizeItem, sIndex) in article.sizes" :key="sIndex" class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+              <div v-for="(sizeItem, sIndex) in article.sizes" :key="sIndex" :data-size="`${aIndex}-${sIndex}`" class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
                 <SearchableDropdown
                   v-model="sizeItem.size_id"
                   :options="sizes"
