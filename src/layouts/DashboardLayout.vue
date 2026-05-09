@@ -85,7 +85,9 @@ async function handleLogout() {
 
           <div class="flex items-center gap-3">
             <span class="text-sm text-surface-500 hidden sm:block">{{ auth.user?.username || 'User' }}</span>
-            <Button variant="ghost" size="sm" @click="handleLogout">Sign Out</Button>
+            <div class="hidden md:block">
+              <Button class="text-red-600!" variant="ghost" size="sm" @click="handleLogout">Sign Out</Button>
+            </div>
             <button
               class="md:hidden p-2 rounded-lg text-surface-600 hover:bg-surface-100 transition-colors cursor-pointer"
               @click="mobileMenuOpen = !mobileMenuOpen"
@@ -101,29 +103,40 @@ async function handleLogout() {
         </div>
       </div>
 
-      <div v-if="mobileMenuOpen" class="md:hidden border-t border-surface-200 bg-white">
-        <div class="px-4 py-3 space-y-1">
-          <button
-            v-for="link in directLinks"
-            :key="link.route"
-            @click="navigate(link.route)"
-            class="block w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-surface-700 hover:bg-surface-100 transition-colors cursor-pointer"
-          >
-            {{ link.name }}
-          </button>
-          <template v-for="group in menuGroups" :key="group.label">
-            <div class="px-3 pt-2 pb-1 text-xs font-semibold text-surface-400 uppercase tracking-wider">{{ group.label }}</div>
-            <button
-              v-for="item in group.items"
-              :key="item.route"
-              @click="navigate(item.route)"
-              class="block w-full text-left px-3 py-2 text-sm font-medium rounded-lg text-surface-600 hover:bg-surface-100 transition-colors cursor-pointer pl-6"
-            >
-              {{ item.name }}
-            </button>
-          </template>
-        </div>
-      </div>
+      <Teleport to="body">
+        <Transition name="mobile-menu">
+          <div v-if="mobileMenuOpen" class="fixed inset-x-0 top-14 z-50 md:hidden" @click="mobileMenuOpen = false">
+            <div class="mx-3 mt-2 bg-white border border-surface-200 rounded-xl shadow-lg overflow-hidden" @click.stop>
+              <div class="py-2">
+                <button
+                  v-for="link in directLinks"
+                  :key="link.route"
+                  @click="navigate(link.route)"
+                  class="block w-full text-left px-4 py-2.5 text-sm font-medium rounded-lg mx-2 text-surface-700 hover:bg-primary-50 hover:text-primary-700 transition-colors cursor-pointer"
+                >
+                  {{ link.name }}
+                </button>
+                <template v-for="group in menuGroups" :key="group.label">
+                  <div class="px-4 pt-3 pb-1 text-xs font-semibold text-surface-400 uppercase tracking-wider">{{ group.label }}</div>
+                  <button
+                    v-for="item in group.items"
+                    :key="item.route"
+                    @click="navigate(item.route)"
+                    class="block w-full text-left px-4 py-2.5 text-sm font-medium rounded-lg mx-2 text-surface-600 hover:bg-primary-50 hover:text-primary-700 transition-colors cursor-pointer pl-8"
+                  >
+                    {{ item.name }}
+                  </button>
+                </template>
+                <div class="border-t border-surface-200 mt-2 pt-2 mr-2">
+                  <button @click="mobileMenuOpen = false; handleLogout()" class="block w-full text-left px-4 py-2.5 text-sm font-medium rounded-lg mx-2 text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
     </nav>
 
     <main class="p-4 sm:p-6 lg:p-8">
@@ -131,3 +144,9 @@ async function handleLogout() {
     </main>
   </div>
 </template>
+
+<style>
+.mobile-menu-enter-active { transition: all 0.2s ease-out; }
+.mobile-menu-leave-active { transition: all 0.15s ease-in; }
+.mobile-menu-enter-from, .mobile-menu-leave-to { opacity: 0; transform: translateY(-8px); }
+</style>

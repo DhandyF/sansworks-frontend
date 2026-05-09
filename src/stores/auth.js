@@ -34,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       setToken(data.token)
-      setUser(data.user.data)
+      setUser(data.user)
       return { success: true }
     } catch {
       return { success: false, error: 'Network error. Please try again.' }
