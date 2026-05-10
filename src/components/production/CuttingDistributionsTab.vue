@@ -56,24 +56,30 @@ const crTriggerRef = ref(null)
 const crDropdownRef = ref(null)
 
 const crGroups = computed(() => {
-  const filtered = allCuttingResults.value.filter(cr => cr.remaining > 0)
-  const q = crSearch.value.toLowerCase()
-  const matches = q
-    ? filtered.filter(cr =>
-        cr.name?.toLowerCase().includes(q) ||
-        cr.article?.name?.toLowerCase().includes(q) ||
-        cr.size?.abbreviation?.toLowerCase().includes(q) ||
-        cr.brand?.name?.toLowerCase().includes(q)
-      )
-    : filtered
-  const map = new Map()
-  for (const cr of matches) {
-    if (!map.has(cr.name)) {
-      map.set(cr.name, { name: cr.name, brand: cr.brand, pre_order: cr.pre_order, entries: [] })
+  const grouped = new Map()
+  for (const cr of allCuttingResults.value) {
+    if (!grouped.has(cr.name)) {
+      const totalRemaining = allCuttingResults.value
+        .filter(c => c.name === cr.name)
+        .reduce((sum, c) => sum + Number(c.remaining ?? 0), 0)
+      grouped.set(cr.name, {
+        name: cr.name,
+        brand: cr.brand,
+        pre_order: cr.pre_order,
+        total_remaining: totalRemaining,
+        entries: [],
+      })
     }
-    map.get(cr.name).entries.push(cr)
+    grouped.get(cr.name).entries.push(cr)
   }
-  return Array.from(map.values())
+  const filtered = Array.from(grouped.values()).filter(g => g.total_remaining > 0)
+  const q = crSearch.value.toLowerCase()
+  if (!q) return filtered
+  return filtered.filter(g =>
+    g.name?.toLowerCase().includes(q) ||
+    g.brand?.name?.toLowerCase().includes(q) ||
+    g.pre_order?.name?.toLowerCase().includes(q)
+  )
 })
 
 async function fetchOptions() {
@@ -102,9 +108,10 @@ function toggleCrPicker() {
   }
 }
 
-function selectCr(cr) {
-  form.value.cutting_result_id = cr.id
-  selectedCuttingResult.value = cr
+function selectCrGroup(group) {
+  form.value.cutting_result_name = group.name
+  form.value.total_cutting = String(group.total_remaining)
+  selectedCrGroup.value = group
   showCrPicker.value = false
   crSearch.value = ''
 }
@@ -128,14 +135,14 @@ const editing = ref(null)
 const formError = ref('')
 const submitting = ref(false)
 
-const form = ref({ cutting_result_id: '', tailor_id: '', total_cutting: '', taken_date: '', deadline_date: '', notes: '' })
-const selectedCuttingResult = ref(null)
+const form = ref({ cutting_result_name: '', tailor_id: '', total_cutting: '', taken_date: '', deadline_date: '', notes: '' })
+const selectedCrGroup = ref(null)
 
 function openAddForm() {
   editing.value = null
-  form.value = { cutting_result_id: '', tailor_id: '', total_cutting: '', taken_date: '', deadline_date: '', notes: '' }
+  form.value = { cutting_result_name: '', tailor_id: '', total_cutting: '', taken_date: '', deadline_date: '', notes: '' }
   formError.value = ''
-  selectedCuttingResult.value = null
+  selectedCrGroup.value = null
   showCrPicker.value = false
   crSearch.value = ''
   fetchOptions()
@@ -154,7 +161,7 @@ function openEditForm(item) {
     notes: item.notes || '',
   }
   formError.value = ''
-  selectedCuttingResult.value = {
+  selectedCrGroup.value = {
     brand: item.brand,
     article: item.article,
     size: item.size,
@@ -172,18 +179,26 @@ async function handleSubmit() {
   formError.value = ''
   submitting.value = true
   try {
-    const payload = {
-      cutting_result_id: form.value.cutting_result_id,
-      tailor_id: form.value.tailor_id,
-      total_cutting: Number(form.value.total_cutting),
-      taken_date: form.value.taken_date,
-      deadline_date: form.value.deadline_date || null,
-      notes: form.value.notes || null,
-    }
     if (editing.value) {
+      const payload = {
+        cutting_result_id: form.value.cutting_result_id,
+        tailor_id: form.value.tailor_id,
+        total_cutting: Number(form.value.total_cutting),
+        taken_date: form.value.taken_date,
+        deadline_date: form.value.deadline_date || null,
+        notes: form.value.notes || null,
+      }
       await request(`/cutting-distributions/${editing.value.id}`, { method: 'PUT', body: JSON.stringify(payload) })
     } else {
-      await request('/cutting-distributions', { method: 'POST', body: JSON.stringify(payload) })
+      const payload = {
+        cutting_result_name: form.value.cutting_result_name,
+        tailor_id: form.value.tailor_id,
+        total_cutting: Number(form.value.total_cutting),
+        taken_date: form.value.taken_date,
+        deadline_date: form.value.deadline_date || null,
+        notes: form.value.notes || null,
+      }
+      await request('/cutting-distributions/batch', { method: 'POST', body: JSON.stringify(payload) })
     }
     fetchData(1)
     showForm.value = false
@@ -235,7 +250,7 @@ function positionCrPicker() {
         <p class="text-surface-500">No distributions found</p>
       </div>
       <Table v-else :columns="columns" :rows="groupedDistributions" expandable :per-page="15">
-        <template #name="{ value }"><span class="whitespace-nowrap min-w-50 inline-block">{{ value }}</span></template>
+        <template #name="{ value }"><span class="whitespace-nowrap min-w-[200px] inline-block">{{ value }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
@@ -278,71 +293,76 @@ function positionCrPicker() {
     <Modal v-model="showForm" :title="editing ? 'Edit Distribution' : 'Add Distribution'" size="lg" contentClass="h-[80vh]" :closeOnOverlay="false">
       <div class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
-        <div class="relative" ref="crPickerRef">
-          <label class="block text-sm font-medium text-surface-700 mb-1">Cutting Result <span class="text-danger">*</span></label>
-          <button
-            ref="crTriggerRef"
-            type="button"
-            class="inline-flex items-center gap-2 w-full px-4 py-2 text-sm font-medium bg-white border rounded-lg transition-colors hover:bg-surface-50 cursor-pointer"
-            :class="showCrPicker ? 'border-primary-500 ring-2 ring-primary-500/30' : 'border-surface-300'"
-            @click="toggleCrPicker"
-          >
-            <span class="flex-1 truncate text-left" :class="selectedCuttingResult ? 'text-surface-800' : 'text-surface-400'">
-              {{ selectedCuttingResult
-                ? `${selectedCuttingResult.name} — ${selectedCuttingResult.article?.name || ''} ${selectedCuttingResult.size?.abbreviation || ''}`
-                : 'Select a cutting result'
-              }}
-            </span>
-            <svg class="w-4 h-4 text-surface-500 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': showCrPicker }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-          </button>
-          <Teleport to="body">
-            <Transition name="cr-picker" @before-enter="positionCrPicker" @enter="positionCrPicker">
-              <div
-                v-if="showCrPicker"
-                ref="crDropdownRef"
-                class="fixed z-9999 bg-white border border-surface-200 rounded-xl shadow-lg overflow-hidden"
-              >
-                <div class="border-b border-surface-200 p-2">
-                  <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-50 rounded-lg">
-                    <svg class="w-4 h-4 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input v-model="crSearch" class="w-full bg-transparent outline-none text-sm placeholder:text-surface-400" placeholder="Search cutting results..." />
+
+        <template v-if="!editing">
+          <div class="relative" ref="crPickerRef">
+            <label class="block text-sm font-medium text-surface-700 mb-1">Cutting Result <span class="text-danger">*</span></label>
+            <button
+              ref="crTriggerRef"
+              type="button"
+              class="inline-flex items-center gap-2 w-full px-4 py-2 text-sm font-medium bg-white border rounded-lg transition-colors hover:bg-surface-50 cursor-pointer"
+              :class="showCrPicker ? 'border-primary-500 ring-2 ring-primary-500/30' : 'border-surface-300'"
+              @click="toggleCrPicker"
+            >
+              <span class="flex-1 truncate text-left" :class="selectedCrGroup ? 'text-surface-800' : 'text-surface-400'">
+                {{ selectedCrGroup ? selectedCrGroup.name : 'Select a cutting result group' }}
+              </span>
+              <svg class="w-4 h-4 text-surface-500 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': showCrPicker }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <Teleport to="body">
+              <Transition name="cr-picker" @before-enter="positionCrPicker" @enter="positionCrPicker">
+                <div
+                  v-if="showCrPicker"
+                  ref="crDropdownRef"
+                  class="fixed z-9999 bg-white border border-surface-200 rounded-xl shadow-lg overflow-hidden"
+                >
+                  <div class="border-b border-surface-200 p-2">
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-50 rounded-lg">
+                      <svg class="w-4 h-4 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                      <input v-model="crSearch" class="w-full bg-transparent outline-none text-sm placeholder:text-surface-400" placeholder="Search cutting results..." />
+                    </div>
+                  </div>
+                  <div v-if="crGroups.length === 0" class="px-4 py-3 text-sm text-surface-400 text-center">No cutting results available</div>
+                  <div v-else class="max-h-72 overflow-y-auto">
+                    <div
+                      v-for="group in crGroups"
+                      :key="group.name"
+                      class="px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-primary-50"
+                      :class="{ 'bg-primary-50 text-primary-700': form.cutting_result_name === group.name }"
+                      @click="selectCrGroup(group)"
+                    >
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <Badge variant="primary" size="sm">{{ group.brand?.name || '-' }}</Badge>
+                          <span class="font-medium text-surface-800">{{ group.name }}</span>
+                        </div>
+                        <Badge :variant="group.total_remaining > 0 ? 'success' : 'danger'" size="sm">rem: {{ group.total_remaining }}</Badge>
+                      </div>
+                      <div class="mt-1 flex flex-wrap gap-1">
+                        <Badge v-for="cr in group.entries" :key="cr.id" variant="default" size="sm">{{ cr.size?.abbreviation || '-' }}: {{ cr.remaining }}</Badge>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div v-if="crGroups.length === 0" class="px-4 py-3 text-sm text-surface-400 text-center">No cutting results available</div>
-                <div v-else class="max-h-72 overflow-y-auto">
-                  <template v-for="group in crGroups" :key="group.name">
-                    <div class="sticky top-0 px-3 py-1.5 bg-surface-50 border-b border-surface-200 text-xs font-semibold text-surface-500 flex items-center gap-1.5">
-                      <Badge variant="primary" size="sm">{{ group.brand?.name || '-' }}</Badge>
-                      <span>{{ group.name }}</span>
-                    </div>
-                    <div
-                      v-for="cr in group.entries"
-                      :key="cr.id"
-                      class="flex items-center justify-between px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-primary-50"
-                      :class="{ 'bg-primary-50 text-primary-700': form.cutting_result_id === cr.id }"
-                      @click="selectCr(cr)"
-                    >
-                      <div class="flex items-center gap-3">
-                        <Badge variant="default" size="sm">{{ cr.size?.abbreviation || '-' }}</Badge>
-                        <span class="text-surface-700">{{ cr.article?.name || '-' }}</span>
-                      </div>
-                      <div class="flex items-center gap-3">
-                        <span class="text-xs text-surface-400">{{ formatDate(cr.cutting_date) }}</span>
-                        <Badge :variant="cr.remaining > 0 ? 'success' : 'danger'" size="sm">rem: {{ cr.remaining }}</Badge>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-              </div>
-            </Transition>
-          </Teleport>
-        </div>
-        <div v-if="selectedCuttingResult" class="p-3 bg-surface-50 rounded-lg space-y-1 text-sm">
-          <p><span class="font-medium">Brand:</span> {{ selectedCuttingResult.brand?.name || '-' }}</p>
-          <p><span class="font-medium">Article:</span> {{ selectedCuttingResult.article?.name || '-' }}</p>
-          <p><span class="font-medium">Size:</span> {{ selectedCuttingResult.size?.abbreviation || '-' }}</p>
-          <p><span class="font-medium">Remaining:</span> {{ selectedCuttingResult.remaining ?? '-' }}</p>
-        </div>
+              </Transition>
+            </Teleport>
+          </div>
+          <div v-if="selectedCrGroup" class="p-3 bg-surface-50 rounded-lg space-y-1 text-sm">
+            <p><span class="font-medium">Brand:</span> {{ selectedCrGroup.brand?.name || '-' }}</p>
+            <p><span class="font-medium">Pre-Order:</span> {{ selectedCrGroup.pre_order?.name || '-' }}</p>
+            <p><span class="font-medium">Total Remaining:</span> <span :class="selectedCrGroup.total_remaining > 0 ? 'text-green-600' : 'text-red-600'" class="font-medium">{{ selectedCrGroup.total_remaining }}</span></p>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="p-3 bg-surface-50 rounded-lg space-y-1 text-sm">
+            <p><span class="font-medium">Brand:</span> {{ editing.brand?.name || '-' }}</p>
+            <p><span class="font-medium">Article:</span> {{ editing.article?.name || '-' }}</p>
+            <p><span class="font-medium">Size:</span> {{ editing.size?.abbreviation || '-' }}</p>
+            <p><span class="font-medium">Remaining:</span> {{ selectedCrGroup?.remaining ?? '-' }}</p>
+          </div>
+        </template>
+
         <SearchableDropdown v-model="form.tailor_id" :options="tailors" label="Tailor" placeholder="Select a tailor" required />
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input v-model="form.total_cutting" label="Quantity to Distribute" type="number" placeholder="0" required />

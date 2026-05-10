@@ -54,6 +54,7 @@ const preOrders = ref([])
 const allPreOrderRows = ref([])
 const preOrderArticles = ref([])
 const preOrderSizes = ref([])
+const preOrdersLoading = ref(false)
 
 async function fetchOptions() {
   if (brands.value.length) return
@@ -69,6 +70,7 @@ async function fetchPreOrders(brandId) {
   preOrderArticles.value = []
   preOrderSizes.value = []
   if (!brandId) return
+  preOrdersLoading.value = true
   try {
     const res = await request(`/pre-orders?brand_filter=${brandId}&per_page=1000`)
     allPreOrderRows.value = res.data
@@ -80,6 +82,9 @@ async function fetchPreOrders(brandId) {
       }
     }
   } catch { /* ignore */ }
+  finally {
+    preOrdersLoading.value = false
+  }
 }
 
 function onPreOrderSelect(poName) {
@@ -123,6 +128,7 @@ const sizeRemaining = ref(null)
 
 const form = ref({ brand_id: '', pre_order_name: '', article_id: '', size_id: '', total_cutting: '', cutting_date: '', notes: '' })
 const formSteps = computed(() => ({ showArticle: !!form.value.pre_order_name, showSize: !!form.value.article_id }))
+const skipBrandReset = ref(false)
 
 function openAddForm() {
   editing.value = null
@@ -137,6 +143,7 @@ function openAddForm() {
 
 function openEditForm(item) {
   editing.value = item
+  skipBrandReset.value = true
   form.value = {
     brand_id: item.brand_id,
     pre_order_name: item.pre_order?.name || '',
@@ -157,6 +164,11 @@ function openEditForm(item) {
 }
 
 watch(() => form.value.brand_id, (val) => {
+  if (skipBrandReset.value) {
+    skipBrandReset.value = false
+    fetchPreOrders(val)
+    return
+  }
   form.value.pre_order_name = ''
   form.value.article_id = ''
   form.value.size_id = ''
@@ -246,9 +258,9 @@ async function handleDelete() {
 
 <template>
   <div>
-    <div class="flex justify-end mb-4">
+    <!-- <div class="flex justify-end mb-4">
       <Button @click="openAddForm">+ Add Cutting Result</Button>
-    </div>
+    </div> -->
     <Card variant="bordered">
       <div v-if="loading" class="flex items-center justify-center py-12">
         <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
@@ -303,7 +315,7 @@ async function handleDelete() {
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SearchableDropdown v-model="form.brand_id" :options="brands" label="Brand" placeholder="Select a brand" required />
-          <SearchableDropdown v-model="form.pre_order_name" :options="preOrders" label="Pre-Order" placeholder="Select a brand first" :disabled="!form.brand_id" required />
+          <SearchableDropdown v-model="form.pre_order_name" :options="preOrders" label="Pre-Order" :placeholder="preOrdersLoading ? 'Loading...' : (!form.brand_id ? 'Select a brand first' : 'Select a pre-order')" :disabled="!form.brand_id || preOrdersLoading" required />
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SearchableDropdown v-if="formSteps.showArticle" v-model="form.article_id" :options="preOrderArticles" label="Article" placeholder="Select an article" required />
