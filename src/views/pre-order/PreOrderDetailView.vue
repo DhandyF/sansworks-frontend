@@ -75,6 +75,27 @@ const statusLabel = (status) => {
 const formatDate = (date) => {
   return date ? new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
 }
+
+function groupByTailor(distributions) {
+  if (!distributions || distributions.length === 0) return []
+  const map = new Map()
+  for (const dist of distributions) {
+    const key = dist.tailor?.id || '_none'
+    if (!map.has(key)) {
+      map.set(key, {
+        tailor: dist.tailor,
+        distributions: [],
+        total_cutting: 0,
+        total_deposited: 0,
+      })
+    }
+    const group = map.get(key)
+    group.distributions.push(dist)
+    group.total_cutting += dist.total_cutting
+    group.total_deposited += dist.total_cutting - dist.deposit_remaining
+  }
+  return Array.from(map.values())
+}
 </script>
 
 <template>
@@ -160,27 +181,37 @@ const formatDate = (date) => {
             <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
             <template #expanded="{ row }">
               <div v-if="row.distributions && row.distributions.length > 0" class="space-y-3">
-                <Card v-for="dist in row.distributions" :key="dist.id" variant="bordered" class="shadow-none!">
-                  <div class="px-4 py-3 border-b border-surface-200 flex items-center justify-between">
+                <Card v-for="tg in groupByTailor(row.distributions)" :key="tg.tailor?.id || '_none'" variant="bordered" class="shadow-none!">
+                  <div class="px-4 py-2.5 border-b border-surface-200 flex items-center justify-between bg-surface-50">
                     <div class="flex items-center gap-3">
-                      <span class="text-sm font-medium text-surface-800">{{ dist.tailor?.name || '-' }}</span>
-                      <Badge :variant="statusBadge(dist.status)" size="sm">{{ statusLabel(dist.status) }}</Badge>
+                      <span class="text-sm font-semibold text-surface-800">{{ tg.tailor?.name || 'No Tailor' }}</span>
                     </div>
                     <div class="flex items-center gap-4 text-sm">
-                      <span class="text-surface-500">Distributed: <span class="text-surface-800 font-medium">{{ dist.total_cutting }}</span></span>
-                      <span class="text-surface-500">Deposited: <span class="text-surface-800 font-medium">{{ dist.total_cutting - dist.deposit_remaining }}</span></span>
-                      <span class="text-surface-500">Remaining: <Badge :variant="dist.deposit_remaining > 0 ? 'warning' : 'success'" size="sm">{{ dist.deposit_remaining }}</Badge></span>
+                      <span class="text-surface-500">Distributed: <span class="text-surface-800 font-medium">{{ tg.total_cutting }}</span></span>
+                      <span class="text-surface-500">Deposited: <span class="text-surface-800 font-medium">{{ tg.total_deposited }}</span></span>
                     </div>
                   </div>
-                  <div class="px-4 py-2">
-                    <div v-if="dist.deposits && dist.deposits.length > 0" class="space-y-1">
-                      <div v-for="dep in dist.deposits" :key="dep.id" class="flex items-center gap-3 text-sm py-1">
-                        <span class="text-surface-700">{{ formatDate(dep.deposit_date) }}</span>
-                        <span class="text-surface-700 font-bold">{{ dep.total_sewing_result }} pcs</span>
-                        <Badge :variant="statusBadge(dep.status)" size="sm">{{ statusLabel(dep.status) }}</Badge>
+                  <div class="divide-y divide-surface-100">
+                    <div v-for="dist in tg.distributions" :key="dist.id" class="px-4 py-2.5">
+                      <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm font-medium text-surface-700">{{ dist.name }}</span>
+                          <Badge :variant="statusBadge(dist.status)" size="sm">{{ statusLabel(dist.status) }}</Badge>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm">
+                          <span class="text-surface-500">Cut: <span class="text-surface-800 font-medium">{{ dist.total_cutting }}</span></span>
+                          <span class="text-surface-500">Remaining: <Badge :variant="dist.deposit_remaining > 0 ? 'warning' : 'success'" size="sm">{{ dist.deposit_remaining }}</Badge></span>
+                        </div>
                       </div>
+                      <div v-if="dist.deposits && dist.deposits.length > 0" class="ml-3 flex flex-wrap gap-2">
+                        <div v-for="dep in dist.deposits" :key="dep.id" class="flex items-center gap-1.5 text-xs bg-surface-50 px-2 py-1 rounded">
+                          <span class="text-surface-600">{{ formatDate(dep.deposit_date) }}</span>
+                          <span class="font-semibold text-surface-800">{{ dep.total_sewing_result }} pcs</span>
+                          <Badge :variant="statusBadge(dep.status)" size="sm">{{ statusLabel(dep.status) }}</Badge>
+                        </div>
+                      </div>
+                      <p v-else class="text-xs text-surface-400 ml-3">No deposits yet</p>
                     </div>
-                    <p v-else class="text-xs text-surface-400 py-1">No deposits yet</p>
                   </div>
                 </Card>
               </div>
