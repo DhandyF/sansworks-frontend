@@ -35,6 +35,11 @@ const routes = [
         component: () => import('@/views/master-data/TailorsView.vue'),
       },
       {
+        path: 'tailors/:id',
+        name: 'tailor-detail',
+        component: () => import('@/views/master-data/TailorDetailView.vue'),
+      },
+      {
         path: 'sizes',
         name: 'sizes',
         component: () => import('@/views/master-data/SizesView.vue'),

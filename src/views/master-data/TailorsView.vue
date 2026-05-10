@@ -1,8 +1,11 @@
 <script setup>
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMasterData } from '@/composables/useMasterData'
 import { useDebounce } from '@/composables/useDebounce'
 import { Button, Card, Table, Badge, Input, Modal } from 'ui-assets'
+
+const router = useRouter()
 
 const search = ref('')
 const { debounce } = useDebounce(500)
@@ -66,6 +69,10 @@ async function handleSubmit() {
   }
 }
 
+function navToDetail(row) {
+  router.push({ name: 'tailor-detail', params: { id: row.id } })
+}
+
 async function handleDelete() {
   if (!deletingItem.value) return
   try {
@@ -103,7 +110,7 @@ async function handleDelete() {
         <p class="text-surface-500">No tailors found</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData">
+        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData" clickable @row-click="navToDetail">
           <template #status="{ value }">
             <Badge :variant="value === 'active' ? 'success' : 'danger'" size="sm">{{ value }}</Badge>
           </template>
