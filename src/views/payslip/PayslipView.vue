@@ -1,0 +1,300 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useApi } from '@/composables/useApi'
+import { Card, Badge, Button, SearchableDropdown } from 'ui-assets'
+
+const { request } = useApi()
+
+const generating = ref(false)
+const showPayslip = ref(false)
+const selectedTailor = ref('')
+const startDate = ref('')
+const endDate = ref('')
+const tailors = ref([])
+const payslip = ref(null)
+
+onMounted(async () => {
+  try {
+    const res = await request('/tailors?per_page=1000')
+    tailors.value = res.data.map(t => ({ value: t.id, label: t.name }))
+  } catch { /* ignore */ }
+})
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value)
+}
+
+function formatDate(dateStr) {
+  return dateStr ? new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+}
+
+function formatDayLabel(dateStr) {
+  return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' })
+}
+
+async function generate() {
+  if (!selectedTailor.value || !startDate.value || !endDate.value) return
+  generating.value = true
+  showPayslip.value = false
+  try {
+    const params = new URLSearchParams({
+      tailor_id: selectedTailor.value,
+      start_date: startDate.value,
+      end_date: endDate.value,
+    })
+    const res = await request(`/payslips/generate?${params}`)
+    payslip.value = res
+    showPayslip.value = true
+  } catch { /* ignore */ }
+  finally {
+    generating.value = false
+  }
+}
+
+function printPayslip() {
+  const p = payslip.value
+  if (!p) return
+
+  const rows = p.items.map(item => {
+    const cells = p.period.date_range.map(d => {
+      const val = item.daily[d]
+      return `<td class="px-2 py-1.5 text-center border border-surface-300">${val > 0 ? val : '-'}</td>`
+    }).join('')
+    return `<tr>
+      <td class="px-3 py-1.5 text-sm font-medium border border-surface-300">${item.article_name}</td>
+      ${cells}
+      <td class="px-3 py-1.5 text-sm text-right border border-surface-300">${item.total_qty}</td>
+      <td class="px-3 py-1.5 text-sm text-right border border-surface-300">${formatCurrency(item.price_per_pcs)}</td>
+      <td class="px-3 py-1.5 text-sm text-right font-semibold border border-surface-300">${formatCurrency(item.total_price)}</td>
+    </tr>`
+  }).join('')
+
+  const dayHeaders = p.period.date_range.map(d => `<th class="px-2 py-1.5 text-center font-semibold border border-surface-300 text-xs">${formatDayLabel(d)}</th>`).join('')
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Payslip - ${p.tailor.name}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #000; padding: 20px; }
+    .slip { max-width: 700px; margin: 0 auto; border: 1px solid #000; }
+    .top-bar { background: #000; color: #fff; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .top-bar .company { font-size: 16px; font-weight: 700; }
+    .top-bar .label { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+    .top-bar .right { text-align: right; }
+    .top-bar .right .slip-num { font-size: 11px; font-weight: 700; }
+    .top-bar .right .slip-label { font-size: 9px; opacity: 0.8; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #000; }
+    .info-block { padding: 8px 12px; border-right: 1px solid #000; }
+    .info-block:last-child { border-right: none; }
+    .info-row { display: flex; margin-bottom: 3px; }
+    .info-row:last-child { margin-bottom: 0; }
+    .info-label { font-weight: 700; width: 80px; font-size: 11px; }
+    .info-value { font-size: 11px; }
+    .period-bar { background: #f2f2f2; border-bottom: 1px solid #000; padding: 6px 12px; display: flex; justify-content: space-between; }
+    .period-bar .left { font-weight: 700; font-size: 11px; }
+    .period-bar .right { font-size: 11px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    thead tr { background: #e6e6e6; }
+    thead th { padding: 6px 4px; border: 1px solid #000; font-weight: 700; font-size: 10px; }
+    tbody td { padding: 5px 4px; border: 1px solid #000; }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tfoot tr td { padding: 6px 4px; border: 1px solid #000; font-weight: 700; font-size: 11px; }
+    tfoot tr td:first-child { font-weight: 700; }
+    .col-emp { text-align: left; }
+    .col-qty, .col-price, .col-total { text-align: right; }
+    .empty-row td { text-align: center; color: #999; padding: 20px; }
+    .bottom { padding: 8px 12px; display: flex; justify-content: space-between; border-top: 1px solid #000; background: #f2f2f2; }
+    .bottom .left { font-size: 10px; color: #666; }
+    .bottom .right { font-size: 10px; color: #666; }
+    .remark { padding: 6px 12px; font-size: 10px; color: #666; border-top: 1px solid #000; }
+  </style>
+</head>
+<body>
+  <div class="slip">
+    <div class="top-bar">
+      <div>
+        <div class="company">SANSWORKS</div>
+        <div class="label">Production Management System</div>
+      </div>
+      <div class="right">
+        <div class="slip-num">PAYSLIP</div>
+        <div class="slip-label">Employee Compensation Statement</div>
+      </div>
+    </div>
+    <div class="info-grid">
+      <div class="info-block">
+        <div class="info-row"><span class="info-label">Employee:</span><span class="info-value">${p.tailor.name}</span></div>
+        <div class="info-row"><span class="info-label">Address:</span><span class="info-value">${p.tailor.address || '-'}</span></div>
+        <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">${p.tailor.phone || '-'}</span></div>
+      </div>
+      <div class="info-block">
+        <div class="info-row"><span class="info-label">Period:</span><span class="info-value">${p.period.month_label}</span></div>
+        <div class="info-row"><span class="info-label">Date Range:</span><span class="info-value">${formatDate(p.period.start_date)} — ${formatDate(p.period.end_date)}</span></div>
+        <div class="info-row"><span class="info-label">Articles:</span><span class="info-value">${p.summary.total_articles}</span></div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-emp" style="width:30%">Article / Item</th>
+          ${dayHeaders}
+          <th class="col-qty" style="width:8%">Total<br/>Qty</th>
+          <th class="col-price" style="width:12%">Price/Pcs</th>
+          <th class="col-total" style="width:14%">Total Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${p.items.length === 0 ? `<tr class="empty-row"><td colspan="${p.period.date_range.length + 5}">No production data for this period</td></tr>` : rows}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="${p.period.date_range.length + 1}" class="text-right">GRAND TOTAL</td>
+          <td class="col-qty">${p.summary.total_qty}</td>
+          <td></td>
+          <td class="col-total" style="font-size:13px">${formatCurrency(p.summary.total_price)}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="bottom">
+      <span class="left">Generated: ${formatDate(new Date().toISOString())}</span>
+      <span class="right">Sansworks Production Management System</span>
+    </div>
+    <div class="remark">Note: This payslip is auto-generated. Please contact admin for any discrepancies.</div>
+  </div>
+  <script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`
+
+  const win = window.open('', '_blank', 'width=780,height=900')
+  if (win) {
+    win.document.write(html)
+    win.document.close()
+  }
+}
+</script>
+
+<template>
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-surface-900">Payslip</h1>
+        <p class="mt-1 text-sm text-surface-500">Generate payslip per tailor by date range</p>
+      </div>
+    </div>
+
+    <Card variant="bordered">
+      <div class="p-4 flex flex-col sm:flex-row items-start sm:items-end gap-4">
+        <div class="w-full sm:max-w-80">
+          <label class="block text-sm font-medium text-surface-700 mb-1">Tailor</label>
+          <SearchableDropdown
+            v-model="selectedTailor"
+            :options="tailors"
+            label=""
+            placeholder="Select tailor"
+            :clearable="true"
+          />
+        </div>
+        <div class="flex">
+          <div class="w-full sm:max-w-[160px] mr-5">
+            <label class="block text-sm font-medium text-surface-700 mb-1">Start Date</label>
+            <input v-model="startDate" type="date" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+          </div>
+          <div class="w-full sm:max-w-[160px]">
+            <label class="block text-sm font-medium text-surface-700 mb-1">End Date</label>
+            <input v-model="endDate" type="date" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <Button @click="generate" :loading="generating" :disabled="!selectedTailor || !startDate || !endDate">Generate</Button>
+          <Button v-if="showPayslip" variant="outline" @click="printPayslip">Print</Button>
+        </div>
+      </div>
+    </Card>
+
+    <div v-if="generating" class="flex items-center justify-center py-20">
+      <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+    </div>
+
+    <div v-else-if="showPayslip && payslip" class="payslip-print">
+      <div class="mt-6 bg-white border border-surface-200 rounded-xl shadow-sm overflow-hidden print:border-0 print:shadow-none print:rounded-none">
+        <div class="p-6 border-b border-surface-200">
+          <div class="flex items-start justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-surface-900">{{ payslip.tailor.name }}</h2>
+              <p class="text-sm text-surface-500 mt-0.5">{{ payslip.tailor.phone || '-' }}{{ payslip.tailor.phone && payslip.tailor.address ? ' | ' : '' }}{{ payslip.tailor.address || '' }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-semibold text-surface-800">{{ payslip.period.week_label }}</p>
+              <p class="text-sm text-surface-500">{{ formatDate(payslip.period.start_date) }} — {{ formatDate(payslip.period.end_date) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-surface-50 border-b border-surface-200">
+                <th class="px-4 py-2.5 text-left font-semibold text-surface-700">Article</th>
+                <th v-for="d in payslip.period.date_range" :key="d" class="px-2 py-2.5 text-center font-semibold text-surface-700 min-w-[60px]">
+                  {{ formatDayLabel(d) }}
+                </th>
+                <th class="px-3 py-2.5 text-right font-semibold text-surface-700">Total Qty</th>
+                <th class="px-3 py-2.5 text-right font-semibold text-surface-700">Price/Pcs</th>
+                <th class="px-4 py-2.5 text-right font-semibold text-surface-700">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="payslip.items.length === 0">
+                <td :colspan="payslip.period.date_range.length + 5" class="px-4 py-8 text-center text-surface-400">No data for this period</td>
+              </tr>
+              <tr v-for="item in payslip.items" :key="item.article_id" class="border-b border-surface-100 hover:bg-surface-50">
+                <td class="px-4 py-2.5 font-medium text-surface-800 whitespace-nowrap">{{ item.article_name }}</td>
+                <td v-for="d in payslip.period.date_range" :key="d" class="px-2 py-2.5 text-center">
+                  <span v-if="item.daily[d] > 0" class="font-medium text-surface-800">{{ item.daily[d] }}</span>
+                  <span v-else class="text-surface-300">-</span>
+                </td>
+                <td class="px-3 py-2.5 text-right font-medium">{{ item.total_qty }}</td>
+                <td class="px-3 py-2.5 text-right">{{ formatCurrency(item.price_per_pcs) }}</td>
+                <td class="px-4 py-2.5 text-right font-semibold">{{ formatCurrency(item.total_price) }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="bg-surface-50 border-t-2 border-surface-300">
+                <td class="px-4 py-3 font-bold text-surface-900">Total</td>
+                <td v-for="d in payslip.period.date_range" :key="d" class="px-2 py-3"></td>
+                <td class="px-3 py-3 text-right font-bold text-surface-900">{{ payslip.summary.total_qty }}</td>
+                <td class="px-3 py-3"></td>
+                <td class="px-4 py-3 text-right font-bold text-lg text-surface-900">{{ formatCurrency(payslip.summary.total_price) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="p-6 bg-surface-50 border-t border-surface-200 flex justify-end">
+          <div class="text-right">
+            <p class="text-xs text-surface-400">Generated on {{ formatDate(new Date().toISOString()) }}</p>
+            <p class="text-xs text-surface-400">Sansworks Production System</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="mt-12 text-center">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-surface-100 rounded-full mb-4">
+        <svg class="w-8 h-8 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <p class="text-surface-500">Select a tailor and date range to generate payslip</p>
+    </div>
+  </div>
+</template>
+
+<style>
+@page { margin: 15mm; size: A4; }
+</style>

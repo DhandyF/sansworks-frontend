@@ -23,6 +23,7 @@ const menuGroups = [
 
 const directLinks = [
   { name: 'Pre-Order', route: 'pre-orders' },
+  { name: 'Payslips', route: 'payslips' },
   { name: 'Production', route: 'production' },
 ]
 

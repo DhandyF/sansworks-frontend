@@ -60,6 +60,11 @@ const routes = [
         component: () => import('@/views/pre-order/PreOrderDetailView.vue'),
       },
       {
+        path: 'payslips',
+        name: 'payslips',
+        component: () => import('@/views/payslip/PayslipView.vue'),
+      },
+      {
         path: 'production',
         name: 'production',
         component: () => import('@/views/production/ProductionView.vue'),
