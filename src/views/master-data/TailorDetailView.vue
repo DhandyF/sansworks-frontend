@@ -1,17 +1,40 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '@/composables/useApi'
+import { useDebounce } from '@/composables/useDebounce'
 import { Card, Badge, Table } from 'ui-assets'
 
 const route = useRoute()
 const router = useRouter()
 const { request } = useApi()
+const { debounce } = useDebounce(500)
 
 const loading = ref(true)
 const tailor = ref(null)
 const summary = ref(null)
+const brands = ref([])
 const distributions = ref([])
+const pagination = ref({ current_page: 1, per_page: 15, total: 0, last_page: 1 })
+
+const searchQuery = ref('')
+const brandFilter = ref('')
+const statusFilter = ref('')
+
+const statusFilters = [
+  { value: '', label: 'All' },
+  { value: 'done', label: 'Done' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'overdue', label: 'Overdue' },
+]
+
+function filterBadgeVariant(filter) {
+  if (filter === statusFilter.value) {
+    if (filter === '') return 'primary'
+    return statusBadge(filter)
+  }
+  return 'default'
+}
 
 const columns = [
   { key: 'name', label: 'Distribution' },
@@ -25,18 +48,41 @@ const columns = [
   { key: 'status', label: 'Status' },
 ]
 
-onMounted(async () => {
+function buildParams(page) {
+  const params = new URLSearchParams()
+  if (searchQuery.value) params.set('search', searchQuery.value)
+  if (brandFilter.value) params.set('brand_filter', brandFilter.value)
+  if (statusFilter.value) params.set('status_filter', statusFilter.value)
+  params.set('page', String(page || pagination.value.current_page))
+  params.set('per_page', '15')
+  return params.toString()
+}
+
+async function fetchData(page) {
   try {
-    const res = await request(`/tailors/${route.params.id}/detail-stats`)
+    const res = await request(`/tailors/${route.params.id}/detail-stats?${buildParams(page)}`)
     tailor.value = res.tailor
     summary.value = res.summary
-    distributions.value = res.distributions
+    brands.value = res.brands || []
+    distributions.value = res.distributions.data
+    pagination.value = {
+      current_page: res.distributions.current_page,
+      per_page: res.distributions.per_page,
+      total: res.distributions.total,
+      last_page: res.distributions.last_page,
+    }
   } catch {
     router.push({ name: 'tailors' })
   } finally {
     loading.value = false
   }
-})
+}
+
+watch(searchQuery, () => debounce(() => fetchData(1)))
+watch(brandFilter, () => fetchData(1))
+watch(statusFilter, () => fetchData(1))
+
+onMounted(() => fetchData(1))
 
 const statusBadge = (status) => {
   if (status === 'done') return 'success'
@@ -121,10 +167,26 @@ function formatCurrency(value) {
         <div class="px-4 py-3 border-b border-surface-200">
           <h2 class="text-lg font-semibold text-surface-900">Distributions</h2>
         </div>
-        <div v-if="distributions.length === 0" class="text-center py-12">
-          <p class="text-surface-500">No distributions found</p>
+        <div class="px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3 border-b border-surface-200">
+          <div class="w-48">
+            <input v-model="searchQuery" type="text" placeholder="Search pre-order..." class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+          </div>
+          <div class="w-48">
+            <select v-model="brandFilter" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500">
+              <option value="">All Brands</option>
+              <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <button v-for="f in statusFilters" :key="f.value" @click="statusFilter = f.value" class="cursor-pointer">
+              <Badge :variant="filterBadgeVariant(f.value)" size="sm">{{ f.label }}</Badge>
+            </button>
+          </div>
         </div>
-        <Table v-else :columns="columns" :rows="distributions" :per-page="15" expandable>
+        <div v-if="distributions.length === 0" class="text-center py-12">
+          <p class="text-surface-500">No distributions match your filters</p>
+        </div>
+        <Table v-else :columns="columns" :rows="distributions" :pagination="pagination" @page-change="fetchData" expandable>
           <template #name="{ value }"><span class="whitespace-nowrap min-w-[160px] inline-block font-medium text-surface-800">{{ value }}</span></template>
           <template #pre_order="{ value }"><span class="whitespace-nowrap">{{ value?.name || '-' }}</span></template>
           <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
