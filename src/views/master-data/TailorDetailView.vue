@@ -198,28 +198,30 @@ function formatCurrency(value) {
           <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
           <template #expanded="{ row }">
             <div v-if="row.deposits && row.deposits.length > 0" class="py-2">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="border-b border-surface-200">
-                    <th class="py-1.5 px-3 text-left font-medium text-surface-500">Deposit</th>
-                    <th class="py-1.5 px-3 text-right font-medium text-surface-500">Sewing Result</th>
-                    <th class="py-1.5 px-3 text-right font-medium text-surface-500">Price/Pcs</th>
-                    <th class="py-1.5 px-3 text-right font-medium text-surface-500">Total Price</th>
-                    <th class="py-1.5 px-3 text-left font-medium text-surface-500">Date</th>
-                    <th class="py-1.5 px-3 text-left font-medium text-surface-500">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="dep in row.deposits" :key="dep.id" class="border-b border-surface-100 last:border-0">
-                    <td class="py-1.5 px-3 whitespace-nowrap">{{ dep.name }}</td>
-                    <td class="py-1.5 px-3 text-right">{{ dep.total_sewing_result }}</td>
-                    <td class="py-1.5 px-3 text-right">{{ formatCurrency(dep.cutting_price_per_pcs) }}</td>
-                    <td class="py-1.5 px-3 text-right font-medium">{{ formatCurrency(dep.total_price) }}</td>
-                    <td class="py-1.5 px-3">{{ formatDate(dep.deposit_date) }}</td>
-                    <td class="py-1.5 px-3"><Badge :variant="statusBadge(dep.status)" size="sm">{{ statusLabel(dep.status) }}</Badge></td>
-                  </tr>
-                </tbody>
-              </table>
+              <Card variant="bordered" class="shadow-none!">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-surface-200">
+                      <th class="py-1.5 px-3 text-left font-medium text-surface-500">Deposit</th>
+                      <th class="py-1.5 px-3 text-right font-medium text-surface-500">Sewing Result</th>
+                      <th class="py-1.5 px-3 text-right font-medium text-surface-500">Price/Pcs</th>
+                      <th class="py-1.5 px-3 text-right font-medium text-surface-500">Total Price</th>
+                      <th class="py-1.5 px-3 text-left font-medium text-surface-500">Date</th>
+                      <th class="py-1.5 px-3 text-left font-medium text-surface-500">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="dep in row.deposits" :key="dep.id" class="border-b border-surface-100 last:border-0">
+                      <td class="py-1.5 px-3 whitespace-nowrap">{{ dep.name }}</td>
+                      <td class="py-1.5 px-3 text-right">{{ dep.total_sewing_result }}</td>
+                      <td class="py-1.5 px-3 text-right">{{ formatCurrency(dep.cutting_price_per_pcs) }}</td>
+                      <td class="py-1.5 px-3 text-right font-medium">{{ formatCurrency(dep.total_price) }}</td>
+                      <td class="py-1.5 px-3">{{ formatDate(dep.deposit_date) }}</td>
+                      <td class="py-1.5 px-3"><Badge :variant="statusBadge(dep.status)" size="sm">{{ statusLabel(dep.status) }}</Badge></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </Card>
             </div>
             <p v-else class="px-3 py-2 text-sm text-surface-400">No deposits yet</p>
           </template>

@@ -255,37 +255,39 @@ function positionCrPicker() {
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
         <template #expanded="{ row }">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-surface-200">
-                <th class="py-1.5 px-3 text-left font-medium text-surface-500">Article</th>
-                <th class="py-1.5 px-3 text-left font-medium text-surface-500">Size</th>
-                <th class="py-1.5 px-3 text-right font-medium text-surface-500">Distributed</th>
-                <th class="py-1.5 px-3 text-right font-medium text-surface-500">Remaining</th>
-                <th class="py-1.5 px-3 text-left font-medium text-surface-500">Taken Date</th>
-                <th class="py-1.5 px-3 text-left font-medium text-surface-500">Deadline</th>
-                <th class="py-1.5 px-3 text-right font-medium text-surface-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="entry in row.entries" :key="entry.id" class="border-b border-surface-100 last:border-0">
-                <td class="py-1.5 px-3">{{ entry.article?.name || '-' }}</td>
-                <td class="py-1.5 px-3"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
-                <td class="py-1.5 px-3 text-right">{{ entry.total_cutting }}</td>
-                <td class="py-1.5 px-3 text-right"><Badge :variant="(entry.deposit_remaining ?? entry.total_cutting) > 0 ? 'success' : 'danger'" size="sm">{{ entry.deposit_remaining ?? entry.total_cutting }}</Badge></td>
-                <td class="py-1.5 px-3">{{ formatDate(entry.taken_date) }}</td>
-                <td class="py-1.5 px-3">{{ formatDate(entry.deadline_date) }}</td>
-                <td class="py-1.5 px-3 text-right">
-                  <button @click="openEditForm(entry)" class="p-1 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" title="Edit">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                  </button>
-                  <button @click="openDeleteModal(entry)" class="p-1 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Delete">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <Card variant="bordered" class="shadow-none!">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-surface-200">
+                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Article</th>
+                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Size</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Distributed</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Remaining</th>
+                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Taken Date</th>
+                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Deadline</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="entry in row.entries" :key="entry.id" class="border-b border-surface-100 last:border-0">
+                  <td class="py-1.5 px-3">{{ entry.article?.name || '-' }}</td>
+                  <td class="py-1.5 px-3"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
+                  <td class="py-1.5 px-3 text-right">{{ entry.total_cutting }}</td>
+                  <td class="py-1.5 px-3 text-right"><Badge :variant="(entry.deposit_remaining ?? entry.total_cutting) > 0 ? 'success' : 'danger'" size="sm">{{ entry.deposit_remaining ?? entry.total_cutting }}</Badge></td>
+                  <td class="py-1.5 px-3">{{ formatDate(entry.taken_date) }}</td>
+                  <td class="py-1.5 px-3">{{ formatDate(entry.deadline_date) }}</td>
+                  <td class="py-1.5 px-3 text-right">
+                    <button @click="openEditForm(entry)" class="p-1 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" title="Edit">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <button @click="openDeleteModal(entry)" class="p-1 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Delete">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </Card>
         </template>
       </Table>
     </Card>
