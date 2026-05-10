@@ -28,6 +28,7 @@ const groupedResults = computed(() => {
         pre_order: item.pre_order,
         total_cutting: 0,
         remaining: 0,
+        has_remaining: false,
         entries: [],
         rawIds: [],
       })
@@ -36,6 +37,7 @@ const groupedResults = computed(() => {
     group.entries.push(item)
     group.total_cutting += Number(item.total_cutting)
     group.remaining += Number(item.remaining)
+    if (item.remaining > 0) group.has_remaining = true
     group.rawIds.push(item.id)
   }
   return Array.from(map.values())
@@ -47,6 +49,7 @@ const columns = [
   { key: 'pre_order', label: 'Pre-Order' },
   { key: 'total_cutting', label: 'Total Cutting' },
   { key: 'remaining', label: 'Remaining' },
+  { key: 'status', label: 'Status' },
 ]
 
 const brands = ref([])
@@ -117,6 +120,18 @@ function onArticleSelect(articleId) {
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function cuttingStatus(group) {
+  if (group.remaining <= 0) return 'done'
+  if (group.has_remaining) return 'in_progress'
+  return 'in_progress'
+}
+
+const statusBadge = (value) => {
+  if (value === 'done') return 'success'
+  if (value === 'overdue') return 'danger'
+  return 'warning'
 }
 
 // Form
@@ -276,6 +291,9 @@ async function handleDelete() {
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #pre_order="{ value }"><span class="whitespace-nowrap min-w-40 inline-block">{{ value?.name || '-' }}</span></template>
         <template #remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
+        <template #status="{ row }">
+          <Badge :variant="statusBadge(cuttingStatus(row))" size="sm">{{ cuttingStatus(row) === 'done' ? 'Done' : 'In Progress' }}</Badge>
+        </template>
         <template #expanded="{ row }">
           <table class="w-full text-sm">
             <thead>
@@ -285,6 +303,7 @@ async function handleDelete() {
                 <th class="py-1.5 px-3 text-right font-medium text-surface-500">Total Cutting</th>
                 <th class="py-1.5 px-3 text-right font-medium text-surface-500">Remaining</th>
                 <th class="py-1.5 px-3 text-left font-medium text-surface-500">Cutting Date</th>
+                <th class="py-1.5 px-3 text-left font-medium text-surface-500">Status</th>
                 <th class="py-1.5 px-3 text-right font-medium text-surface-500">Actions</th>
               </tr>
             </thead>
@@ -295,6 +314,7 @@ async function handleDelete() {
                 <td class="py-1.5 px-3 text-right">{{ entry.total_cutting }}</td>
                 <td class="py-1.5 px-3 text-right"><Badge :variant="entry.remaining > 0 ? 'success' : 'danger'" size="sm">{{ entry.remaining }}</Badge></td>
                 <td class="py-1.5 px-3">{{ formatDate(entry.cutting_date) }}</td>
+                <td class="py-1.5 px-3"><Badge :variant="entry.remaining > 0 ? 'warning' : 'success'" size="sm">{{ entry.remaining > 0 ? 'In Progress' : 'Done' }}</Badge></td>
                 <td class="py-1.5 px-3 text-right">
                   <button @click="openEditForm(entry)" class="p-1 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" title="Edit">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
