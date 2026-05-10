@@ -28,10 +28,6 @@ function formatDate(dateStr) {
   return dateStr ? new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
 }
 
-function formatDayLabel(dateStr) {
-  return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' })
-}
-
 async function generate() {
   if (!selectedTailor.value || !startDate.value || !endDate.value) return
   generating.value = true
@@ -55,9 +51,13 @@ function printPayslip() {
   const p = payslip.value
   if (!p) return
 
+  const isWeekMode = p.period.use_weeks
+  const cols = p.columns || []
+  const colCount = cols.length
+
   const rows = p.items.map(item => {
-    const cells = p.period.date_range.map(d => {
-      const val = item.daily[d]
+    const cells = cols.map(c => {
+      const val = item.columns[c.key] || 0
       return `<td class="px-2 py-1.5 text-center border border-surface-300">${val > 0 ? val : '-'}</td>`
     }).join('')
     return `<tr>
@@ -69,7 +69,10 @@ function printPayslip() {
     </tr>`
   }).join('')
 
-  const dayHeaders = p.period.date_range.map(d => `<th class="px-2 py-1.5 text-center font-semibold border border-surface-300 text-xs">${formatDayLabel(d)}</th>`).join('')
+  const colHeaders = cols.map(c => `<th class="px-2 py-1.5 text-center border border-surface-300 text-xs" style="min-width:70px">
+    <div>${c.label}</div>
+    <div style="font-weight:400;font-size:9px;margin-top:1px">${c.sub_label}</div>
+  </th>`).join('')
 
   const html = `<!DOCTYPE html>
 <html>
@@ -138,19 +141,19 @@ function printPayslip() {
     <table>
       <thead>
         <tr>
-          <th class="col-emp" style="width:30%">Article / Item</th>
-          ${dayHeaders}
+          <th class="col-emp" style="width:25%">Article / Item</th>
+          ${colHeaders}
           <th class="col-qty" style="width:8%">Total<br/>Qty</th>
           <th class="col-price" style="width:12%">Price/Pcs</th>
           <th class="col-total" style="width:14%">Total Amount</th>
         </tr>
       </thead>
       <tbody>
-        ${p.items.length === 0 ? `<tr class="empty-row"><td colspan="${p.period.date_range.length + 5}">No production data for this period</td></tr>` : rows}
+        ${p.items.length === 0 ? `<tr class="empty-row"><td colspan="${colCount + 5}">No production data for this period</td></tr>` : rows}
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="${p.period.date_range.length + 1}" class="text-right">GRAND TOTAL</td>
+          <td colspan="${colCount + 1}" class="text-right">GRAND TOTAL</td>
           <td class="col-qty">${p.summary.total_qty}</td>
           <td></td>
           <td class="col-total" style="font-size:13px">${formatCurrency(p.summary.total_price)}</td>
@@ -240,8 +243,8 @@ function printPayslip() {
             <thead>
               <tr class="bg-surface-50 border-b border-surface-200">
                 <th class="px-4 py-2.5 text-left font-semibold text-surface-700">Article</th>
-                <th v-for="d in payslip.period.date_range" :key="d" class="px-2 py-2.5 text-center font-semibold text-surface-700 min-w-[60px]">
-                  {{ formatDayLabel(d) }}
+                <th v-for="c in payslip.columns" :key="c.key" class="px-2 py-2.5 text-center font-semibold text-surface-700 min-w-[60px]">
+                  {{ c.label }}<br><span class="text-xs font-normal text-surface-400">{{ c.sub_label }}</span>
                 </th>
                 <th class="px-3 py-2.5 text-right font-semibold text-surface-700">Total Qty</th>
                 <th class="px-3 py-2.5 text-right font-semibold text-surface-700">Price/Pcs</th>
@@ -250,12 +253,12 @@ function printPayslip() {
             </thead>
             <tbody>
               <tr v-if="payslip.items.length === 0">
-                <td :colspan="payslip.period.date_range.length + 5" class="px-4 py-8 text-center text-surface-400">No data for this period</td>
+                <td :colspan="payslip.columns.length + 5" class="px-4 py-8 text-center text-surface-400">No data for this period</td>
               </tr>
               <tr v-for="item in payslip.items" :key="item.article_id" class="border-b border-surface-100 hover:bg-surface-50">
                 <td class="px-4 py-2.5 font-medium text-surface-800 whitespace-nowrap">{{ item.article_name }}</td>
-                <td v-for="d in payslip.period.date_range" :key="d" class="px-2 py-2.5 text-center">
-                  <span v-if="item.daily[d] > 0" class="font-medium text-surface-800">{{ item.daily[d] }}</span>
+                <td v-for="c in payslip.columns" :key="c.key" class="px-2 py-2.5 text-center">
+                  <span v-if="item.columns[c.key] > 0" class="font-medium text-surface-800">{{ item.columns[c.key] }}</span>
                   <span v-else class="text-surface-300">-</span>
                 </td>
                 <td class="px-3 py-2.5 text-right font-medium">{{ item.total_qty }}</td>
@@ -266,7 +269,7 @@ function printPayslip() {
             <tfoot>
               <tr class="bg-surface-50 border-t-2 border-surface-300">
                 <td class="px-4 py-3 font-bold text-surface-900">Total</td>
-                <td v-for="d in payslip.period.date_range" :key="d" class="px-2 py-3"></td>
+                <td v-for="c in payslip.columns" :key="c.key" class="px-2 py-3"></td>
                 <td class="px-3 py-3 text-right font-bold text-surface-900">{{ payslip.summary.total_qty }}</td>
                 <td class="px-3 py-3"></td>
                 <td class="px-4 py-3 text-right font-bold text-lg text-surface-900">{{ formatCurrency(payslip.summary.total_price) }}</td>
