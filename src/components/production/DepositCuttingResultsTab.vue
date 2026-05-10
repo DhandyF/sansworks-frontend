@@ -224,7 +224,10 @@ function openEditForm(item) {
   fetchDistributionOptions()
   if (item.cutting_distribution_id) {
     request(`/cutting-distributions/remaining?cutting_distribution_id=${item.cutting_distribution_id}`).then(res => {
-      distRemaining.value = res
+      distRemaining.value = {
+        ...res,
+        available: res.available + Number(item.total_sewing_result),
+      }
     }).catch(() => {})
   }
   showForm.value = true
