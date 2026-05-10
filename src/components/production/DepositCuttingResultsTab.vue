@@ -29,6 +29,7 @@ const groupedDeposits = computed(() => {
         tailor: item.tailor,
         pre_order: item.cutting_distribution?.cutting_result?.pre_order,
         total_sewing_result: 0,
+        total_price: 0,
         has_overdue: false,
         distIds: new Set(),
         entries: [],
@@ -37,6 +38,7 @@ const groupedDeposits = computed(() => {
     const group = map.get(key)
     group.entries.push(item)
     group.total_sewing_result += Number(item.total_sewing_result)
+    group.total_price += Number(item.total_price || 0)
     if (item.status === 'overdue') group.has_overdue = true
     const distId = item.cutting_distribution_id
     if (distId && !group.distIds.has(distId)) {
@@ -80,6 +82,7 @@ const columns = [
   { key: 'name', label: 'Distribution' },
   { key: 'tailor', label: 'Tailor' },
   { key: 'total_sewing_result', label: 'Total Sewing' },
+  { key: 'total_price', label: 'Total Price' },
   { key: 'total_deposit_remaining', label: 'Remaining' },
   { key: 'status', label: 'Status' },
 ]
@@ -176,13 +179,23 @@ const formError = ref('')
 const submitting = ref(false)
 const distRemaining = ref(null)
 
-const form = ref({ cutting_distribution_ids: [], cutting_distribution_id: '', total_sewing_result: '', deposit_date: '', quality_notes: '', notes: '' })
+const form = ref({ cutting_distribution_ids: [], cutting_distribution_id: '', total_sewing_result: '', cutting_price_per_pcs: '', deposit_date: '', quality_notes: '', notes: '' })
 const selectedDistGroup = ref(null)
 const selectedDistribution = ref(null)
 
+const computedTotalPrice = computed(() => {
+  const price = Number(form.value.cutting_price_per_pcs) || 0
+  const qty = Number(form.value.total_sewing_result) || 0
+  return price * qty
+})
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value)
+}
+
 function openAddForm() {
   editing.value = null
-  form.value = { cutting_distribution_ids: [], cutting_distribution_id: '', total_sewing_result: '', deposit_date: '', quality_notes: '', notes: '' }
+  form.value = { cutting_distribution_ids: [], cutting_distribution_id: '', total_sewing_result: '', cutting_price_per_pcs: '', deposit_date: '', quality_notes: '', notes: '' }
   formError.value = ''
   selectedDistGroup.value = null
   distRemaining.value = null
@@ -198,6 +211,7 @@ function openEditForm(item) {
     cutting_distribution_ids: [],
     cutting_distribution_id: item.cutting_distribution_id,
     total_sewing_result: String(item.total_sewing_result),
+    cutting_price_per_pcs: String(item.cutting_price_per_pcs ?? ''),
     deposit_date: item.deposit_date ? item.deposit_date.split('T')[0] : '',
     quality_notes: item.quality_notes || '',
     notes: item.notes || '',
@@ -230,6 +244,7 @@ async function handleSubmit() {
       const payload = {
         cutting_distribution_id: form.value.cutting_distribution_id,
         total_sewing_result: totalSewing,
+        cutting_price_per_pcs: Number(form.value.cutting_price_per_pcs) || 0,
         deposit_date: form.value.deposit_date,
         quality_notes: form.value.quality_notes || null,
         notes: form.value.notes || null,
@@ -245,6 +260,7 @@ async function handleSubmit() {
       const payload = {
         distribution_ids: form.value.cutting_distribution_ids,
         total_sewing_result: totalSewing,
+        cutting_price_per_pcs: Number(form.value.cutting_price_per_pcs) || 0,
         deposit_date: form.value.deposit_date,
         quality_notes: form.value.quality_notes || null,
         notes: form.value.notes || null,
@@ -311,6 +327,7 @@ function positionDistPicker() {
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
         <template #total_sewing_result="{ value }"><span class="font-medium">{{ value }}</span></template>
+        <template #total_price="{ value }"><span class="font-medium whitespace-nowrap">{{ formatCurrency(value) }}</span></template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
         <template #status="{ row }">
           <Badge :variant="statusBadge(groupStatus(row))" size="sm">{{ groupStatus(row) }}</Badge>
@@ -323,6 +340,8 @@ function positionDistPicker() {
                 <th class="py-1.5 px-3 text-left font-medium text-surface-500">Article</th>
                 <th class="py-1.5 px-3 text-left font-medium text-surface-500">Size</th>
                 <th class="py-1.5 px-3 text-right font-medium text-surface-500">Sewing Result</th>
+                <th class="py-1.5 px-3 text-right font-medium text-surface-500">Price/Pcs</th>
+                <th class="py-1.5 px-3 text-right font-medium text-surface-500">Total Price</th>
                 <th class="py-1.5 px-3 text-left font-medium text-surface-500">Deposit Date</th>
                 <th class="py-1.5 px-3 text-left font-medium text-surface-500">Status</th>
                 <th class="py-1.5 px-3 text-right font-medium text-surface-500">Actions</th>
@@ -334,6 +353,8 @@ function positionDistPicker() {
                 <td class="py-1.5 px-3">{{ entry.article?.name || '-' }}</td>
                 <td class="py-1.5 px-3"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
                 <td class="py-1.5 px-3 text-right">{{ entry.total_sewing_result }}</td>
+                <td class="py-1.5 px-3 text-right">{{ formatCurrency(entry.cutting_price_per_pcs) }}</td>
+                <td class="py-1.5 px-3 text-right font-medium">{{ formatCurrency(entry.total_price) }}</td>
                 <td class="py-1.5 px-3">{{ formatDate(entry.deposit_date) }}</td>
                 <td class="py-1.5 px-3"><Badge :variant="statusBadge(entry.status)" size="sm">{{ entry.status }}</Badge></td>
                 <td class="py-1.5 px-3 text-right">
@@ -435,6 +456,13 @@ function positionDistPicker() {
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input v-model="form.total_sewing_result" label="Sewing Result" type="number" placeholder="0" required />
+          <Input v-model="form.cutting_price_per_pcs" label="Cutting Price/Pcs" type="number" placeholder="0" required />
+        </div>
+        <div class="px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg text-sm">
+          <span class="font-medium text-surface-600">Total Price:</span>
+          <span class="ml-2 font-semibold">{{ formatCurrency(computedTotalPrice) }}</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input v-model="form.deposit_date" label="Deposit Date" type="date" required />
         </div>
         <Input v-model="form.quality_notes" label="Quality Notes" type="textarea" placeholder="Optional quality notes" />
