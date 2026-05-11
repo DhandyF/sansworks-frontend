@@ -10,7 +10,7 @@ const props = defineProps({
 })
 
 const { request } = useApi()
-const cuttingResults = useMasterData('/cutting-results', () => ({ search: props.search, brand_filter: props.brandFilter }), { perPage: 1000 })
+const cuttingResults = useMasterData('/cutting-results', () => ({ search: props.search, brand_filter: props.brandFilter }), { perPage: 1000000 })
 const { items, loading, fetchData } = cuttingResults
 
 function refresh() { fetchData(1) }
@@ -62,7 +62,7 @@ const preOrdersLoading = ref(false)
 async function fetchOptions() {
   if (brands.value.length) return
   try {
-    const res = await request('/brands?per_page=1000')
+    const res = await request('/brands?per_page=1000000')
     brands.value = res.data.map(b => ({ value: b.id, label: b.name }))
   } catch { /* ignore */ }
 }
@@ -75,7 +75,7 @@ async function fetchPreOrders(brandId) {
   if (!brandId) return
   preOrdersLoading.value = true
   try {
-    const res = await request(`/pre-orders?brand_filter=${brandId}&per_page=1000`)
+    const res = await request(`/pre-orders?brand_filter=${brandId}&per_page=1000000`)
     allPreOrderRows.value = res.data
     const seen = new Set()
     for (const po of res.data) {

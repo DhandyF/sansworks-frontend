@@ -15,7 +15,7 @@ const payslip = ref(null)
 
 onMounted(async () => {
   try {
-    const res = await request('/tailors?per_page=1000')
+    const res = await request('/tailors?per_page=1000000')
     tailors.value = res.data.map(t => ({ value: t.id, label: t.name }))
   } catch { /* ignore */ }
 })

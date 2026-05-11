@@ -9,7 +9,7 @@ const search = ref('')
 const brandFilter = ref('')
 const { debounce } = useDebounce(500)
 
-const { items, loading, fetchData, deleteItem } = useMasterData('/pre-orders', () => ({ search: search.value, brand_filter: brandFilter.value }), { perPage: 1000 })
+const { items, loading, fetchData, deleteItem } = useMasterData('/pre-orders', () => ({ search: search.value, brand_filter: brandFilter.value }), { perPage: 1000000 })
 
 watch([search, brandFilter], () => debounce(() => fetchData(1)))
 
@@ -155,7 +155,7 @@ onMounted(async () => {
   document.addEventListener('click', handleCuttingFormClickOutside, true)
   if (!filterBrandsLoaded) {
     try {
-      const res = await request('/brands?per_page=1000')
+      const res = await request('/brands?per_page=1000000')
       filterBrands.value = res.data.map(b => ({ value: b.id, label: b.name }))
       filterBrandsLoaded = true
     } catch { /* ignore */ }
@@ -166,8 +166,8 @@ async function fetchOptions() {
   if (brands.value.length) return
   try {
     const [brandsRes, sizesRes] = await Promise.all([
-      request('/brands?per_page=1000'),
-      request('/sizes?per_page=1000'),
+      request('/brands?per_page=1000000'),
+      request('/sizes?per_page=1000000'),
     ])
     brands.value = brandsRes.data.map(b => ({ value: b.id, label: b.name }))
     sizes.value = sizesRes.data.map(s => ({ value: s.id, label: s.abbreviation }))
@@ -178,7 +178,7 @@ async function fetchArticles(brandId) {
   articles.value = []
   if (!brandId) return
   try {
-    const res = await request(`/articles?brand_id=${brandId}&per_page=1000`)
+    const res = await request(`/articles?brand_id=${brandId}&per_page=1000000`)
     articles.value = res.data.map(a => ({ value: a.id, label: a.name }))
   } catch { /* ignore */ }
 }

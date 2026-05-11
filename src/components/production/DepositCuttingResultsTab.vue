@@ -10,7 +10,7 @@ const props = defineProps({
 })
 
 const { request } = useApi()
-const deposits = useMasterData('/deposit-cutting-results', () => ({ search: props.search, brand_filter: props.brandFilter }), { perPage: 1000, autoFetch: false })
+const deposits = useMasterData('/deposit-cutting-results', () => ({ search: props.search, brand_filter: props.brandFilter }), { perPage: 1000000, autoFetch: false })
 const { items, loading, fetchData } = deposits
 
 function refresh() { fetchData(1) }
@@ -130,7 +130,7 @@ const distGroups = computed(() => {
 
 async function fetchDistributionOptions() {
   try {
-    const res = await request('/cutting-distributions?per_page=1000')
+    const res = await request('/cutting-distributions?per_page=1000000')
     allDistributions.value = res.data
   } catch { /* ignore */ }
 }

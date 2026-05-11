@@ -22,7 +22,7 @@ async function fetchBrands() {
   if (brandsLoaded.value) return
   brandsLoading.value = true
   try {
-    const res = await request('/brands?per_page=1000')
+    const res = await request('/brands?per_page=1000000')
     brands.value = res.data.map(b => ({ value: b.id, label: b.name }))
     brandsLoaded.value = true
   } finally {
@@ -56,7 +56,7 @@ watch(() => form.value.brand_id, async (newBrandId) => {
   if (!newBrandId) return
   brandArticlesLoading.value = true
   try {
-    const res = await request(`/articles?brand_id=${newBrandId}&per_page=1000`)
+    const res = await request(`/articles?brand_id=${newBrandId}&per_page=1000000`)
     brandArticles.value = res.data || []
   } catch { /* ignore */ } finally {
     brandArticlesLoading.value = false

@@ -10,7 +10,7 @@ const props = defineProps({
 })
 
 const { request } = useApi()
-const distributions = useMasterData('/cutting-distributions', () => ({ search: props.search, brand_filter: props.brandFilter }), { perPage: 1000, autoFetch: false })
+const distributions = useMasterData('/cutting-distributions', () => ({ search: props.search, brand_filter: props.brandFilter }), { perPage: 1000000, autoFetch: false })
 const { items, loading, fetchData } = distributions
 
 function refresh() { fetchData(1) }
@@ -85,14 +85,14 @@ const crGroups = computed(() => {
 async function fetchOptions() {
   if (tailors.value.length) return
   try {
-    const res = await request('/tailors?per_page=1000')
+    const res = await request('/tailors?per_page=1000000')
     tailors.value = res.data.map(t => ({ value: t.id, label: t.name }))
   } catch { /* ignore */ }
 }
 
 async function fetchCuttingResultsOptions() {
   try {
-    const res = await request('/cutting-results?per_page=1000')
+    const res = await request('/cutting-results?per_page=1000000')
     allCuttingResults.value = res.data
   } catch { /* ignore */ }
 }

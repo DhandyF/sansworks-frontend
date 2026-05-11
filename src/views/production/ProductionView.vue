@@ -33,7 +33,7 @@ let filterBrandsLoaded = false
 onMounted(async () => {
   if (!filterBrandsLoaded) {
     try {
-      const res = await request('/brands?per_page=1000')
+      const res = await request('/brands?per_page=1000000')
       filterBrands.value = res.data.map(b => ({ value: b.id, label: b.name }))
       filterBrandsLoaded = true
     } catch { /* ignore */ }
