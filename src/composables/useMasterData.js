@@ -1,13 +1,15 @@
 import { ref, onMounted } from 'vue'
 import { useApi } from '@/composables/useApi'
 
-export function useMasterData(endpoint, buildParams = null, autoFetch = true) {
+export function useMasterData(endpoint, buildParams = null, options = {}) {
+  const { perPage: perPageDefault = 15, autoFetch = true } = typeof options === 'boolean' ? { autoFetch: options } : options
   const { loading, error, request, create, update, remove } = useApi()
   const items = ref([])
   const currentPage = ref(1)
-  const perPage = ref(15)
+  const perPage = ref(perPageDefault)
   const totalItems = ref(0)
   const lastPage = ref(1)
+  const meta = ref({})
 
   const pagination = ref({
     currentPage: 1,
@@ -15,6 +17,7 @@ export function useMasterData(endpoint, buildParams = null, autoFetch = true) {
     total: 0,
     from: 0,
     to: 0,
+    perPage: perPageDefault,
   })
 
   async function fetchData(page = 1) {
@@ -29,16 +32,20 @@ export function useMasterData(endpoint, buildParams = null, autoFetch = true) {
       }
     }
     const res = await request(url)
+    
     items.value = res.data
-    totalItems.value = res.total
-    lastPage.value = res.last_page
-    perPage.value = res.per_page
+    const m = res.meta || {}
+    meta.value = m
+    totalItems.value = m.total || 0
+    lastPage.value = m.last_page || 1
+    perPage.value = m.per_page || perPageDefault
     pagination.value = {
-      currentPage: res.current_page,
-      lastPage: res.last_page,
-      total: res.total,
-      from: res.from || (res.total > 0 ? (res.current_page - 1) * res.per_page + 1 : 0),
-      to: res.to || Math.min(res.current_page * res.per_page, res.total),
+      currentPage: m.current_page || 1,
+      lastPage: m.last_page || 1,
+      total: m.total || 0,
+      from: m.from || (m.total > 0 ? ((m.current_page || 1) - 1) * (m.per_page || perPageDefault) + 1 : 0),
+      to: m.to || Math.min((m.current_page || 1) * (m.per_page || perPageDefault), m.total || 0),
+      perPage: m.per_page || perPageDefault,
     }
   }
 

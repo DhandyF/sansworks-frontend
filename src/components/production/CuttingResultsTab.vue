@@ -10,7 +10,7 @@ const props = defineProps({
 })
 
 const { request } = useApi()
-const cuttingResults = useMasterData('/cutting-results', () => ({ search: props.search, brand_filter: props.brandFilter }))
+const cuttingResults = useMasterData('/cutting-results', () => ({ search: props.search, brand_filter: props.brandFilter }), { perPage: 1000 })
 const { items, loading, fetchData } = cuttingResults
 
 function refresh() { fetchData(1) }

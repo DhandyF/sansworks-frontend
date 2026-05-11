@@ -10,7 +10,7 @@ const props = defineProps({
 })
 
 const { request } = useApi()
-const distributions = useMasterData('/cutting-distributions', () => ({ search: props.search, brand_filter: props.brandFilter }), false)
+const distributions = useMasterData('/cutting-distributions', () => ({ search: props.search, brand_filter: props.brandFilter }), { perPage: 1000, autoFetch: false })
 const { items, loading, fetchData } = distributions
 
 function refresh() { fetchData(1) }

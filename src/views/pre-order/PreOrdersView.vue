@@ -9,7 +9,7 @@ const search = ref('')
 const brandFilter = ref('')
 const { debounce } = useDebounce(500)
 
-const { items, loading, fetchData, deleteItem } = useMasterData('/pre-orders', () => ({ search: search.value, brand_filter: brandFilter.value }))
+const { items, loading, fetchData, deleteItem } = useMasterData('/pre-orders', () => ({ search: search.value, brand_filter: brandFilter.value }), { perPage: 1000 })
 
 watch([search, brandFilter], () => debounce(() => fetchData(1)))
 

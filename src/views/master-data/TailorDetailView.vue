@@ -15,7 +15,7 @@ const tailor = ref(null)
 const summary = ref(null)
 const brands = ref([])
 const distributions = ref([])
-const pagination = ref({ current_page: 1, per_page: 15, total: 0, last_page: 1 })
+const pagination = ref({ currentPage: 1, perPage: 15, total: 0, lastPage: 1, from: 0, to: 0 })
 
 const searchQuery = ref('')
 const brandFilter = ref('')
@@ -53,7 +53,7 @@ function buildParams(page) {
   if (searchQuery.value) params.set('search', searchQuery.value)
   if (brandFilter.value) params.set('brand_filter', brandFilter.value)
   if (statusFilter.value) params.set('status_filter', statusFilter.value)
-  params.set('page', String(page || pagination.value.current_page))
+  params.set('page', String(page || pagination.value.currentPage))
   params.set('per_page', '15')
   return params.toString()
 }
@@ -65,11 +65,16 @@ async function fetchData(page) {
     summary.value = res.summary
     brands.value = res.brands || []
     distributions.value = res.distributions.data
+    const d = res.distributions
+    const from = d.total > 0 ? (d.current_page - 1) * d.per_page + 1 : 0
+    const to = Math.min(d.current_page * d.per_page, d.total)
     pagination.value = {
-      current_page: res.distributions.current_page,
-      per_page: res.distributions.per_page,
-      total: res.distributions.total,
-      last_page: res.distributions.last_page,
+      currentPage: d.current_page,
+      perPage: d.per_page,
+      total: d.total,
+      lastPage: d.last_page,
+      from,
+      to,
     }
   } catch {
     router.push({ name: 'tailors' })

@@ -10,7 +10,7 @@ const props = defineProps({
 })
 
 const { request } = useApi()
-const deposits = useMasterData('/deposit-cutting-results', () => ({ search: props.search, brand_filter: props.brandFilter }), false)
+const deposits = useMasterData('/deposit-cutting-results', () => ({ search: props.search, brand_filter: props.brandFilter }), { perPage: 1000, autoFetch: false })
 const { items, loading, fetchData } = deposits
 
 function refresh() { fetchData(1) }
