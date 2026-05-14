@@ -1,7 +1,7 @@
 {
   "nav": {
     "management": "Manajemen",
-    "brands": "Merek",
+    "brands": "Brands",
     "articles": "Artikel",
     "users": "Pengguna",
     "tailors": "Penjahit",
@@ -21,14 +21,14 @@
     "add": "Tambah",
     "search": "Cari...",
     "all": "Semua",
-    "allBrands": "Semua merek",
+    "allBrands": "Semua brand",
     "noResults": "{0} tidak ditemukan",
     "actions": "Aksi",
     "name": "Nama",
     "phone": "Telepon",
     "address": "Alamat",
     "status": "Status",
-    "brand": "Merek",
+    "brand": "Brand",
     "notes": "Catatan",
     "description": "Deskripsi",
     "date": "Tanggal",
@@ -46,7 +46,7 @@
     "loading": "Memuat...",
     "confirmDelete": "Yakin ingin menghapus",
     "cannotUndo": "Tindakan ini tidak dapat dibatalkan.",
-    "selectBrand": "Pilih merek",
+    "selectBrand": "Pilih brand",
     "selectAll": "Semua",
     "rem": "sisa"
   },
@@ -83,10 +83,10 @@
     "addBrand": "Tambah Merek",
     "editBrand": "Edit Merek",
     "searchPlaceholder": "Cari berdasarkan nama...",
-    "brandName": "Nama merek",
-    "brandAddress": "Alamat merek",
+    "brandName": "Nama brand",
+    "brandAddress": "Alamat brand",
     "phoneNumber": "Nomor telepon",
-    "deleteTitle": "Hapus Merek"
+    "deleteTitle": "Hapus Brand"
   },
   "sizes": {
     "title": "Ukuran",
@@ -145,8 +145,8 @@
     "filterOverdue": "Terlambat"
   },
   "brandDetail": {
-    "title": "Detail Merek",
-    "brandInfo": "Informasi Merek",
+    "title": "Detail Brand",
+    "brandInfo": "Informasi Brand",
     "preOrders": "Pre-Order",
     "phone": "Telepon",
     "address": "Alamat",
@@ -187,7 +187,7 @@
     "remove": "Hapus",
     "preOrderDate": "Tanggal Pre-Order",
     "deadlineDate": "Batas Waktu",
-    "selectBrandFirst": "Pilih merek terlebih dahulu...",
+    "selectBrandFirst": "Pilih brand terlebih dahulu...",
     "selectArticle": "Pilih artikel",
     "selectSize": "Pilih ukuran",
     "noPreOrders": "Pre-order tidak ditemukan"
