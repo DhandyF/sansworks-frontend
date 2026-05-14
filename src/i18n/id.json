@@ -78,10 +78,10 @@
     "deleteTitle": "Hapus Pengguna"
   },
   "brands": {
-    "title": "Merek",
-    "description": "Kelola informasi merek",
-    "addBrand": "Tambah Merek",
-    "editBrand": "Edit Merek",
+    "title": "Brands",
+    "description": "Kelola informasi brands",
+    "addBrand": "Tambah Brand",
+    "editBrand": "Edit Brand",
     "searchPlaceholder": "Cari berdasarkan nama...",
     "brandName": "Nama brand",
     "brandAddress": "Alamat brand",
@@ -100,14 +100,14 @@
   },
   "articles": {
     "title": "Artikel",
-    "description": "Kelola artikel dan mereknya",
+    "description": "Kelola artikel dan brands",
     "addArticle": "Tambah Artikel",
     "editArticle": "Edit Artikel",
     "searchPlaceholder": "Cari berdasarkan nama artikel...",
     "articleName": "Nama Artikel",
     "optionalDescription": "Deskripsi opsional",
     "loadingArticles": "Memuat artikel...",
-    "existingArticles": "Artikel yang sudah ada untuk merek ini:",
+    "existingArticles": "Artikel yang sudah ada untuk brand ini:",
     "deleteTitle": "Hapus Artikel"
   },
   "tailors": {
@@ -226,7 +226,7 @@
     "name": "Nama",
     "totalCutting": "Total Potong",
     "cuttingDate": "Tanggal Potong",
-    "selectBrandFirst": "Pilih merek terlebih dahulu",
+    "selectBrandFirst": "Pilih brand terlebih dahulu",
     "selectPreOrder": "Pilih pre-order",
     "selectArticle": "Pilih artikel",
     "selectSize": "Pilih ukuran",
