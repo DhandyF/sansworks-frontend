@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { Card, Badge, Button, SearchableDropdown } from 'ui-assets'
 
+const { t } = useI18n()
 const { request } = useApi()
 
 const generating = ref(false)
@@ -77,7 +79,7 @@ function printPayslip() {
   const html = `<!DOCTYPE html>
 <html>
 <head>
-  <title>Payslip - ${p.tailor.name}</title>
+  <title>${t('payslip.payslip')} - ${p.tailor.name}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #000; padding: 20px; }
@@ -118,42 +120,42 @@ function printPayslip() {
   <div class="slip">
     <div class="top-bar">
       <div>
-        <div class="company">SANSWORKS</div>
-        <div class="label">Production Management System</div>
+        <div class="company">${t('payslip.printTitle')}</div>
+        <div class="label">${t('payslip.printSubtitle')}</div>
       </div>
       <div class="right">
-        <div class="slip-num">PAYSLIP</div>
-        <div class="slip-label">Employee Compensation Statement</div>
+        <div class="slip-num">${t('payslip.payslip')}</div>
+        <div class="slip-label">${t('payslip.employeeStatement')}</div>
       </div>
     </div>
     <div class="info-grid">
       <div class="info-block">
-        <div class="info-row"><span class="info-label">Employee:</span><span class="info-value">${p.tailor.name}</span></div>
-        <div class="info-row"><span class="info-label">Address:</span><span class="info-value">${p.tailor.address || '-'}</span></div>
-        <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">${p.tailor.phone || '-'}</span></div>
+        <div class="info-row"><span class="info-label">${t('payslip.employee')}</span><span class="info-value">${p.tailor.name}</span></div>
+        <div class="info-row"><span class="info-label">${t('payslip.address')}</span><span class="info-value">${p.tailor.address || '-'}</span></div>
+        <div class="info-row"><span class="info-label">${t('payslip.phone')}</span><span class="info-value">${p.tailor.phone || '-'}</span></div>
       </div>
       <div class="info-block">
-        <div class="info-row"><span class="info-label">Period:</span><span class="info-value">${p.period.month_label}</span></div>
-        <div class="info-row"><span class="info-label">Date Range:</span><span class="info-value">${formatDate(p.period.start_date)} — ${formatDate(p.period.end_date)}</span></div>
-        <div class="info-row"><span class="info-label">Articles:</span><span class="info-value">${p.summary.total_articles}</span></div>
+        <div class="info-row"><span class="info-label">${t('payslip.period')}</span><span class="info-value">${p.period.month_label}</span></div>
+        <div class="info-row"><span class="info-label">${t('payslip.dateRange')}</span><span class="info-value">${formatDate(p.period.start_date)} — ${formatDate(p.period.end_date)}</span></div>
+        <div class="info-row"><span class="info-label">${t('payslip.articles')}</span><span class="info-value">${p.summary.total_articles}</span></div>
       </div>
     </div>
     <table>
       <thead>
         <tr>
-          <th class="col-emp" style="width:25%">Article / Item</th>
+          <th class="col-emp" style="width:25%">${t('payslip.articleItem')}</th>
           ${colHeaders}
-          <th class="col-qty" style="width:8%">Total<br/>Qty</th>
-          <th class="col-price" style="width:12%">Price/Pcs</th>
-          <th class="col-total" style="width:14%">Total Amount</th>
+          <th class="col-qty" style="width:8%">${t('payslip.totalQty')}</th>
+          <th class="col-price" style="width:12%">${t('payslip.pricePcs')}</th>
+          <th class="col-total" style="width:14%">${t('payslip.totalAmount')}</th>
         </tr>
       </thead>
       <tbody>
-        ${p.items.length === 0 ? `<tr class="empty-row"><td colspan="${colCount + 5}">No production data for this period</td></tr>` : rows}
+        ${p.items.length === 0 ? `<tr class="empty-row"><td colspan="${colCount + 5}">${t('payslip.noProductionData')}</td></tr>` : rows}
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="${colCount + 1}" class="text-right">GRAND TOTAL</td>
+          <td colspan="${colCount + 1}" class="text-right">${t('payslip.grandTotal')}</td>
           <td class="col-qty">${p.summary.total_qty}</td>
           <td></td>
           <td class="col-total" style="font-size:13px">${formatCurrency(p.summary.total_price)}</td>
@@ -161,10 +163,10 @@ function printPayslip() {
       </tfoot>
     </table>
     <div class="bottom">
-      <span class="left">Generated: ${formatDate(new Date().toISOString())}</span>
-      <span class="right">Sansworks Production Management System</span>
+      <span class="left">${t('payslip.generated')}: ${formatDate(new Date().toISOString())}</span>
+      <span class="right">${t('payslip.footer')}</span>
     </div>
-    <div class="remark">Note: This payslip is auto-generated. Please contact admin for any discrepancies.</div>
+    <div class="remark">${t('payslip.note')}</div>
   </div>
   <script>window.onload = function() { window.print(); }<\/script>
 </body>
@@ -182,36 +184,36 @@ function printPayslip() {
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-surface-900">Payslip</h1>
-        <p class="mt-1 text-sm text-surface-500">Generate payslip per tailor by date range</p>
+        <h1 class="text-2xl font-bold text-surface-900">{{ t('payslip.title') }}</h1>
+        <p class="mt-1 text-sm text-surface-500">{{ t('payslip.description') }}</p>
       </div>
     </div>
 
     <Card variant="bordered">
       <div class="p-4 flex flex-col sm:flex-row items-start sm:items-end gap-4">
         <div class="w-full sm:max-w-80">
-          <label class="block text-sm font-medium text-surface-700 mb-1">Tailor</label>
+          <label class="block text-sm font-medium text-surface-700 mb-1">{{ t('payslip.tailor') }}</label>
           <SearchableDropdown
             v-model="selectedTailor"
             :options="tailors"
             label=""
-            placeholder="Select tailor"
+            :placeholder="t('payslip.selectTailor')"
             :clearable="true"
           />
         </div>
         <div class="flex">
           <div class="w-full sm:max-w-[160px] mr-5">
-            <label class="block text-sm font-medium text-surface-700 mb-1">Start Date</label>
+            <label class="block text-sm font-medium text-surface-700 mb-1">{{ t('payslip.startDate') }}</label>
             <input v-model="startDate" type="date" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
           </div>
           <div class="w-full sm:max-w-[160px]">
-            <label class="block text-sm font-medium text-surface-700 mb-1">End Date</label>
+            <label class="block text-sm font-medium text-surface-700 mb-1">{{ t('payslip.endDate') }}</label>
             <input v-model="endDate" type="date" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
           </div>
         </div>
         <div class="flex gap-2">
-          <Button @click="generate" :loading="generating" :disabled="!selectedTailor || !startDate || !endDate">Generate</Button>
-          <Button v-if="showPayslip" variant="outline" @click="printPayslip">Print</Button>
+          <Button @click="generate" :loading="generating" :disabled="!selectedTailor || !startDate || !endDate">{{ t('payslip.generate') }}</Button>
+          <Button v-if="showPayslip" variant="outline" @click="printPayslip">{{ t('payslip.print') }}</Button>
         </div>
       </div>
     </Card>
@@ -242,18 +244,18 @@ function printPayslip() {
           <table class="w-full text-sm">
             <thead>
               <tr class="bg-surface-50 border-b border-surface-200">
-                <th class="px-4 py-2.5 text-left font-semibold text-surface-700">Article</th>
+                <th class="px-4 py-2.5 text-left font-semibold text-surface-700">{{ t('common.article') }}</th>
                 <th v-for="c in payslip.columns" :key="c.key" class="px-2 py-2.5 text-center font-semibold text-surface-700 min-w-[60px]">
                   {{ c.label }}<br><span class="text-xs font-normal text-surface-400">{{ c.sub_label }}</span>
                 </th>
-                <th class="px-3 py-2.5 text-right font-semibold text-surface-700">Total Qty</th>
-                <th class="px-3 py-2.5 text-right font-semibold text-surface-700">Price/Pcs</th>
-                <th class="px-4 py-2.5 text-right font-semibold text-surface-700">Total</th>
+                <th class="px-3 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.totalQty') }}</th>
+                <th class="px-3 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.pricePcs') }}</th>
+                <th class="px-4 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.totalAmount') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="payslip.items.length === 0">
-                <td :colspan="payslip.columns.length + 5" class="px-4 py-8 text-center text-surface-400">No data for this period</td>
+                <td :colspan="payslip.columns.length + 5" class="px-4 py-8 text-center text-surface-400">{{ t('payslip.noData') }}</td>
               </tr>
               <tr v-for="item in payslip.items" :key="item.article_id" class="border-b border-surface-100 hover:bg-surface-50">
                 <td class="px-4 py-2.5 font-medium text-surface-800 whitespace-nowrap">{{ item.article_name }}</td>
@@ -268,7 +270,7 @@ function printPayslip() {
             </tbody>
             <tfoot>
               <tr class="bg-surface-50 border-t-2 border-surface-300">
-                <td class="px-4 py-3 font-bold text-surface-900">Total</td>
+                <td class="px-4 py-3 font-bold text-surface-900">{{ t('payslip.grandTotal') }}</td>
                 <td v-for="c in payslip.columns" :key="c.key" class="px-2 py-3"></td>
                 <td class="px-3 py-3 text-right font-bold text-surface-900">{{ payslip.summary.total_qty }}</td>
                 <td class="px-3 py-3"></td>
@@ -280,8 +282,8 @@ function printPayslip() {
 
         <div class="p-6 bg-surface-50 border-t border-surface-200 flex justify-end">
           <div class="text-right">
-            <p class="text-xs text-surface-400">Generated on {{ formatDate(new Date().toISOString()) }}</p>
-            <p class="text-xs text-surface-400">Sansworks Production System</p>
+            <p class="text-xs text-surface-400">{{ t('payslip.generatedOn') }} {{ formatDate(new Date().toISOString()) }}</p>
+            <p class="text-xs text-surface-400">{{ t('payslip.footer') }}</p>
           </div>
         </div>
       </div>
@@ -293,7 +295,7 @@ function printPayslip() {
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       </div>
-      <p class="text-surface-500">Select a tailor and date range to generate payslip</p>
+      <p class="text-surface-500">{{ t('payslip.emptyState') }}</p>
     </div>
   </div>
 </template>

@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { Card, Badge, Table } from 'ui-assets'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { request } = useApi()
@@ -13,14 +15,14 @@ const brand = ref(null)
 const preOrders = ref([])
 
 const columns = [
-  { key: 'name', label: 'Pre-Order', sortable: true },
-  { key: 'total_pcs', label: 'Total Pcs', sortable: true },
-  { key: 'cut_qty', label: 'Cutting Done', sortable: true },
-  { key: 'distributed_qty', label: 'Distributed', sortable: true },
-  { key: 'deposited_qty', label: 'Deposited', sortable: true },
-  { key: 'pre_order_date', label: 'Order Date' },
-  { key: 'deadline_date', label: 'Deadline' },
-  { key: 'status', label: 'Status' },
+  { key: 'name', label: t('common.name'), sortable: true },
+  { key: 'total_pcs', label: t('common.totalPcs'), sortable: true },
+  { key: 'cut_qty', label: t('brandDetail.cuttingDone'), sortable: true },
+  { key: 'distributed_qty', label: t('brandDetail.distributed'), sortable: true },
+  { key: 'deposited_qty', label: t('brandDetail.deposited'), sortable: true },
+  { key: 'pre_order_date', label: t('brandDetail.orderDate') },
+  { key: 'deadline_date', label: t('brandDetail.deadline') },
+  { key: 'status', label: t('brandDetail.status') },
 ]
 
 onMounted(async () => {
@@ -42,9 +44,9 @@ const statusBadge = (status) => {
 }
 
 const statusLabel = (status) => {
-  if (status === 'done') return 'Done'
-  if (status === 'overdue') return 'Overdue'
-  return 'In Progress'
+  if (status === 'done') return t('common.done')
+  if (status === 'overdue') return t('common.overdue')
+  return t('common.inProgress')
 }
 
 const formatDate = (date) => {
@@ -59,11 +61,11 @@ function goToPreOrder(row) {
 <template>
   <div>
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.push({ name: 'brands' })" class="p-2 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer" title="Back">
+      <button @click="router.push({ name: 'brands' })" class="p-2 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer" :title="t('common.back')">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <div>
-        <h1 class="text-2xl font-bold text-surface-900">Brand Detail</h1>
+        <h1 class="text-2xl font-bold text-surface-900">{{ t('brandDetail.title') }}</h1>
       </div>
     </div>
 
@@ -77,30 +79,30 @@ function goToPreOrder(row) {
     <template v-else-if="brand">
       <Card variant="bordered" class="mb-6">
         <div class="px-4 py-3 border-b border-surface-200">
-          <h2 class="text-lg font-semibold text-surface-900">Brand Information</h2>
+          <h2 class="text-lg font-semibold text-surface-900">{{ t('brandDetail.brandInfo') }}</h2>
         </div>
         <div class="px-4 py-3 grid-cols-1 sm:grid-cols-3 gap-4 flex w-full row">
           <div class="mr-4">
-            <p class="text-xs text-surface-500">Phone</p>
+            <p class="text-xs text-surface-500">{{ t('brandDetail.phone') }}</p>
             <p class="text-sm font-medium text-surface-800">{{ brand.phone || '-' }}</p>
           </div>
           <div class="mr-4">
-            <p class="text-xs text-surface-500">Address</p>
+            <p class="text-xs text-surface-500">{{ t('brandDetail.address') }}</p>
             <p class="text-sm font-medium text-surface-800">{{ brand.address || '-' }}</p>
           </div>
           <div class="mr-4">
-            <p class="text-xs text-surface-500">Status</p>
-            <p class="text-sm font-medium text-surface-800"><Badge :variant="brand.status === 'active' ? 'success' : 'danger'" size="sm">{{ brand.status === 'active' ? 'Active' : 'Inactive' }}</Badge></p>
+            <p class="text-xs text-surface-500">{{ t('brandDetail.status') }}</p>
+            <p class="text-sm font-medium text-surface-800"><Badge :variant="brand.status === 'active' ? 'success' : 'danger'" size="sm">{{ brand.status === 'active' ? t('common.active') : t('common.inactive') }}</Badge></p>
           </div>
         </div>
       </Card>
 
       <Card variant="bordered">
         <div class="px-4 py-3 border-b border-surface-200">
-          <h2 class="text-lg font-semibold text-surface-900">Pre-Orders</h2>
+          <h2 class="text-lg font-semibold text-surface-900">{{ t('brandDetail.preOrders') }}</h2>
         </div>
         <div v-if="preOrders.length === 0" class="text-center py-12">
-          <p class="text-surface-500">No pre-orders found</p>
+          <p class="text-surface-500">{{ t('common.noResults') }}</p>
         </div>
         <Table v-else :columns="columns" :rows="preOrders" :per-page="15" clickable @row-click="goToPreOrder">
           <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>

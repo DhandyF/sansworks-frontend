@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { Card, Badge, Table } from 'ui-assets'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { request } = useApi()
@@ -19,12 +21,12 @@ const filteredEntries = computed(() => {
   return entries.value.filter(e => e.status === statusFilter.value)
 })
 
-const statusFilters = [
-  { value: '', label: 'All' },
-  { value: 'done', label: 'Done' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'overdue', label: 'Overdue' },
-]
+const statusFilters = computed(() => [
+  { value: '', label: t('preOrderDetail.filterAll') },
+  { value: 'done', label: t('preOrderDetail.filterDone') },
+  { value: 'in_progress', label: t('preOrderDetail.filterInProgress') },
+  { value: 'overdue', label: t('preOrderDetail.filterOverdue') },
+])
 
 function filterBadgeVariant(filter) {
   if (filter === statusFilter.value) {
@@ -34,18 +36,18 @@ function filterBadgeVariant(filter) {
   return 'default'
 }
 
-const columns = [
-  { key: 'name', label: 'Pre-Order' },
-  { key: 'article', label: 'Article' },
-  { key: 'size', label: 'Size' },
-  { key: 'total_pcs', label: 'Total Pcs' },
-  { key: 'cut_qty', label: 'Cutting Done' },
-  { key: 'cutting_remaining', label: 'Remaining' },
-  { key: 'distributed_qty', label: 'Distributed' },
-  { key: 'deposited_qty', label: 'Deposited' },
-  { key: 'deadline_date', label: 'Deadline' },
-  { key: 'status', label: 'Status' },
-]
+const columns = computed(() => [
+  { key: 'name', label: t('preOrderDetail.title') },
+  { key: 'article', label: t('common.article') },
+  { key: 'size', label: t('common.size') },
+  { key: 'total_pcs', label: t('common.totalPcs') },
+  { key: 'cut_qty', label: t('preOrderDetail.cuttingDone') },
+  { key: 'cutting_remaining', label: t('common.remaining') },
+  { key: 'distributed_qty', label: t('preOrderDetail.distributed') },
+  { key: 'deposited_qty', label: t('preOrderDetail.deposited') },
+  { key: 'deadline_date', label: t('preOrderDetail.deadline') },
+  { key: 'status', label: t('preOrderDetail.status') },
+])
 
 onMounted(async () => {
   try {
@@ -67,9 +69,9 @@ const statusBadge = (status) => {
 }
 
 const statusLabel = (status) => {
-  if (status === 'done') return 'Done'
-  if (status === 'overdue') return 'Overdue'
-  return 'In Progress'
+  if (status === 'done') return t('common.done')
+  if (status === 'overdue') return t('common.overdue')
+  return t('common.inProgress')
 }
 
 const formatDate = (date) => {
@@ -101,11 +103,11 @@ function groupByTailor(distributions) {
 <template>
   <div>
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.back()" class="p-2 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer" title="Back">
+      <button @click="router.back()" class="p-2 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer" :title="t('common.back')">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <div>
-        <h1 class="text-2xl font-bold text-surface-900">{{ preOrder?.name || 'Pre-Order Detail' }}</h1>
+        <h1 class="text-2xl font-bold text-surface-900">{{ preOrder?.name || t('preOrderDetail.title') }}</h1>
         <p class="mt-0.5 text-sm text-surface-500">
           {{ preOrder?.brand?.name || '' }}
           <span v-if="preOrder?.pre_order_date" class="ml-2">&middot; {{ formatDate(preOrder.pre_order_date) }}</span>
@@ -124,43 +126,43 @@ function groupByTailor(distributions) {
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.total_pcs }}</p>
-          <p class="text-xs text-surface-500 mt-1">Total Pcs</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('common.totalPcs') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.cut_qty }}</p>
-          <p class="text-xs text-surface-500 mt-1">Cutting Done</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('preOrderDetail.cuttingDone') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.distributed_qty }}</p>
-          <p class="text-xs text-surface-500 mt-1">Distributed</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('preOrderDetail.distributed') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.deposited_qty }}</p>
-          <p class="text-xs text-surface-500 mt-1">Deposited</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('preOrderDetail.deposited') }}</p>
         </Card>
       </div>
 
       <div class="grid grid-cols-3 gap-4 mb-6">
         <Card variant="bordered" class="text-center py-3">
           <p class="text-xl font-semibold text-green-600">{{ summary.done_count }}</p>
-          <p class="text-xs text-surface-500 mt-0.5">Done</p>
+          <p class="text-xs text-surface-500 mt-0.5">{{ t('common.done') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-3">
           <p class="text-xl font-semibold text-amber-600">{{ summary.in_progress_count }}</p>
-          <p class="text-xs text-surface-500 mt-0.5">In Progress</p>
+          <p class="text-xs text-surface-500 mt-0.5">{{ t('common.inProgress') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-3">
           <p class="text-xl font-semibold text-red-600">{{ summary.overdue_count }}</p>
-          <p class="text-xs text-surface-500 mt-0.5">Overdue</p>
+          <p class="text-xs text-surface-500 mt-0.5">{{ t('common.overdue') }}</p>
         </Card>
       </div>
 
       <Card variant="bordered">
         <div class="px-4 py-3 border-b border-surface-200">
-          <h2 class="text-lg font-semibold text-surface-900">Details</h2>
+          <h2 class="text-lg font-semibold text-surface-900">{{ t('preOrderDetail.details') }}</h2>
         </div>
         <div v-if="entries.length === 0" class="text-center py-12">
-          <p class="text-surface-500">No entries found</p>
+          <p class="text-surface-500">{{ t('preOrderDetail.noEntries') }}</p>
         </div>
         <template v-else>
           <div class="px-4 py-2 flex items-center gap-2 border-b border-surface-200">
@@ -184,11 +186,11 @@ function groupByTailor(distributions) {
                 <Card v-for="tg in groupByTailor(row.distributions)" :key="tg.tailor?.id || '_none'" variant="bordered" class="shadow-none!">
                   <div class="px-4 py-2.5 border-b border-surface-200 flex items-center justify-between bg-surface-50">
                     <div class="flex items-center gap-3">
-                      <span class="text-sm font-semibold text-surface-800">{{ tg.tailor?.name || 'No Tailor' }}</span>
+                      <span class="text-sm font-semibold text-surface-800">{{ tg.tailor?.name || t('preOrderDetail.noTailor') }}</span>
                     </div>
                     <div class="flex items-center gap-4 text-sm">
-                      <span class="text-surface-500">Distributed: <span class="text-surface-800 font-medium">{{ tg.total_cutting }}</span></span>
-                      <span class="text-surface-500">Deposited: <span class="text-surface-800 font-medium">{{ tg.total_deposited }}</span></span>
+                      <span class="text-surface-500">{{ t('preOrderDetail.distributed') }}: <span class="text-surface-800 font-medium">{{ tg.total_cutting }}</span></span>
+                      <span class="text-surface-500">{{ t('preOrderDetail.deposited') }}: <span class="text-surface-800 font-medium">{{ tg.total_deposited }}</span></span>
                     </div>
                   </div>
                   <div class="divide-y divide-surface-100">
@@ -199,23 +201,23 @@ function groupByTailor(distributions) {
                           <Badge :variant="statusBadge(dist.status)" size="sm">{{ statusLabel(dist.status) }}</Badge>
                         </div>
                         <div class="flex items-center gap-3 text-sm">
-                          <span class="text-surface-500">Cut: <span class="text-surface-800 font-medium">{{ dist.total_cutting }}</span></span>
-                          <span class="text-surface-500">Remaining: <Badge :variant="dist.deposit_remaining > 0 ? 'warning' : 'success'" size="sm">{{ dist.deposit_remaining }}</Badge></span>
+                          <span class="text-surface-500">{{ t('preOrderDetail.cut') }}: <span class="text-surface-800 font-medium">{{ dist.total_cutting }}</span></span>
+                          <span class="text-surface-500">{{ t('common.remaining') }}: <Badge :variant="dist.deposit_remaining > 0 ? 'warning' : 'success'" size="sm">{{ dist.deposit_remaining }}</Badge></span>
                         </div>
                       </div>
                       <div v-if="dist.deposits && dist.deposits.length > 0" class="ml-3 flex flex-wrap gap-2">
                         <div v-for="dep in dist.deposits" :key="dep.id" class="flex items-center gap-1.5 text-xs bg-surface-50 px-2 py-1 rounded">
                           <span class="text-surface-600">{{ formatDate(dep.deposit_date) }}</span>
-                          <span class="font-semibold text-surface-800">{{ dep.total_sewing_result }} pcs</span>
+                          <span class="font-semibold text-surface-800">{{ dep.total_sewing_result }} {{ t('common.pcs') }}</span>
                           <Badge :variant="statusBadge(dep.status)" size="sm">{{ statusLabel(dep.status) }}</Badge>
                         </div>
                       </div>
-                      <p v-else class="text-xs text-surface-400 ml-3">No deposits yet</p>
+                      <p v-else class="text-xs text-surface-400 ml-3">{{ t('preOrderDetail.noDeposits') }}</p>
                     </div>
                   </div>
                 </Card>
               </div>
-              <div v-else class="text-sm text-surface-400">No distributions yet</div>
+              <div v-else class="text-sm text-surface-400">{{ t('preOrderDetail.noDistributions') }}</div>
             </template>
           </Table>
         </template>

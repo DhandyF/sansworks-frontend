@@ -1,14 +1,16 @@
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useMasterData } from '@/composables/useMasterData'
 import { Button, Card, Table, Input, Modal } from 'ui-assets'
 
+const { t } = useI18n()
 const { items, loading, pagination, fetchData, addItem, editItem, deleteItem } = useMasterData('/sizes')
 
 const columns = [
-  { key: 'name', label: 'Name' },
-  { key: 'abbreviation', label: 'Abbreviation' },
-  { key: 'actions', label: 'Actions' },
+  { key: 'name', label: t('common.name') },
+  { key: 'abbreviation', label: t('sizes.abbreviation') },
+  { key: 'actions', label: t('common.actions') },
 ]
 
 const showForm = ref(false)
@@ -74,10 +76,10 @@ async function handleDelete() {
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-surface-900">Sizes</h1>
-        <p class="mt-1 text-sm text-surface-500">Manage clothing sizes</p>
+        <h1 class="text-2xl font-bold text-surface-900">{{ t('sizes.title') }}</h1>
+        <p class="mt-1 text-sm text-surface-500">{{ t('sizes.description') }}</p>
       </div>
-      <Button @click="openAddForm">+ Add Size</Button>
+      <Button @click="openAddForm">{{ t('sizes.addSize') }}</Button>
     </div>
 
     <Card variant="bordered">
@@ -94,10 +96,10 @@ async function handleDelete() {
         <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData">
           <template #actions="{ row }">
             <div class="flex items-center gap-1">
-              <button @click="openEditForm(row)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" title="Edit">
+              <button @click="openEditForm(row)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               </button>
-              <button @click="openDeleteModal(row)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Delete">
+              <button @click="openDeleteModal(row)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               </button>
             </div>
@@ -106,26 +108,26 @@ async function handleDelete() {
       </template>
     </Card>
 
-    <Modal v-model="showForm" :title="editing ? 'Edit Size' : 'Add Size'" size="sm" contentClass="h-[80vh]" :closeOnOverlay="false">
+    <Modal v-model="showForm" :title="editing ? t('sizes.editSize') : t('sizes.addSize')" size="sm" contentClass="h-[80vh]" :closeOnOverlay="false">
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
-        <Input :model-value="form.name" @update:model-value="v => form.name = upper(v)" label="Name" placeholder="e.g. Extra Large" required />
-        <Input :model-value="form.abbreviation" @update:model-value="v => form.abbreviation = upper(v)" label="Abbreviation" placeholder="e.g. XL" required />
+        <Input :model-value="form.name" @update:model-value="v => form.name = upper(v)" :label="t('common.name')" :placeholder="t('sizes.namePlaceholder')" required />
+        <Input :model-value="form.abbreviation" @update:model-value="v => form.abbreviation = upper(v)" :label="t('sizes.abbreviation')" :placeholder="t('sizes.abbrPlaceholder')" required />
       </form>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showForm = false">Cancel</Button>
-          <Button :loading="submitting" @click="handleSubmit">{{ editing ? 'Update' : 'Create' }}</Button>
+          <Button variant="outline" @click="showForm = false">{{ t('common.cancel') }}</Button>
+          <Button :loading="submitting" @click="handleSubmit">{{ editing ? t('common.update') : t('common.create') }}</Button>
         </div>
       </template>
     </Modal>
 
-    <Modal v-model="showDeleteModal" title="Delete Size" size="sm" :closeOnOverlay="false">
-      <p class="text-surface-700">Are you sure you want to delete <strong>{{ deletingItem?.name }}</strong>? This action cannot be undone.</p>
+    <Modal v-model="showDeleteModal" :title="t('sizes.deleteTitle')" size="sm" :closeOnOverlay="false">
+      <p class="text-surface-700">{{ t('common.confirmDelete') }} <strong>{{ deletingItem?.name }}</strong>? {{ t('common.cannotUndo') }}</p>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showDeleteModal = false">Cancel</Button>
-          <Button variant="danger" @click="handleDelete">Delete</Button>
+          <Button variant="outline" @click="showDeleteModal = false">{{ t('common.cancel') }}</Button>
+          <Button variant="danger" @click="handleDelete">{{ t('common.delete') }}</Button>
         </div>
       </template>
     </Modal>

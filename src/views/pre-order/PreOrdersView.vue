@@ -1,9 +1,12 @@
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useMasterData } from '@/composables/useMasterData'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
 import { Button, Card, Table, Badge, Input, Modal, SearchableDropdown } from 'ui-assets'
+
+const { t } = useI18n()
 
 const search = ref('')
 const brandFilter = ref('')
@@ -95,15 +98,15 @@ async function submitCuttingResult() {
   if (!cuttingForm.value) return
   const f = cuttingForm.value
   if (!f.total_cutting || Number(f.total_cutting) <= 0) {
-    cuttingError.value = 'Cutting qty must be greater than 0'
+    cuttingError.value = t('preOrders.cuttingQtyGreater0')
     return
   }
   if (Number(f.total_cutting) > f.remaining) {
-    cuttingError.value = `Cutting qty (${f.total_cutting}) exceeds remaining (${f.remaining})`
+    cuttingError.value = t('preOrders.cuttingQtyExceeds')
     return
   }
   if (!f.cutting_date) {
-    cuttingError.value = 'Cutting date is required'
+    cuttingError.value = t('preOrders.cuttingQtyRequired')
     return
   }
   cuttingSubmitting.value = true
@@ -142,7 +145,6 @@ async function submitCuttingResult() {
 const cuttingFormRef = ref(null)
 
 function handleCuttingFormClickOutside() {
-  // Don't close on outside click - only close via Save, Cancel, or + button toggle
 }
 
 onUnmounted(() => {
@@ -215,15 +217,15 @@ const groupedOrders = computed(() => {
   return Array.from(map.values())
 })
 
-const columns = [
-  { key: 'brand', label: 'Brand' },
-  { key: 'name', label: 'Pre-Order Name' },
-  { key: 'pre_order_date', label: 'Order Date' },
-  { key: 'deadline_date', label: 'Deadline' },
-  { key: 'total_pcs', label: 'Total Pcs' },
-  { key: 'total_remaining', label: 'Remaining' },
-  { key: 'actions', label: 'Actions' },
-]
+const columns = computed(() => [
+  { key: 'brand', label: t('common.brand') },
+  { key: 'name', label: t('preOrders.preOrderName') },
+  { key: 'pre_order_date', label: t('preOrders.orderDate') },
+  { key: 'deadline_date', label: t('preOrders.deadline') },
+  { key: 'total_pcs', label: t('common.totalPcs') },
+  { key: 'total_remaining', label: t('common.remaining') },
+  { key: 'actions', label: t('common.actions') },
+])
 
 function formatDate(dateStr) {
   if (!dateStr) return '-'
@@ -390,10 +392,10 @@ async function handleDelete() {
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-surface-900">Pre-Orders</h1>
-        <p class="mt-1 text-sm text-surface-500">Manage pre-orders for production</p>
+        <h1 class="text-2xl font-bold text-surface-900">{{ t('preOrders.title') }}</h1>
+        <p class="mt-1 text-sm text-surface-500">{{ t('preOrders.description') }}</p>
       </div>
-      <Button @click="openAddForm">+ Add Pre-Order</Button>
+      <Button @click="openAddForm">+ {{ t('preOrders.addPreOrder') }}</Button>
     </div>
 
     <div class="flex flex-col sm:flex-row gap-3 mb-4">
@@ -402,12 +404,12 @@ async function handleDelete() {
           v-model="brandFilter"
           :options="filterBrands"
           label=""
-          placeholder="All brands"
+          :placeholder="t('common.allBrands')"
           clearable
         />
       </div>
       <div class="flex-1">
-        <Input v-model="search" label="" placeholder="Search by pre-order name..." />
+        <Input v-model="search" label="" :placeholder="t('preOrders.searchPlaceholder')" />
       </div>
     </div>
 
@@ -419,7 +421,7 @@ async function handleDelete() {
         </svg>
       </div>
       <div v-else-if="items.length === 0" class="text-center py-12">
-        <p class="text-surface-500">No pre-orders found</p>
+        <p class="text-surface-500">{{ t('preOrders.noPreOrders') }}</p>
       </div>
       <template v-else>
         <Table :columns="columns" :rows="groupedOrders" expandable :per-page="15">
@@ -440,10 +442,10 @@ async function handleDelete() {
           </template>
           <template #actions="{ row }">
             <div class="flex items-center gap-1">
-              <button @click.stop="openEditForm(row)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" title="Edit">
+              <button @click.stop="openEditForm(row)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               </button>
-              <button @click.stop="openDeleteModal(row)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Delete">
+              <button @click.stop="openDeleteModal(row)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               </button>
             </div>
@@ -457,10 +459,10 @@ async function handleDelete() {
                 <table class="w-full text-sm">
                   <thead>
                     <tr class="border-b border-surface-200">
-                      <th class="py-1.5 px-4 text-left font-medium text-surface-500">Size</th>
-                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">Total Pcs</th>
-                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">Cut Qty</th>
-                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">Remaining</th>
+                      <th class="py-1.5 px-4 text-left font-medium text-surface-500">{{ t('preOrders.size') }}</th>
+                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('common.totalPcs') }}</th>
+                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('preOrders.cutQty') }}</th>
+                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('common.remaining') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -482,7 +484,7 @@ async function handleDelete() {
                             :disabled="entry.remaining <= 0"
                             class="p-1 rounded-md transition-colors cursor-pointer"
                             :class="entry.remaining > 0 ? 'text-primary-600 hover:bg-primary-50' : 'text-surface-300 cursor-not-allowed'"
-                            title="Add cutting result"
+                            :title="t('preOrders.addCuttingResult')"
                           >
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                           </button>
@@ -499,7 +501,7 @@ async function handleDelete() {
       </template>
     </Card>
 
-    <Modal v-model="showForm" :title="editing ? 'Edit Pre-Order' : 'Add Pre-Order'" size="lg" contentClass="h-[80vh]" :closeOnOverlay="false">
+    <Modal v-model="showForm" :title="editing ? t('preOrders.editPreOrder') : t('preOrders.addPreOrder')" size="lg" contentClass="h-[80vh]" :closeOnOverlay="false">
       <div class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
 
@@ -507,33 +509,33 @@ async function handleDelete() {
           <SearchableDropdown
             v-model="form.brand_id"
             :options="brands"
-            label="Brand"
-            placeholder="Select a brand"
+            :label="t('common.brand')"
+            :placeholder="t('common.selectBrand')"
             required
           />
-          <Input v-if="editing" :model-value="editing.name" label="Pre-Order Name" disabled />
-          <Input v-else :model-value="nextName" label="Pre-Order Name" disabled placeholder="Select a brand first..." />
+          <Input v-if="editing" :model-value="editing.name" :label="t('preOrders.preOrderName')" disabled />
+          <Input v-else :model-value="nextName" :label="t('preOrders.preOrderName')" disabled :placeholder="t('preOrders.selectBrandFirst')" />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input v-model="form.pre_order_date" label="Pre-Order Date" type="date" required />
-          <Input v-model="form.deadline_date" label="Deadline Date" type="date" required />
+          <Input v-model="form.pre_order_date" :label="t('preOrders.preOrderDate')" type="date" required />
+          <Input v-model="form.deadline_date" :label="t('preOrders.deadlineDate')" type="date" required />
         </div>
 
         <div class="border-t border-surface-200 pt-4">
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-semibold text-surface-800">Articles</h3>
+            <h3 class="text-sm font-semibold text-surface-800">{{ t('preOrders.articles') }}</h3>
             <button @click="addArticle" type="button" class="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium cursor-pointer">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-              Add Article
+              {{ t('preOrders.addArticle') }}
             </button>
           </div>
 
           <div v-for="(article, aIndex) in form.articles" :key="aIndex" :data-article="aIndex" class="mb-4 p-4 bg-surface-50 rounded-lg border border-surface-200">
             <div class="flex items-center justify-between mb-3">
-              <span class="text-sm font-medium text-surface-700">Article {{ form.articles.length > 1 ? aIndex + 1 : '' }}</span>
+              <span class="text-sm font-medium text-surface-700">{{ form.articles.length > 1 ? `${t('preOrders.article')} ${aIndex + 1}` : t('preOrders.article') }}</span>
               <button v-if="form.articles.length > 1" @click="removeArticle(aIndex)" type="button" class="text-red-500 hover:text-red-700 text-sm cursor-pointer">
-                Remove Article
+                {{ t('preOrders.removeArticle') }}
               </button>
             </div>
 
@@ -541,8 +543,8 @@ async function handleDelete() {
               <SearchableDropdown
                 v-model="article.article_id"
                 :options="articles"
-                label="Article"
-                placeholder="Select an article"
+                :label="t('preOrders.article')"
+                :placeholder="t('preOrders.selectArticle')"
                 :disabled="!form.brand_id"
                 required
               />
@@ -553,22 +555,22 @@ async function handleDelete() {
                 <span class="text-xs font-medium text-surface-500">Sizes & Quantities</span>
                 <button @click="addSizeRow(aIndex)" type="button" class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium cursor-pointer">
                   <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                  Add Size
+                  {{ t('preOrders.addSize') }}
                 </button>
               </div>
               <div v-for="(sizeItem, sIndex) in article.sizes" :key="sIndex" :data-size="`${aIndex}-${sIndex}`" class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
                 <SearchableDropdown
                   v-model="sizeItem.size_id"
                   :options="sizes"
-                  :label="`Size ${article.sizes.length > 1 ? sIndex + 1 : ''}`"
-                  placeholder="Select a size"
+                  :label="article.sizes.length > 1 ? `${t('preOrders.size')} ${sIndex + 1}` : t('preOrders.size')"
+                  :placeholder="t('preOrders.selectSize')"
                   required
                 />
                 <div class="flex items-end gap-2">
                   <div class="flex-1">
-                    <Input v-model="sizeItem.total_pcs" :label="article.sizes.length > 1 ? `Pcs ${sIndex + 1}` : 'Total Pcs'" type="number" placeholder="0" required />
+                    <Input v-model="sizeItem.total_pcs" :label="article.sizes.length > 1 ? `${t('common.pcs')} ${sIndex + 1}` : t('common.totalPcs')" type="number" placeholder="0" required />
                   </div>
-                  <button v-if="article.sizes.length > 1" @click="removeSizeRow(aIndex, sIndex)" type="button" class="p-2 mb-0.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer" title="Remove">
+                  <button v-if="article.sizes.length > 1" @click="removeSizeRow(aIndex, sIndex)" type="button" class="p-2 mb-0.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer" :title="t('preOrders.remove')">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 </div>
@@ -579,18 +581,19 @@ async function handleDelete() {
       </div>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showForm = false">Cancel</Button>
-          <Button :loading="submitting" @click="handleSubmit">{{ editing ? 'Update' : 'Create' }}</Button>
+          <Button variant="outline" @click="showForm = false">{{ t('common.cancel') }}</Button>
+          <Button :loading="submitting" @click="handleSubmit">{{ editing ? t('common.update') : t('common.create') }}</Button>
         </div>
       </template>
     </Modal>
 
-    <Modal v-model="showDeleteModal" title="Delete Pre-Order" size="sm" :closeOnOverlay="false">
-      <p class="text-surface-700">Are you sure you want to delete <strong>{{ deletingGroup?.name }}</strong>? This will remove all sizes in this pre-order. This action cannot be undone.</p>
+    <Modal v-model="showDeleteModal" :title="t('preOrders.deleteTitle')" size="sm" :closeOnOverlay="false">
+      <p class="text-surface-700">{{ t('preOrders.deleteMessage', { name: deletingGroup?.name }) }}</p>
+      <p class="text-sm text-surface-500 mt-1">{{ t('common.cannotUndo') }}</p>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showDeleteModal = false">Cancel</Button>
-          <Button variant="danger" @click="handleDelete">Delete</Button>
+          <Button variant="outline" @click="showDeleteModal = false">{{ t('common.cancel') }}</Button>
+          <Button variant="danger" @click="handleDelete">{{ t('common.delete') }}</Button>
         </div>
       </template>
     </Modal>
@@ -599,19 +602,19 @@ async function handleDelete() {
       <div v-if="cuttingForm" ref="cuttingFormRef" class="fixed z-50 bg-white rounded-lg border border-surface-200 p-4 w-72" :style="cuttingFormStyle">
         <div v-if="cuttingError" class="p-2 mb-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{{ cuttingError }}</div>
         <div class="space-y-3">
-          <Input v-model="cuttingForm.cutting_date" label="Cutting Date" type="date" required />
-          <Input v-model="cuttingForm.total_cutting" label="Cutting Qty" type="number" placeholder="0" required />
-          <p class="text-xs text-surface-500">Remaining available: <strong>{{ cuttingForm.remaining }}</strong></p>
+          <Input v-model="cuttingForm.cutting_date" :label="t('preOrders.cuttingDate')" type="date" required />
+          <Input v-model="cuttingForm.total_cutting" :label="t('preOrders.cutQty')" type="number" placeholder="0" required />
+          <p class="text-xs text-surface-500">{{ t('preOrders.remainingAvailable') }}: <strong>{{ cuttingForm.remaining }}</strong></p>
           <div class="flex items-center gap-2 pt-1">
-            <Button :loading="cuttingSubmitting" @click="submitCuttingResult" size="sm">Save</Button>
-            <Button variant="outline" @click="closeCuttingForm" size="sm">Cancel</Button>
+            <Button :loading="cuttingSubmitting" @click="submitCuttingResult" size="sm">{{ t('common.create') }}</Button>
+            <Button variant="outline" @click="closeCuttingForm" size="sm">{{ t('common.cancel') }}</Button>
           </div>
         </div>
       </div>
       <div v-if="tooltipData" class="fixed z-50 w-56 p-2 bg-black/80 text-white rounded-lg shadow-lg text-xs" :style="tooltipStyle" @mouseenter="() => {}" @mouseleave="hideTooltip">
         <div v-for="cr in tooltipData" :key="cr.id" class="flex justify-between py-0.5">
           <span>{{ cr.cutting_date ? formatDate(cr.cutting_date) : '-' }}</span>
-          <span class="font-medium">{{ cr.total_cutting }} pcs</span>
+          <span class="font-medium">{{ cr.total_cutting }} {{ t('common.pcs') }}</span>
         </div>
       </div>
     </Teleport>

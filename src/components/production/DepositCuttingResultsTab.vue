@@ -1,8 +1,11 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useMasterData } from '@/composables/useMasterData'
 import { Button, Card, Table, Badge, Input, Modal } from 'ui-assets'
+
+const { t } = useI18n()
 
 const props = defineProps({
   search: String,
@@ -77,15 +80,22 @@ function groupStatus(group) {
   return 'in_progress'
 }
 
-const columns = [
-  { key: 'brand', label: 'Brand' },
-  { key: 'name', label: 'Distribution' },
-  { key: 'tailor', label: 'Tailor' },
-  { key: 'total_sewing_result', label: 'Total Sewing' },
-  { key: 'total_price', label: 'Total Price' },
-  { key: 'total_deposit_remaining', label: 'Remaining' },
-  { key: 'status', label: 'Status' },
-]
+function translateStatus(status) {
+  if (status === 'done') return t('common.done')
+  if (status === 'overdue') return t('common.overdue')
+  if (status === 'in_progress') return t('common.inProgress')
+  return status
+}
+
+const columns = computed(() => [
+  { key: 'brand', label: t('common.brand') },
+  { key: 'name', label: t('deposits.distribution') },
+  { key: 'tailor', label: t('common.tailor') },
+  { key: 'total_sewing_result', label: t('deposits.sewingResult') },
+  { key: 'total_price', label: t('deposits.totalPrice') },
+  { key: 'total_deposit_remaining', label: t('common.remaining') },
+  { key: 'status', label: t('common.status') },
+])
 
 const allDistributions = ref([])
 const showDistPicker = ref(false)
@@ -240,7 +250,7 @@ async function handleSubmit() {
     if (editing.value) {
       const totalSewing = Number(form.value.total_sewing_result)
       if (distRemaining.value && totalSewing > distRemaining.value.available) {
-        formError.value = `Sewing result (${totalSewing}) exceeds available distribution quantity (${distRemaining.value.available}).`
+        formError.value = `${t('deposits.sewingResult')} (${totalSewing}) exceeds available distribution quantity (${distRemaining.value.available}).`
         submitting.value = false
         return
       }
@@ -256,7 +266,7 @@ async function handleSubmit() {
     } else {
       const totalSewing = Number(form.value.total_sewing_result)
       if (distRemaining.value && totalSewing > distRemaining.value.available) {
-        formError.value = `Sewing result (${totalSewing}) exceeds available quantity (${distRemaining.value.available}).`
+        formError.value = `${t('deposits.sewingResult')} (${totalSewing}) exceeds available quantity (${distRemaining.value.available}).`
         submitting.value = false
         return
       }
@@ -313,7 +323,7 @@ function positionDistPicker() {
 <template>
   <div>
     <div class="flex justify-end mb-4">
-      <Button @click="openAddForm">+ Add Deposit</Button>
+      <Button @click="openAddForm">+ {{ t('deposits.addDeposit') }}</Button>
     </div>
     <Card variant="bordered">
       <div v-if="loading" class="flex items-center justify-center py-12">
@@ -323,7 +333,7 @@ function positionDistPicker() {
         </svg>
       </div>
       <div v-else-if="items.length === 0" class="text-center py-12">
-        <p class="text-surface-500">No deposits found</p>
+        <p class="text-surface-500">{{ t('deposits.noResults') }}</p>
       </div>
       <Table v-else :columns="columns" :rows="groupedDeposits" expandable :per-page="15">
         <template #name="{ value }"><span class="whitespace-nowrap min-w-[200px] inline-block">{{ value }}</span></template>
@@ -333,22 +343,22 @@ function positionDistPicker() {
         <template #total_price="{ value }"><span class="font-medium whitespace-nowrap">{{ formatCurrency(value) }}</span></template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
         <template #status="{ row }">
-          <Badge :variant="statusBadge(groupStatus(row))" size="sm">{{ groupStatus(row) }}</Badge>
+          <Badge :variant="statusBadge(groupStatus(row))" size="sm">{{ translateStatus(groupStatus(row)) }}</Badge>
         </template>
         <template #expanded="{ row }">
           <Card variant="bordered" class="shadow-none!">
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-surface-200">
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Deposit Name</th>
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Article</th>
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Size</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Sewing Result</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Price/Pcs</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Total Price</th>
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Deposit Date</th>
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">Status</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">Actions</th>
+                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.name') }}</th>
+                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('deposits.article') }}</th>
+                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.size') }}</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('deposits.sewingResult') }}</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('deposits.cuttingPricePerPcs') }}</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('deposits.totalPrice') }}</th>
+                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('deposits.depositDate') }}</th>
+                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.status') }}</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('common.edit') }}/{{ t('common.delete') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -360,12 +370,12 @@ function positionDistPicker() {
                   <td class="py-1.5 px-3 text-right">{{ formatCurrency(entry.cutting_price_per_pcs) }}</td>
                   <td class="py-1.5 px-3 text-right font-medium">{{ formatCurrency(entry.total_price) }}</td>
                   <td class="py-1.5 px-3">{{ formatDate(entry.deposit_date) }}</td>
-                  <td class="py-1.5 px-3"><Badge :variant="statusBadge(entry.status)" size="sm">{{ entry.status }}</Badge></td>
+                  <td class="py-1.5 px-3"><Badge :variant="statusBadge(entry.status)" size="sm">{{ translateStatus(entry.status) }}</Badge></td>
                   <td class="py-1.5 px-3 text-right">
-                    <button @click="openEditForm(entry)" class="p-1 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" title="Edit">
+                    <button @click="openEditForm(entry)" class="p-1 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </button>
-                    <button @click="openDeleteModal(entry)" class="p-1 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Delete">
+                    <button @click="openDeleteModal(entry)" class="p-1 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </td>
@@ -377,11 +387,11 @@ function positionDistPicker() {
       </Table>
     </Card>
 
-    <Modal v-model="showForm" :title="editing ? 'Edit Deposit' : 'Add Deposit'" size="lg" :closeOnOverlay="false" contentClass="h-[80vh]">
+    <Modal v-model="showForm" :title="editing ? t('deposits.editDeposit') : t('deposits.addDeposit')" size="lg" :closeOnOverlay="false" contentClass="h-[80vh]">
       <div class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
         <div class="relative" ref="distPickerRef" v-if="!editing">
-          <label class="block text-sm font-medium text-surface-700 mb-1">Distribution <span class="text-danger">*</span></label>
+          <label class="block text-sm font-medium text-surface-700 mb-1">{{ t('deposits.distribution') }} <span class="text-danger">*</span></label>
           <button
             ref="distTriggerRef"
             type="button"
@@ -390,7 +400,7 @@ function positionDistPicker() {
             @click="toggleDistPicker"
           >
             <span class="flex-1 truncate text-left" :class="selectedDistGroup ? 'text-surface-800' : 'text-surface-400'">
-              {{ selectedDistGroup ? `${selectedDistGroup.name} — ${selectedDistGroup.tailor?.name || ''}` : 'Select a distribution group' }}
+              {{ selectedDistGroup ? `${selectedDistGroup.name} — ${selectedDistGroup.tailor?.name || ''}` : t('deposits.selectDistribution') }}
             </span>
             <svg class="w-4 h-4 text-surface-500 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': showDistPicker }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
           </button>
@@ -404,10 +414,10 @@ function positionDistPicker() {
                 <div class="border-b border-surface-200 p-2">
                   <div class="flex items-center gap-2 px-3 py-1.5 bg-surface-50 rounded-lg">
                     <svg class="w-4 h-4 text-surface-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input v-model="distSearch" class="w-full bg-transparent outline-none text-sm placeholder:text-surface-400" placeholder="Search distributions..." />
+                    <input v-model="distSearch" class="w-full bg-transparent outline-none text-sm placeholder:text-surface-400" :placeholder="t('deposits.searchDistributions')" />
                   </div>
                 </div>
-                <div v-if="distGroups.length === 0" class="px-4 py-3 text-sm text-surface-400 text-center">No available distributions</div>
+                <div v-if="distGroups.length === 0" class="px-4 py-3 text-sm text-surface-400 text-center">{{ t('deposits.noDistributions') }}</div>
                 <div v-else class="max-h-72 overflow-y-auto">
                   <div
                     v-for="group in distGroups"
@@ -423,7 +433,7 @@ function positionDistPicker() {
                         <span class="text-surface-400">—</span>
                         <span>{{ group.tailor?.name || '-' }}</span>
                       </div>
-                      <Badge :variant="group.total_remaining > 0 ? 'success' : 'danger'" size="sm">rem: {{ group.total_remaining }}</Badge>
+                      <Badge :variant="group.total_remaining > 0 ? 'success' : 'danger'" size="sm">{{ t('common.rem') }}: {{ group.total_remaining }}</Badge>
                     </div>
                     <div class="mt-1 flex flex-wrap gap-1">
                       <Badge v-for="d in group.entries" :key="d.id" variant="default" size="sm">{{ d.size?.abbreviation || '-' }}: {{ d.deposit_remaining ?? d.total_cutting }}</Badge>
@@ -435,58 +445,58 @@ function positionDistPicker() {
           </Teleport>
         </div>
         <div v-else>
-          <label class="block text-sm font-medium text-surface-700 mb-1">Distribution</label>
+          <label class="block text-sm font-medium text-surface-700 mb-1">{{ t('deposits.distribution') }}</label>
           <div class="px-4 py-2 text-sm bg-surface-50 border border-surface-200 rounded-lg text-surface-700">
             {{ selectedDistribution?.name || '-' }} — {{ selectedDistribution?.tailor?.name || '' }}
           </div>
         </div>
         <div v-if="!editing && selectedDistGroup" class="p-3 bg-surface-50 rounded-lg space-y-1 text-sm">
-          <p><span class="font-medium">Brand:</span> {{ selectedDistGroup.brand?.name || '-' }}</p>
-          <p><span class="font-medium">Tailor:</span> {{ selectedDistGroup.tailor?.name || '-' }}</p>
-          <p><span class="font-medium">Total Distributed:</span> {{ selectedDistGroup.total_distributed }}</p>
-          <p><span class="font-medium">Total Remaining:</span> <span :class="selectedDistGroup.total_remaining > 0 ? 'text-green-600' : 'text-red-600'" class="font-medium">{{ selectedDistGroup.total_remaining }}</span></p>
+          <p><span class="font-medium">{{ t('common.brand') }}:</span> {{ selectedDistGroup.brand?.name || '-' }}</p>
+          <p><span class="font-medium">{{ t('common.tailor') }}:</span> {{ selectedDistGroup.tailor?.name || '-' }}</p>
+          <p><span class="font-medium">{{ t('deposits.totalDistributed') }}:</span> {{ selectedDistGroup.total_distributed }}</p>
+          <p><span class="font-medium">{{ t('deposits.totalRemaining') }}:</span> <span :class="selectedDistGroup.total_remaining > 0 ? 'text-green-600' : 'text-red-600'" class="font-medium">{{ selectedDistGroup.total_remaining }}</span></p>
         </div>
         <div v-if="editing && selectedDistribution" class="p-3 bg-surface-50 rounded-lg space-y-1 text-sm">
-          <p><span class="font-medium">Pre-Order:</span> {{ selectedDistribution.cutting_result?.pre_order?.name || selectedDistribution.cutting_result?.name || '-' }}</p>
-          <p><span class="font-medium">Tailor:</span> {{ selectedDistribution.tailor?.name || '-' }}</p>
-          <p><span class="font-medium">Brand:</span> {{ selectedDistribution.brand?.name || '-' }}</p>
-          <p><span class="font-medium">Article:</span> {{ selectedDistribution.article?.name || '-' }}</p>
-          <p><span class="font-medium">Size:</span> {{ selectedDistribution.size?.abbreviation || '-' }}</p>
-          <p><span class="font-medium">Distributed:</span> {{ selectedDistribution.total_cutting || '-' }}</p>
+          <p><span class="font-medium">{{ t('common.preOrder') }}:</span> {{ selectedDistribution.cutting_result?.pre_order?.name || selectedDistribution.cutting_result?.name || '-' }}</p>
+          <p><span class="font-medium">{{ t('common.tailor') }}:</span> {{ selectedDistribution.tailor?.name || '-' }}</p>
+          <p><span class="font-medium">{{ t('common.brand') }}:</span> {{ selectedDistribution.brand?.name || '-' }}</p>
+          <p><span class="font-medium">{{ t('deposits.article') }}:</span> {{ selectedDistribution.article?.name || '-' }}</p>
+          <p><span class="font-medium">{{ t('common.size') }}:</span> {{ selectedDistribution.size?.abbreviation || '-' }}</p>
+          <p><span class="font-medium">{{ t('deposits.totalDistributed') }}:</span> {{ selectedDistribution.total_cutting || '-' }}</p>
         </div>
         <div v-if="distRemaining" class="p-3 bg-blue-50 rounded-lg space-y-1 text-sm">
-          <p><span class="font-medium">Total Distributed:</span> {{ distRemaining.total_cutting }}</p>
-          <p><span class="font-medium">Already Deposited:</span> {{ distRemaining.deposited }}</p>
-          <p><span class="font-medium">Available:</span> <span :class="distRemaining.available > 0 ? 'text-green-600' : 'text-red-600'" class="font-medium">{{ distRemaining.available }}</span></p>
+          <p><span class="font-medium">{{ t('deposits.totalDistributed') }}:</span> {{ distRemaining.total_cutting }}</p>
+          <p><span class="font-medium">{{ t('deposits.alreadyDeposited') }}:</span> {{ distRemaining.deposited }}</p>
+          <p><span class="font-medium">{{ t('deposits.available') }}:</span> <span :class="distRemaining.available > 0 ? 'text-green-600' : 'text-red-600'" class="font-medium">{{ distRemaining.available }}</span></p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input v-model="form.total_sewing_result" label="Sewing Result" type="number" placeholder="0" required />
-          <Input v-model="form.cutting_price_per_pcs" label="Cutting Price/Pcs" type="number" placeholder="0" required />
+          <Input v-model="form.total_sewing_result" :label="t('deposits.sewingResult')" type="number" placeholder="0" required />
+          <Input v-model="form.cutting_price_per_pcs" :label="t('deposits.cuttingPricePerPcs')" type="number" placeholder="0" required />
         </div>
         <div class="px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg text-sm">
-          <span class="font-medium text-surface-600">Total Price:</span>
+          <span class="font-medium text-surface-600">{{ t('deposits.totalPrice') }}:</span>
           <span class="ml-2 font-semibold">{{ formatCurrency(computedTotalPrice) }}</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input v-model="form.deposit_date" label="Deposit Date" type="date" required />
+          <Input v-model="form.deposit_date" :label="t('deposits.depositDate')" type="date" required />
         </div>
-        <Input v-model="form.quality_notes" label="Quality Notes" type="textarea" placeholder="Optional quality notes" />
-        <Input v-model="form.notes" label="Notes" type="textarea" placeholder="Optional notes" />
+        <Input v-model="form.quality_notes" :label="t('deposits.qualityNotes')" type="textarea" :placeholder="t('deposits.optionalQualityNotes')" />
+        <Input v-model="form.notes" :label="t('common.notes')" type="textarea" />
       </div>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showForm = false">Cancel</Button>
-          <Button :loading="submitting" @click="handleSubmit">{{ editing ? 'Update' : 'Create' }}</Button>
+          <Button variant="outline" @click="showForm = false">{{ t('common.cancel') }}</Button>
+          <Button :loading="submitting" @click="handleSubmit">{{ editing ? t('common.update') : t('common.create') }}</Button>
         </div>
       </template>
     </Modal>
 
-    <Modal v-model="showDeleteModal" title="Delete Deposit" size="sm" :closeOnOverlay="false">
-      <p class="text-surface-700">Are you sure you want to delete <strong>{{ deletingItem?.name }}</strong>? This action cannot be undone.</p>
+    <Modal v-model="showDeleteModal" :title="t('deposits.deleteTitle')" size="sm" :closeOnOverlay="false">
+      <p class="text-surface-700">{{ t('common.confirmDelete') }} <strong>{{ deletingItem?.name }}</strong>? {{ t('common.cannotUndo') }}.</p>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showDeleteModal = false">Cancel</Button>
-          <Button variant="danger" @click="handleDelete">Delete</Button>
+          <Button variant="outline" @click="showDeleteModal = false">{{ t('common.cancel') }}</Button>
+          <Button variant="danger" @click="handleDelete">{{ t('common.delete') }}</Button>
         </div>
       </template>
     </Modal>

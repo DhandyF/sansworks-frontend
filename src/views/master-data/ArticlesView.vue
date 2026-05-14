@@ -1,9 +1,12 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useMasterData } from '@/composables/useMasterData'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
 import { Button, Card, Table, Badge, Input, Modal, SearchableDropdown } from 'ui-assets'
+
+const { t } = useI18n()
 
 const search = ref('')
 const brandFilter = ref('')
@@ -31,10 +34,10 @@ async function fetchBrands() {
 }
 
 const columns = [
-  { key: 'name', label: 'Name' },
-  { key: 'brand', label: 'Brand' },
-  { key: 'description', label: 'Description' },
-  { key: 'actions', label: 'Actions' },
+  { key: 'name', label: t('common.name') },
+  { key: 'brand', label: t('common.brand') },
+  { key: 'description', label: t('common.description') },
+  { key: 'actions', label: t('common.actions') },
 ]
 
 const showForm = ref(false)
@@ -117,10 +120,10 @@ async function handleDelete() {
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-surface-900">Articles</h1>
-        <p class="mt-1 text-sm text-surface-500">Manage articles and their brands</p>
+        <h1 class="text-2xl font-bold text-surface-900">{{ t('articles.title') }}</h1>
+        <p class="mt-1 text-sm text-surface-500">{{ t('articles.description') }}</p>
       </div>
-      <Button @click="openAddForm">+ Add Article</Button>
+      <Button @click="openAddForm">+ {{ t('articles.addArticle') }}</Button>
     </div>
 
     <div class="flex flex-col sm:flex-row gap-3 mb-4">
@@ -134,7 +137,7 @@ async function handleDelete() {
         />
       </div>
       <div class="flex-1">
-        <Input v-model="search" label="" placeholder="Search by article name..." />
+        <Input v-model="search" label="" :placeholder="t('articles.searchPlaceholder')" />
       </div>
     </div>
 
@@ -158,10 +161,10 @@ async function handleDelete() {
           </template>
           <template #actions="{ row }">
             <div class="flex items-center gap-1">
-              <button @click="openEditForm(row)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" title="Edit">
+              <button @click="openEditForm(row)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               </button>
-              <button @click="openDeleteModal(row)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Delete">
+              <button @click="openDeleteModal(row)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               </button>
             </div>
@@ -170,40 +173,40 @@ async function handleDelete() {
       </template>
     </Card>
 
-    <Modal v-model="showForm" :title="editing ? 'Edit Article' : 'Add Article'" size="md" contentClass="h-[80vh]" :closeOnOverlay="false">
+    <Modal v-model="showForm" :title="editing ? t('articles.editArticle') : t('articles.addArticle')" size="md" contentClass="h-[80vh]" :closeOnOverlay="false">
       <div class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
         <SearchableDropdown
           v-model="form.brand_id"
           :options="brands"
-          label="Brand"
-          placeholder="Select a brand"
+          :label="t('common.brand')"
+          :placeholder="t('common.selectBrand')"
           required
         />
-        <div v-if="brandArticlesLoading" class="text-sm text-surface-400">Loading articles...</div>
+        <div v-if="brandArticlesLoading" class="text-sm text-surface-400">{{ t('articles.loadingArticles') }}</div>
         <div v-else-if="brandArticles.length > 0" class="space-y-1">
-          <p class="text-sm font-medium text-surface-700">Existing articles for this brand:</p>
+          <p class="text-sm font-medium text-surface-700">{{ t('articles.existingArticles') }}</p>
           <div class="flex flex-wrap gap-1.5">
             <Badge v-for="article in brandArticles" :key="article.id" variant="default" size="sm">{{ article.name }}</Badge>
           </div>
         </div>
-        <Input :model-value="form.name" @update:model-value="v => form.name = v.toUpperCase()" label="Article Name" placeholder="Article name" required />
-        <Input v-model="form.description" label="Description" type="textarea" placeholder="Optional description" />
+        <Input :model-value="form.name" @update:model-value="v => form.name = v.toUpperCase()" :label="t('articles.articleName')" :placeholder="t('articles.articleName')" required />
+        <Input v-model="form.description" :label="t('common.description')" type="textarea" :placeholder="t('articles.optionalDescription')" />
       </div>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showForm = false">Cancel</Button>
-          <Button :loading="submitting" @click="handleSubmit">{{ editing ? 'Update' : 'Create' }}</Button>
+          <Button variant="outline" @click="showForm = false">{{ t('common.cancel') }}</Button>
+          <Button :loading="submitting" @click="handleSubmit">{{ editing ? t('common.update') : t('common.create') }}</Button>
         </div>
       </template>
     </Modal>
 
-    <Modal v-model="showDeleteModal" title="Delete Article" size="sm" :closeOnOverlay="false">
-      <p class="text-surface-700">Are you sure you want to delete <strong>{{ deletingItem?.name }}</strong>? This action cannot be undone.</p>
+    <Modal v-model="showDeleteModal" :title="t('articles.deleteTitle')" size="sm" :closeOnOverlay="false">
+      <p class="text-surface-700">{{ t('common.confirmDelete') }} <strong>{{ deletingItem?.name }}</strong>? {{ t('common.cannotUndo') }}</p>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showDeleteModal = false">Cancel</Button>
-          <Button variant="danger" @click="handleDelete">Delete</Button>
+          <Button variant="outline" @click="showDeleteModal = false">{{ t('common.cancel') }}</Button>
+          <Button variant="danger" @click="handleDelete">{{ t('common.delete') }}</Button>
         </div>
       </template>
     </Modal>

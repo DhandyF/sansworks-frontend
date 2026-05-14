@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
 import { Input, SearchableDropdown } from 'ui-assets'
@@ -11,6 +12,7 @@ import DepositCuttingResultsTab from '@/components/production/DepositCuttingResu
 const route = useRoute()
 const router = useRouter()
 const { request } = useApi()
+const { t } = useI18n()
 
 const activeTab = ref(route.query.tab || 'cutting')
 const search = ref('')
@@ -18,9 +20,9 @@ const brandFilter = ref('')
 const { debounce } = useDebounce(500)
 
 const tabs = [
-  { id: 'cutting', name: 'Cutting Results', component: CuttingResultsTab },
-  { id: 'distributions', name: 'Distributions', component: CuttingDistributionsTab },
-  { id: 'deposits', name: 'Deposits', component: DepositCuttingResultsTab },
+  { id: 'cutting', name: computed(() => t('production.cuttingResults')), component: CuttingResultsTab },
+  { id: 'distributions', name: computed(() => t('production.distributions')), component: CuttingDistributionsTab },
+  { id: 'deposits', name: computed(() => t('production.deposits')), component: DepositCuttingResultsTab },
 ]
 
 const cuttingRef = ref(null)
@@ -67,8 +69,8 @@ watch([search, brandFilter], () => {
   <div>
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-surface-900">Production</h1>
-        <p class="mt-1 text-sm text-surface-500">Manage production workflow from cutting to sewing</p>
+        <h1 class="text-2xl font-bold text-surface-900">{{ t('production.title') }}</h1>
+        <p class="mt-1 text-sm text-surface-500">{{ t('production.description') }}</p>
       </div>
     </div>
 
@@ -90,10 +92,10 @@ watch([search, brandFilter], () => {
 
     <div class="flex flex-col sm:flex-row gap-3 mb-4">
       <div class="sm:w-64">
-        <SearchableDropdown v-model="brandFilter" :options="filterBrands" label="" placeholder="All brands" clearable />
+        <SearchableDropdown v-model="brandFilter" :options="filterBrands" label="" :placeholder="t('production.searchPlaceholder')" clearable />
       </div>
       <div class="flex-1">
-        <Input v-model="search" label="" placeholder="Search..." />
+        <Input v-model="search" label="" :placeholder="t('production.searchPlaceholder')" />
       </div>
     </div>
 

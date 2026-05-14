@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
 import { Card, Badge, Table } from 'ui-assets'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { request } = useApi()
@@ -21,12 +23,12 @@ const searchQuery = ref('')
 const brandFilter = ref('')
 const statusFilter = ref('')
 
-const statusFilters = [
-  { value: '', label: 'All' },
-  { value: 'done', label: 'Done' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'overdue', label: 'Overdue' },
-]
+const statusFilters = computed(() => [
+  { value: '', label: t('tailorDetail.filterAll') },
+  { value: 'done', label: t('common.done') },
+  { value: 'in_progress', label: t('common.inProgress') },
+  { value: 'overdue', label: t('common.overdue') },
+])
 
 function filterBadgeVariant(filter) {
   if (filter === statusFilter.value) {
@@ -36,17 +38,17 @@ function filterBadgeVariant(filter) {
   return 'default'
 }
 
-const columns = [
-  { key: 'name', label: 'Distribution' },
-  { key: 'pre_order', label: 'Pre-Order' },
-  { key: 'brand', label: 'Brand' },
-  { key: 'article', label: 'Article' },
-  { key: 'size', label: 'Size' },
-  { key: 'total_cutting', label: 'Distributed' },
-  { key: 'deposit_remaining', label: 'Remaining' },
-  { key: 'total_price', label: 'Total Price' },
-  { key: 'status', label: 'Status' },
-]
+const columns = computed(() => [
+  { key: 'name', label: t('tailorDetail.distribution') },
+  { key: 'pre_order', label: t('tailorDetail.preOrder') },
+  { key: 'brand', label: t('common.brand') },
+  { key: 'article', label: t('tailorDetail.article') },
+  { key: 'size', label: t('tailorDetail.size') },
+  { key: 'total_cutting', label: t('tailorDetail.distributed') },
+  { key: 'deposit_remaining', label: t('common.remaining') },
+  { key: 'total_price', label: t('tailorDetail.totalPrice') },
+  { key: 'status', label: t('common.status') },
+])
 
 function buildParams(page) {
   const params = new URLSearchParams()
@@ -96,9 +98,9 @@ const statusBadge = (status) => {
 }
 
 const statusLabel = (status) => {
-  if (status === 'done') return 'Done'
-  if (status === 'overdue') return 'Overdue'
-  return 'In Progress'
+  if (status === 'done') return t('common.done')
+  if (status === 'overdue') return t('common.overdue')
+  return t('common.inProgress')
 }
 
 function formatDate(date) {
@@ -113,11 +115,11 @@ function formatCurrency(value) {
 <template>
   <div>
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.back()" class="p-2 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer" title="Back">
+      <button @click="router.back()" class="p-2 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer" :title="t('common.back')">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <div>
-        <h1 class="text-2xl font-bold text-surface-900">{{ tailor?.name || 'Tailor Detail' }}</h1>
+        <h1 class="text-2xl font-bold text-surface-900">{{ tailor?.name || t('tailorDetail.title') }}</h1>
         <p v-if="tailor" class="mt-0.5 text-sm text-surface-500">
           <span v-if="tailor.phone">{{ tailor.phone }}</span>
           <span v-if="tailor.phone && tailor.address" class="mx-1">&middot;</span>
@@ -137,48 +139,48 @@ function formatCurrency(value) {
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.total_distributed }}</p>
-          <p class="text-xs text-surface-500 mt-1">Total Distributed</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('tailorDetail.totalDistributed') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.total_deposited }}</p>
-          <p class="text-xs text-surface-500 mt-1">Total Deposited</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('tailorDetail.totalDeposited') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900" :class="summary.total_remaining > 0 ? 'text-amber-600' : 'text-green-600'">{{ summary.total_remaining }}</p>
-          <p class="text-xs text-surface-500 mt-1">Remaining</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('common.remaining') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ formatCurrency(summary.total_price) }}</p>
-          <p class="text-xs text-surface-500 mt-1">Total Price</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('tailorDetail.totalPrice') }}</p>
         </Card>
       </div>
 
       <div class="grid grid-cols-3 gap-4 mb-6">
         <Card variant="bordered" class="text-center py-3">
           <p class="text-xl font-semibold text-green-600">{{ summary.done_count }}</p>
-          <p class="text-xs text-surface-500 mt-0.5">Done</p>
+          <p class="text-xs text-surface-500 mt-0.5">{{ t('common.done') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-3">
           <p class="text-xl font-semibold text-amber-600">{{ summary.in_progress_count }}</p>
-          <p class="text-xs text-surface-500 mt-0.5">In Progress</p>
+          <p class="text-xs text-surface-500 mt-0.5">{{ t('common.inProgress') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-3">
           <p class="text-xl font-semibold text-red-600">{{ summary.overdue_count }}</p>
-          <p class="text-xs text-surface-500 mt-0.5">Overdue</p>
+          <p class="text-xs text-surface-500 mt-0.5">{{ t('common.overdue') }}</p>
         </Card>
       </div>
 
       <Card variant="bordered">
         <div class="px-4 py-3 border-b border-surface-200">
-          <h2 class="text-lg font-semibold text-surface-900">Distributions</h2>
+          <h2 class="text-lg font-semibold text-surface-900">{{ t('tailorDetail.distributions') }}</h2>
         </div>
         <div class="px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3 border-b border-surface-200">
           <div class="w-48">
-            <input v-model="searchQuery" type="text" placeholder="Search pre-order..." class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+            <input v-model="searchQuery" type="text" :placeholder="t('tailorDetail.searchPlaceholder')" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
           </div>
           <div class="w-48">
             <select v-model="brandFilter" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500">
-              <option value="">All Brands</option>
+              <option value="">{{ t('common.allBrands') }}</option>
               <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
             </select>
           </div>
@@ -189,7 +191,7 @@ function formatCurrency(value) {
           </div>
         </div>
         <div v-if="distributions.length === 0" class="text-center py-12">
-          <p class="text-surface-500">No distributions match your filters</p>
+          <p class="text-surface-500">{{ t('tailorDetail.noFilters') }}</p>
         </div>
         <Table v-else :columns="columns" :rows="distributions" :pagination="pagination" @page-change="fetchData" expandable>
           <template #name="{ value }"><span class="whitespace-nowrap min-w-[160px] inline-block font-medium text-surface-800">{{ value }}</span></template>
@@ -207,12 +209,12 @@ function formatCurrency(value) {
                 <table class="w-full text-sm">
                   <thead>
                     <tr class="border-b border-surface-200">
-                      <th class="py-1.5 px-3 text-left font-medium text-surface-500">Deposit</th>
-                      <th class="py-1.5 px-3 text-right font-medium text-surface-500">Sewing Result</th>
-                      <th class="py-1.5 px-3 text-right font-medium text-surface-500">Price/Pcs</th>
-                      <th class="py-1.5 px-3 text-right font-medium text-surface-500">Total Price</th>
-                      <th class="py-1.5 px-3 text-left font-medium text-surface-500">Date</th>
-                      <th class="py-1.5 px-3 text-left font-medium text-surface-500">Status</th>
+                      <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('tailorDetail.deposit') }}</th>
+                      <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('tailorDetail.sewingResult') }}</th>
+                      <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('tailorDetail.pricePerPcs') }}</th>
+                      <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('tailorDetail.totalPrice') }}</th>
+                      <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('tailorDetail.depositDate') }}</th>
+                      <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.status') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -228,7 +230,7 @@ function formatCurrency(value) {
                 </table>
               </Card>
             </div>
-            <p v-else class="px-3 py-2 text-sm text-surface-400">No deposits yet</p>
+            <p v-else class="px-3 py-2 text-sm text-surface-400">{{ t('tailorDetail.noDeposits') }}</p>
           </template>
         </Table>
       </Card>
