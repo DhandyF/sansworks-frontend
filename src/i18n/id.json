@@ -155,7 +155,8 @@
     "deadline": "Batas Waktu",
     "cuttingDone": "Potong Selesai",
     "distributed": "Didistribusikan",
-    "deposited": "Disetor"
+    "deposited": "Disetor",
+    "progress": "Progres"
   },
   "preOrders": {
     "title": "Pre-Order",

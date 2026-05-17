@@ -48,7 +48,14 @@ const columns = computed(() => [
   { key: 'tailor', label: t('cuttingDistributions.tailor') },
   { key: 'total_distributed', label: t('cuttingDistributions.totalDistributed') },
   { key: 'total_deposit_remaining', label: t('common.remaining') },
+  { key: 'progress', label: t('brandDetail.progress') },
 ])
+
+function getProgress(row) {
+  if (!row.total_distributed || row.total_distributed === 0) return 0
+  const done = row.total_distributed - row.total_deposit_remaining
+  return Math.round((done / row.total_distributed) * 100)
+}
 
 const tailors = ref([])
 const allCuttingResults = ref([])
@@ -257,6 +264,14 @@ function positionCrPicker() {
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
+        <template #progress="{ row }">
+          <div class="flex items-center gap-2">
+            <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
+              <div :style="{ width: `${getProgress(row)}%`, height: '100%', background: '#3b82f6', borderRadius: '9999px' }"></div>
+            </div>
+            <span style="font-size: 11px; font-weight: 500; color: #374151;">{{ getProgress(row) }}%</span>
+          </div>
+        </template>
         <template #expanded="{ row }">
           <Card variant="bordered" class="shadow-none!">
             <table class="w-full text-sm">

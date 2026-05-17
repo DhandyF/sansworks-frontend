@@ -52,8 +52,15 @@ const columns = computed(() => [
   { key: 'pre_order', label: t('common.preOrder') },
   { key: 'total_cutting', label: t('cuttingResults.totalCutting') },
   { key: 'remaining', label: t('common.remaining') },
+  { key: 'progress', label: t('brandDetail.progress') },
   { key: 'status', label: t('common.status') },
 ])
+
+function getProgress(row) {
+  if (!row.total_cutting || row.total_cutting === 0) return 0
+  const done = row.total_cutting - row.remaining
+  return Math.round((done / row.total_cutting) * 100)
+}
 
 const brands = ref([])
 const preOrders = ref([])
@@ -289,6 +296,14 @@ async function handleDelete() {
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #pre_order="{ value }"><span class="whitespace-nowrap min-w-40 inline-block">{{ value?.name || '-' }}</span></template>
         <template #remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
+        <template #progress="{ row }">
+          <div class="flex items-center gap-2">
+            <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
+              <div :style="{ width: `${getProgress(row)}%`, height: '100%', background: '#3b82f6', borderRadius: '9999px' }"></div>
+            </div>
+            <span style="font-size: 11px; font-weight: 500; color: #374151;">{{ getProgress(row) }}%</span>
+          </div>
+        </template>
         <template #status="{ row }">
           <Badge :variant="statusBadge(cuttingStatus(row))" size="sm">{{ cuttingStatus(row) === 'done' ? t('common.done') : t('common.inProgress') }}</Badge>
         </template>

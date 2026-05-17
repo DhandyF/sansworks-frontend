@@ -155,7 +155,8 @@
     "deadline": "Deadline",
     "cuttingDone": "Cutting Done",
     "distributed": "Distributed",
-    "deposited": "Deposited"
+    "deposited": "Deposited",
+    "progress": "Progress"
   },
   "preOrders": {
     "title": "Pre-Orders",

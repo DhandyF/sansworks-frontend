@@ -25,8 +25,8 @@ const menuGroups = [
 
 const directLinks = [
   { name: () => t('nav.preOrders'), route: 'pre-orders' },
-  { name: () => t('nav.payslips'), route: 'payslips' },
   { name: () => t('nav.production'), route: 'production' },
+  { name: () => t('nav.payslips'), route: 'payslips' },
 ]
 
 function navigate(routeName) {

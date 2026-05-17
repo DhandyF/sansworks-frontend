@@ -224,6 +224,7 @@ const columns = computed(() => [
   { key: 'deadline_date', label: t('preOrders.deadline') },
   { key: 'total_pcs', label: t('common.totalPcs') },
   { key: 'total_remaining', label: t('common.remaining') },
+  { key: 'progress', label: t('brandDetail.progress') },
   { key: 'actions', label: t('common.actions') },
 ])
 
@@ -231,6 +232,12 @@ function formatDate(dateStr) {
   if (!dateStr) return '-'
   const d = new Date(dateStr)
   return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function getProgress(row) {
+  if (!row.total_pcs || row.total_pcs === 0) return 0
+  const cutQty = row.total_pcs - row.total_remaining
+  return Math.round((cutQty / row.total_pcs) * 100)
 }
 
 const showForm = ref(false)
@@ -439,6 +446,14 @@ async function handleDelete() {
           </template>
           <template #total_remaining="{ value }">
             <Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge>
+          </template>
+          <template #progress="{ row }">
+            <div class="flex items-center gap-2">
+              <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
+                <div :style="{ width: `${getProgress(row)}%`, height: '100%', background: '#3b82f6', borderRadius: '9999px' }"></div>
+              </div>
+              <span style="font-size: 11px; font-weight: 500; color: #374151;">{{ getProgress(row) }}%</span>
+            </div>
           </template>
           <template #actions="{ row }">
             <div class="flex items-center gap-1">

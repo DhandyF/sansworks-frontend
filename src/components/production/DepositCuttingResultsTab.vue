@@ -94,8 +94,14 @@ const columns = computed(() => [
   { key: 'total_sewing_result', label: t('deposits.sewingResult') },
   { key: 'total_price', label: t('deposits.totalPrice') },
   { key: 'total_deposit_remaining', label: t('common.remaining') },
+  { key: 'progress', label: t('brandDetail.progress') },
   { key: 'status', label: t('common.status') },
 ])
+
+function getProgress(row) {
+  if (!row.total_distributed || row.total_distributed === 0) return 0
+  return Math.round((row.total_sewing_result / row.total_distributed) * 100)
+}
 
 const allDistributions = ref([])
 const showDistPicker = ref(false)
@@ -342,6 +348,14 @@ function positionDistPicker() {
         <template #total_sewing_result="{ value }"><span class="font-medium">{{ value }}</span></template>
         <template #total_price="{ value }"><span class="font-medium whitespace-nowrap">{{ formatCurrency(value) }}</span></template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
+        <template #progress="{ row }">
+          <div class="flex items-center gap-2">
+            <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
+              <div :style="{ width: `${getProgress(row)}%`, height: '100%', background: '#3b82f6', borderRadius: '9999px' }"></div>
+            </div>
+            <span style="font-size: 11px; font-weight: 500; color: #374151;">{{ getProgress(row) }}%</span>
+          </div>
+        </template>
         <template #status="{ row }">
           <Badge :variant="statusBadge(groupStatus(row))" size="sm">{{ translateStatus(groupStatus(row)) }}</Badge>
         </template>

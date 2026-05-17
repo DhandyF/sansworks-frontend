@@ -45,6 +45,7 @@ const columns = computed(() => [
   { key: 'cutting_remaining', label: t('common.remaining') },
   { key: 'distributed_qty', label: t('preOrderDetail.distributed') },
   { key: 'deposited_qty', label: t('preOrderDetail.deposited') },
+  { key: 'progress', label: t('brandDetail.progress') },
   { key: 'deadline_date', label: t('preOrderDetail.deadline') },
   { key: 'status', label: t('preOrderDetail.status') },
 ])
@@ -76,6 +77,11 @@ const statusLabel = (status) => {
 
 const formatDate = (date) => {
   return date ? new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
+}
+
+const getProgress = (row) => {
+  if (!row.total_pcs || row.total_pcs === 0) return 0
+  return Math.round((row.deposited_qty || 0) / row.total_pcs * 100)
 }
 
 function groupByTailor(distributions) {
@@ -179,6 +185,14 @@ function groupByTailor(distributions) {
             <template #cutting_remaining="{ value }"><span class="block text-right"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></span></template>
             <template #distributed_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
             <template #deposited_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
+            <template #progress="{ row }">
+              <div class="flex items-center gap-2">
+                <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
+                  <div :style="{ width: `${getProgress(row)}%`, height: '100%', background: '#3b82f6', borderRadius: '9999px' }"></div>
+                </div>
+                <span style="font-size: 11px; font-weight: 500; color: #374151;">{{ getProgress(row) }}%</span>
+              </div>
+            </template>
             <template #deadline_date="{ value }"><span class="whitespace-nowrap">{{ formatDate(value) }}</span></template>
             <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
             <template #expanded="{ row }">
