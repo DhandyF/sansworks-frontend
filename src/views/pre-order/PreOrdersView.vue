@@ -275,12 +275,8 @@ watch(() => form.value.brand_id, (newBrandId) => {
 })
 
 function addArticle() {
-  form.value.articles.push(createEmptyArticle())
-  nextTick(() => {
-    const idx = form.value.articles.length - 1
-    const el = document.querySelector(`[data-article="${idx}"] button`)
-    if (el) el.click()
-  })
+  const newArticle = createEmptyArticle()
+  form.value.articles = [...form.value.articles, newArticle]
 }
 
 function removeArticle(index) {
