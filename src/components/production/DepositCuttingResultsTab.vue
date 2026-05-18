@@ -211,7 +211,16 @@ function formatCurrency(value) {
 
 function openAddForm() {
   editing.value = null
-  form.value = { cutting_distribution_ids: [], cutting_distribution_id: '', total_sewing_result: '', cutting_price_per_pcs: '', deposit_date: '', quality_notes: '', notes: '' }
+  const today = new Date().toISOString().split('T')[0]
+  form.value = {
+    cutting_distribution_ids: [],
+    cutting_distribution_id: '',
+    total_sewing_result: '',
+    cutting_price_per_pcs: '',
+    deposit_date: today,
+    quality_notes: '',
+    notes: ''
+  }
   formError.value = ''
   selectedDistGroup.value = null
   distRemaining.value = null
