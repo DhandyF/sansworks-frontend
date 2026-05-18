@@ -277,6 +277,11 @@ watch(() => form.value.brand_id, (newBrandId) => {
 function addArticle() {
   const newArticle = createEmptyArticle()
   form.value.articles = [...form.value.articles, newArticle]
+  nextTick(() => {
+    const idx = form.value.articles.length - 1
+    const el = document.querySelector(`[data-article="${idx}"] input`)
+    if (el) el.focus()
+  })
 }
 
 function removeArticle(index) {
@@ -361,15 +366,68 @@ async function handleSubmit() {
     }
 
     if (editing.value) {
-      for (const rawId of editing.value.rawIds) {
+      const existingSizes = editing.value.articles.flatMap(ag =>
+        ag.entries.map(e => `${ag.article_id}_${e.size_id}`)
+      )
+      const formSizes = form.value.articles.flatMap(a =>
+        a.sizes.map(s => `${a.article_id}_${s.size_id}`)
+      )
+
+      const sizesToAdd = form.value.articles.flatMap(a =>
+        a.sizes.filter(s => !existingSizes.includes(`${a.article_id}_${s.size_id}`)).map(s => ({
+          article_id: a.article_id,
+          size_id: s.size_id,
+          total_pcs: Number(s.total_pcs),
+        }))
+      )
+
+      const sizesToRemove = editing.value.articles.flatMap(ag =>
+        ag.entries.filter(e => !formSizes.includes(`${ag.article_id}_${e.size_id}`)).map(e => e.id)
+      )
+
+      for (const rawId of sizesToRemove) {
         await deleteItem(rawId)
       }
+
+      for (const rawId of editing.value.rawIds) {
+        const item = items.value.find(i => i.id === rawId)
+        if (item && !sizesToRemove.includes(rawId)) {
+          const formArticle = form.value.articles.find(a => a.article_id === item.article_id)
+          const formSize = formArticle?.sizes.find(s => s.size_id === item.size_id)
+          await request(`/pre-orders/${rawId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              brand_id: payload.brand_id,
+              name: payload.name,
+              pre_order_date: payload.pre_order_date,
+              deadline_date: payload.deadline_date,
+              article_id: item.article_id,
+              size_id: item.size_id,
+              total_pcs: formSize ? Number(formSize.total_pcs) : item.total_pcs,
+            }),
+          })
+        }
+      }
+
+      if (sizesToAdd.length > 0) {
+        await request('/pre-orders/batch', {
+          method: 'POST',
+          body: JSON.stringify({
+            brand_id: payload.brand_id,
+            name: payload.name,
+            pre_order_date: payload.pre_order_date,
+            deadline_date: payload.deadline_date,
+            articles: groupSizesByArticle(sizesToAdd),
+          }),
+        })
+      }
+    } else {
+      await request('/pre-orders/batch', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
     }
 
-    await request('/pre-orders/batch', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
     await fetchData(1)
     showForm.value = false
   } catch (e) {
@@ -377,6 +435,17 @@ async function handleSubmit() {
   } finally {
     submitting.value = false
   }
+}
+
+function groupSizesByArticle(flatSizes) {
+  const map = new Map()
+  for (const s of flatSizes) {
+    if (!map.has(s.article_id)) {
+      map.set(s.article_id, { article_id: s.article_id, sizes: [] })
+    }
+    map.get(s.article_id).sizes.push({ size_id: s.size_id, total_pcs: s.total_pcs })
+  }
+  return Array.from(map.values())
 }
 
 async function handleDelete() {
