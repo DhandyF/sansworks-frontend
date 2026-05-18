@@ -306,11 +306,13 @@ function removeSizeRow(articleIndex, sizeIndex) {
 
 function openAddForm() {
   editing.value = null
+  const today = new Date().toISOString().split('T')[0]
+  const deadline = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
   form.value = {
     brand_id: '',
     name: '',
-    pre_order_date: '',
-    deadline_date: '',
+    pre_order_date: today,
+    deadline_date: deadline,
     articles: [createEmptyArticle()],
   }
   formError.value = ''

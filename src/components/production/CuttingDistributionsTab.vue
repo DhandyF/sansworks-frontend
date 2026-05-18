@@ -150,7 +150,9 @@ const selectedCrGroup = ref(null)
 
 function openAddForm() {
   editing.value = null
-  form.value = { cutting_result_name: '', tailor_id: '', total_cutting: '', taken_date: '', deadline_date: '', notes: '' }
+  const today = new Date().toISOString().split('T')[0]
+  const deadline = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+  form.value = { cutting_result_name: '', tailor_id: '', total_cutting: '', taken_date: today, deadline_date: deadline, notes: '' }
   formError.value = ''
   selectedCrGroup.value = null
   showCrPicker.value = false
