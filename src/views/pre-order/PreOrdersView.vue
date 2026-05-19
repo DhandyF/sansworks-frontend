@@ -29,6 +29,7 @@ const cuttingFormStyle = ref({})
 
 const tooltipData = ref(null)
 const tooltipStyle = ref({})
+const today = new Date().toISOString().split('T')[0]
 
 function showTooltip(entry, event) {
   if (!entry.cutting_results || entry.cutting_results.length === 0) return
@@ -55,7 +56,7 @@ function openCuttingForm(entry, group, event) {
     cut_qty: entry.cut_qty ?? 0,
     remaining: entry.remaining ?? entry.total_pcs,
     total_cutting: '',
-    cutting_date: '',
+    cutting_date: today,
   }
   cuttingError.value = ''
   nextTick(() => positionCuttingForm(event))
@@ -306,7 +307,7 @@ function removeSizeRow(articleIndex, sizeIndex) {
 
 function openAddForm() {
   editing.value = null
-  const today = new Date().toISOString().split('T')[0]
+  // const today = new Date().toISOString().split('T')[0]
   const deadline = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
   form.value = {
     brand_id: '',

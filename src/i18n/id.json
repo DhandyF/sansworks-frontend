@@ -7,6 +7,7 @@
     "tailors": "Penjahit",
     "sizes": "Ukuran",
     "preOrders": "Pre-Order",
+    "shipments": "Pengiriman",
     "payslips": "Slip Gaji",
     "production": "Produksi",
     "signOut": "Keluar"
@@ -49,7 +50,9 @@
     "selectBrand": "Pilih brand",
     "selectAll": "Semua",
     "rem": "sisa",
-    "tailor": "Penjahit"
+    "tailor": "Penjahit",
+    "article": "Artikel",
+    "size": "Ukuran"
   },
   "login": {
     "title": "Masuk ke Sansworks",
@@ -186,6 +189,22 @@
     "addArticle": "Tambah Artikel",
     "addSize": "Tambah Ukuran",
     "removeArticle": "Hapus Artikel",
+    "preOrderDate": "Tanggal Pre-Order",
+    "deadlineDate": "Batas Waktu"
+  },
+  "shipments": {
+    "title": "Pengiriman",
+    "description": "Kelola pengiriman barang jadi",
+    "noPreOrders": "Belum ada pre-order",
+    "shipped": "Dikirim",
+    "remaining": "Sisa Kirim",
+    "addShipment": "Tambah pengiriman",
+    "shipmentDate": "Tanggal Kirim",
+    "shipmentQty": "Jml Kirim",
+    "shipmentDateRequired": "Tanggal kirim wajib diisi",
+    "shipmentQtyGreater0": "Jumlah kirim harus lebih dari 0",
+    "shipmentQtyExceeds": "Jumlah kirim melebihi sisa",
+    "remainingAvailable": "Sisa tersedia:",
     "remove": "Hapus",
     "preOrderDate": "Tanggal Pre-Order",
     "deadlineDate": "Batas Waktu",

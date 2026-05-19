@@ -7,6 +7,7 @@
     "tailors": "Tailors",
     "sizes": "Sizes",
     "preOrders": "Pre-Order",
+    "shipments": "Shipments",
     "payslips": "Payslips",
     "production": "Production",
     "signOut": "Sign Out"
@@ -48,7 +49,10 @@
     "cannotUndo": "This action cannot be undone.",
     "selectBrand": "Select a brand",
     "selectAll": "All",
-    "rem": "rem"
+    "rem": "rem",
+    "tailor": "Tailor",
+    "article": "Article",
+    "size": "Size"
   },
   "login": {
     "title": "Sign in to Sansworks",
@@ -185,7 +189,21 @@
     "addArticle": "Add Article",
     "addSize": "Add Size",
     "removeArticle": "Remove Article",
-    "remove": "Remove",
+    "remove": "Remove"
+  },
+  "shipments": {
+    "title": "Shipments",
+    "description": "Manage finished goods shipments",
+    "noPreOrders": "No pre-orders yet",
+    "shipped": "Shipped",
+    "remaining": "Remaining",
+    "addShipment": "Add shipment",
+    "shipmentDate": "Shipment Date",
+    "shipmentQty": "Shipment Qty",
+    "shipmentDateRequired": "Shipment date is required",
+    "shipmentQtyGreater0": "Shipment qty must be greater than 0",
+    "shipmentQtyExceeds": "Shipment qty exceeds remaining",
+    "remainingAvailable": "Remaining available:",
     "preOrderDate": "Pre-Order Date",
     "deadlineDate": "Deadline Date",
     "selectBrandFirst": "Select a brand first...",
