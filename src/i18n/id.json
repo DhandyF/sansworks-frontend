@@ -5,7 +5,7 @@
     "articles": "Artikel",
     "users": "Pengguna",
     "tailors": "Penjahit",
-    "sizes": "Ukuran",
+    "sizes": "Size",
     "preOrders": "Pre-Order",
     "shipments": "Pengiriman",
     "payslips": "Slip Gaji",
@@ -52,7 +52,7 @@
     "rem": "sisa",
     "tailor": "Penjahit",
     "article": "Artikel",
-    "size": "Ukuran"
+    "size": "Size"
   },
   "login": {
     "title": "Masuk ke Sansworks",
@@ -93,7 +93,7 @@
     "deleteTitle": "Hapus Brand"
   },
   "sizes": {
-    "title": "Ukuran",
+    "title": "Size",
     "description": "Kelola ukuran pakaian",
     "addSize": "Tambah Ukuran",
     "editSize": "Edit Ukuran",
@@ -136,7 +136,7 @@
     "distribution": "Distribusi",
     "preOrder": "Pre-Order",
     "article": "Artikel",
-    "size": "Ukuran",
+    "size": "Size",
     "distributed": "Didistribusikan",
     "pricePerPcs": "Harga/Pcs",
     "deposit": "Setoran",
@@ -176,7 +176,7 @@
     "deposited": "Disetor",
     "cuttingDate": "Tanggal Potong",
     "article": "Artikel",
-    "size": "Ukuran",
+    "size": "Size",
     "cutQty": "Jml Potong",
     "deleteTitle": "Hapus Pre-Order",
     "deleteMessage": "Ini akan menghapus semua ukuran dalam pre-order ini.",
@@ -195,7 +195,6 @@
   "shipments": {
     "title": "Pengiriman",
     "description": "Kelola pengiriman barang jadi",
-    "noPreOrders": "Belum ada pre-order",
     "shipped": "Dikirim",
     "remaining": "Sisa Kirim",
     "addShipment": "Tambah pengiriman",
@@ -215,7 +214,7 @@
   },
   "preOrderDetail": {
     "title": "Detail Pre-Order",
-    "totalPcs": "Total Pcs",
+    "totalPcs": "Total Order",
     "cuttingDone": "Potong Selesai",
     "distributed": "Didistribusikan",
     "deposited": "Disetor",
@@ -230,7 +229,9 @@
     "filterInProgress": "Dalam Proses",
     "filterOverdue": "Terlambat",
     "deadline": "Batas Waktu",
-    "status": "Status"
+    "status": "Status",
+    "remaining": "Sisa Potong",
+    "progress": "Progress Jahit"
   },
   "production": {
     "title": "Produksi",
@@ -272,7 +273,7 @@
     "preOrder": "Pre-Order",
     "totalRemaining": "Total Sisa:",
     "article": "Artikel",
-    "size": "Ukuran",
+    "size": "Size",
     "tailor": "Penjahit",
     "quantityToDistribute": "Jumlah Distribusi",
     "takenDate": "Tanggal Ambil",

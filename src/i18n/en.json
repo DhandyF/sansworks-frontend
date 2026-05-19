@@ -194,7 +194,6 @@
   "shipments": {
     "title": "Shipments",
     "description": "Manage finished goods shipments",
-    "noPreOrders": "No pre-orders yet",
     "shipped": "Shipped",
     "remaining": "Remaining",
     "addShipment": "Add shipment",
@@ -213,7 +212,7 @@
   },
   "preOrderDetail": {
     "title": "Pre-Order Detail",
-    "totalPcs": "Total Pcs",
+    "totalPcs": "Jumlah Order",
     "cuttingDone": "Cutting Done",
     "distributed": "Distributed",
     "deposited": "Deposited",
@@ -228,7 +227,9 @@
     "filterInProgress": "In Progress",
     "filterOverdue": "Overdue",
     "deadline": "Deadline",
-    "status": "Status"
+    "status": "Status",
+    "remaining": "Remaining",
+    "progress": "Sewing Progress"
   },
   "production": {
     "title": "Production",
