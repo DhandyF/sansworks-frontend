@@ -34,11 +34,12 @@ const shipmentFormRef = ref(null)
 
 function openShipmentForm(entry, group, event) {
   const today = new Date().toISOString().split('T')[0]
+  const remainingFromDeposit = (entry.deposited_qty ?? 0) - (entry.shipped ?? 0)
   shipmentForm.value = {
     pre_order_id: entry.id,
     shipment_date: today,
     total_shipment: '',
-    remaining: entry.shipped !== undefined ? entry.total_pcs - entry.shipped : entry.total_pcs,
+    remaining: remainingFromDeposit > 0 ? remainingFromDeposit : 0,
   }
   shipmentError.value = ''
   nextTick(() => positionShipmentForm(event))
@@ -178,6 +179,7 @@ const groupedOrders = computed(() => {
       group.articles.push(articleGroup)
     }
 
+    const deposited = item.deposited_qty ?? 0
     const shipped = item.shipments?.reduce((sum, s) => sum + s.total_shipment, 0) ?? 0
     const remainingShip = item.total_pcs - shipped
 
@@ -186,6 +188,7 @@ const groupedOrders = computed(() => {
       size: item.size, 
       size_id: item.size_id, 
       total_pcs: item.total_pcs, 
+      deposited_qty: deposited,
       shipped: shipped,
       remaining_ship: remainingShip,
       shipments: item.shipments || []
@@ -202,6 +205,7 @@ const columns = computed(() => [
   { key: 'pre_order_date', label: t('preOrders.orderDate') },
   { key: 'deadline_date', label: t('preOrders.deadline') },
   { key: 'total_pcs', label: t('common.totalPcs') },
+  { key: 'deposited', label: t('preOrderDetail.deposited') },
   { key: 'shipped', label: t('shipments.shipped') },
   { key: 'remaining', label: t('shipments.remaining') },
   { key: 'progress', label: t('brandDetail.progress') },
@@ -221,15 +225,20 @@ function getShipped(row) {
 
 function getRemainingShip(row) {
   return row.articles.reduce((sum, ag) => {
-    return sum + ag.entries.reduce((s, e) => s + (e.remaining_ship ?? e.total_pcs), 0)
+    return sum + ag.entries.reduce((s, e) => s + (e.remaining_ship ?? 0), 0)
+  }, 0)
+}
+
+function getDeposited(row) {
+  return row.articles.reduce((sum, ag) => {
+    return sum + ag.entries.reduce((s, e) => s + (e.deposited_qty ?? 0), 0)
   }, 0)
 }
 
 function getProgress(row) {
-  const total = row.total_pcs
-  if (!total || total === 0) return 0
+  if (!row.total_pcs || row.total_pcs === 0) return 0
   const shipped = getShipped(row)
-  return Math.round((shipped / total) * 100)
+  return Math.round((shipped / row.total_pcs) * 100)
 }
 </script>
 
@@ -281,11 +290,17 @@ function getProgress(row) {
           <template #deadline_date="{ row }">
             {{ formatDate(row.deadline_date) }}
           </template>
+          <template #total_pcs="{ row }">
+            <span class="text-surface-800 font-medium">{{ row.total_pcs }}</span>
+          </template>
+          <template #deposited="{ row }">
+            <span class="text-surface-800 font-medium">{{ getDeposited(row) }}</span>
+          </template>
           <template #shipped="{ row }">
             <span class="text-surface-800 font-medium">{{ getShipped(row) }}</span>
           </template>
           <template #remaining="{ row }">
-            <Badge :variant="getRemainingShip(row) > 0 ? 'success' : 'danger'" size="sm">{{ getRemainingShip(row) }}</Badge>
+            <Badge :variant="getRemainingShip(row) > 0 ? 'danger' : 'success'" size="sm">{{ getRemainingShip(row) }}</Badge>
           </template>
           <template #progress="{ row }">
             <div class="flex items-center gap-2">
@@ -306,6 +321,7 @@ function getProgress(row) {
                     <tr class="border-b border-surface-200">
                       <th class="py-1.5 px-4 text-left font-medium text-surface-500">{{ t('common.size') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('common.totalPcs') }}</th>
+                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('preOrderDetail.deposited') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('shipments.shipped') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('shipments.remaining') }}</th>
                     </tr>
@@ -314,6 +330,7 @@ function getProgress(row) {
                     <tr v-for="entry in ag.entries" :key="entry.id" class="border-b border-surface-100 last:border-0">
                       <td class="py-1.5 px-4"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
                       <td class="py-1.5 px-4 text-right">{{ entry.total_pcs }}</td>
+                      <td class="py-1.5 px-4 text-right">{{ entry.deposited_qty ?? 0 }}</td>
                       <td class="py-1.5 px-4">
                         <div class="flex items-center justify-end gap-1.5">
                           <span
@@ -335,7 +352,7 @@ function getProgress(row) {
                           </button>
                         </div>
                       </td>
-                      <td class="py-1.5 px-4 text-right"><Badge :variant="entry.remaining_ship > 0 ? 'success' : 'danger'" size="sm">{{ entry.remaining_ship ?? entry.total_pcs }}</Badge></td>
+                      <td class="py-1.5 px-4 text-right"><Badge :variant="entry.remaining_ship > 0 ? 'danger' : 'success'" size="sm">{{ entry.remaining_ship ?? entry.total_pcs }}</Badge></td>
                     </tr>
                   </tbody>
                 </table>
