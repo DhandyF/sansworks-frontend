@@ -42,10 +42,12 @@ const columns = computed(() => [
   { key: 'size', label: t('common.size') },
   { key: 'total_pcs', label: t('common.totalPcs') },
   { key: 'cut_qty', label: t('preOrderDetail.cuttingDone') },
-  { key: 'cutting_remaining', label: t('common.remaining') },
   { key: 'distributed_qty', label: t('preOrderDetail.distributed') },
+  { key: 'cutting_remaining', label: t('preOrderDetail.remaining') },
   { key: 'deposited_qty', label: t('preOrderDetail.deposited') },
   { key: 'progress', label: t('brandDetail.progress') },
+  { key: 'delivered', label: t('preOrderDetail.delivered'), tooltip: t('preOrderDetail.deliveredTooltip') },
+  { key: 'not_delivered', label: t('preOrderDetail.notDelivered'), tooltip: t('preOrderDetail.notDeliveredTooltip') },
   { key: 'deadline_date', label: t('preOrderDetail.deadline') },
   { key: 'status', label: t('preOrderDetail.status') },
 ])
@@ -81,7 +83,7 @@ const formatDate = (date) => {
 
 const getProgress = (row) => {
   if (!row.total_pcs || row.total_pcs === 0) return 0
-  return Math.round((row.deposited_qty || 0) / row.total_pcs * 100)
+  return Math.round((row.shipped_qty || 0) / row.total_pcs * 100)
 }
 
 function groupByTailor(distributions) {
@@ -182,9 +184,11 @@ function groupByTailor(distributions) {
             <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
             <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
             <template #cut_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
-            <template #cutting_remaining="{ value }"><span class="block text-right"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></span></template>
             <template #distributed_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
+            <template #cutting_remaining="{ value }"><span class="block text-right"><Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge></span></template>
             <template #deposited_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
+            <template #delivered="{ row }"><span class="block text-right">{{ row.shipped_qty ?? 0 }}</span></template>
+            <template #not_delivered="{ row }"><span class="block text-right"><Badge :variant="(row.total_pcs - (row.shipped_qty ?? 0)) > 0 ? 'danger' : 'success'" size="sm">{{ row.total_pcs - (row.shipped_qty ?? 0) }}</Badge></span></template>
             <template #progress="{ row }">
               <div class="flex items-center gap-2">
                 <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
