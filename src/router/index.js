@@ -65,6 +65,11 @@ const routes = [
         component: () => import('@/views/shipment/ShipmentsView.vue'),
       },
       {
+        path: 'qc',
+        name: 'qc',
+        component: () => import('@/views/qc/QCView.vue'),
+      },
+      {
         path: 'payslips',
         name: 'payslips',
         component: () => import('@/views/payslip/PayslipView.vue'),

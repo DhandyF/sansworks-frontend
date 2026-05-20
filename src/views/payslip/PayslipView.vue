@@ -62,12 +62,14 @@ function printPayslip() {
       const val = item.columns[c.key] || 0
       return `<td class="px-2 py-1.5 text-center border border-surface-300">${val > 0 ? val : '-'}</td>`
     }).join('')
+    const deductions = item.repair_charges > 0 ? formatCurrency(item.repair_charges) : '-'
     return `<tr>
       <td class="px-3 py-1.5 text-sm font-medium border border-surface-300">${item.article_name}</td>
       ${cells}
       <td class="px-3 py-1.5 text-sm text-right border border-surface-300">${item.total_qty}</td>
       <td class="px-3 py-1.5 text-sm text-right border border-surface-300">${formatCurrency(item.price_per_pcs)}</td>
-      <td class="px-3 py-1.5 text-sm text-right font-semibold border border-surface-300">${formatCurrency(item.total_price)}</td>
+      <td class="px-3 py-1.5 text-sm text-right font-semibold border border-surface-300">${formatCurrency(item.earnings)}</td>
+      <td class="px-3 py-1.5 text-sm text-right font-semibold border border-surface-300">${deductions}</td>
     </tr>`
   }).join('')
 
@@ -143,11 +145,12 @@ function printPayslip() {
     <table>
       <thead>
         <tr>
-          <th class="col-emp" style="width:25%">${t('payslip.articleItem')}</th>
+          <th class="col-emp" style="width:20%">${t('payslip.articleItem')}</th>
           ${colHeaders}
-          <th class="col-qty" style="width:8%">${t('payslip.totalQty')}</th>
-          <th class="col-price" style="width:12%">${t('payslip.pricePcs')}</th>
-          <th class="col-total" style="width:14%">${t('payslip.totalAmount')}</th>
+          <th class="col-qty" style="width:7%">${t('payslip.totalQty')}</th>
+          <th class="col-price" style="width:10%">${t('payslip.pricePcs')}</th>
+          <th class="col-total" style="width:12%">${t('payslip.earnings')}</th>
+          <th class="col-total" style="width:12%">${t('payslip.deductions')}</th>
         </tr>
       </thead>
       <tbody>
@@ -158,7 +161,12 @@ function printPayslip() {
           <td colspan="${colCount + 1}" class="text-right">${t('payslip.grandTotal')}</td>
           <td class="col-qty">${p.summary.total_qty}</td>
           <td></td>
-          <td class="col-total" style="font-size:13px">${formatCurrency(p.summary.total_price)}</td>
+          <td class="col-total" style="font-size:13px">${formatCurrency(p.summary.earnings)}</td>
+          <td class="col-total" style="font-size:13px">${p.summary.repair_charges > 0 ? formatCurrency(p.summary.repair_charges) : '-'}</td>
+        </tr>
+        <tr>
+          <td colspan="${colCount + 3}" class="text-right font-bold">${t('payslip.netTotal')}</td>
+          <td colspan="2" class="col-total font-bold" style="font-size:13px">${formatCurrency(p.summary.net_total)}</td>
         </tr>
       </tfoot>
     </table>
@@ -250,7 +258,8 @@ function printPayslip() {
                 </th>
                 <th class="px-3 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.totalQty') }}</th>
                 <th class="px-3 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.pricePcs') }}</th>
-                <th class="px-4 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.totalAmount') }}</th>
+                <th class="px-4 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.earnings') }}</th>
+                <th class="px-4 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.deductions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -265,16 +274,21 @@ function printPayslip() {
                 </td>
                 <td class="px-3 py-2.5 text-right font-medium">{{ item.total_qty }}</td>
                 <td class="px-3 py-2.5 text-right">{{ formatCurrency(item.price_per_pcs) }}</td>
-                <td class="px-4 py-2.5 text-right font-semibold">{{ formatCurrency(item.total_price) }}</td>
+                <td class="px-4 py-2.5 text-right font-semibold text-green-600">{{ formatCurrency(item.earnings) }}</td>
+                <td class="px-4 py-2.5 text-right font-semibold text-red-600">{{ item.repair_charges > 0 ? formatCurrency(item.repair_charges) : '-' }}</td>
               </tr>
             </tbody>
             <tfoot>
               <tr class="bg-surface-50 border-t-2 border-surface-300">
-                <td class="px-4 py-3 font-bold text-surface-900">{{ t('payslip.grandTotal') }}</td>
-                <td v-for="c in payslip.columns" :key="c.key" class="px-2 py-3"></td>
+                <td class="px-4 py-3 font-bold text-surface-900" :colspan="payslip.columns.length + 1">{{ t('payslip.grandTotal') }}</td>
                 <td class="px-3 py-3 text-right font-bold text-surface-900">{{ payslip.summary.total_qty }}</td>
                 <td class="px-3 py-3"></td>
-                <td class="px-4 py-3 text-right font-bold text-lg text-surface-900">{{ formatCurrency(payslip.summary.total_price) }}</td>
+                <td class="px-4 py-3 text-right font-bold text-lg text-green-600">{{ formatCurrency(payslip.summary.earnings) }}</td>
+                <td class="px-4 py-3 text-right font-bold text-lg text-red-600">{{ payslip.summary.repair_charges > 0 ? formatCurrency(payslip.summary.repair_charges) : '-' }}</td>
+              </tr>
+              <tr class="bg-surface-100">
+                <td :colspan="payslip.columns.length + 3" class="px-4 py-2 text-right font-bold text-surface-900">{{ t('payslip.netTotal') }}</td>
+                <td colspan="2" class="px-4 py-2 text-right font-bold text-lg text-surface-900">{{ formatCurrency(payslip.summary.net_total) }}</td>
               </tr>
             </tfoot>
           </table>

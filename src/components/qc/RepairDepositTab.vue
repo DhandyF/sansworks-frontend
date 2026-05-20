@@ -3,7 +3,7 @@ import { ref, watch, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMasterData } from '@/composables/useMasterData'
 import { useApi } from '@/composables/useApi'
-import { Button, Card, Table, Badge, Modal, SearchableDropdown } from 'ui-assets'
+import { Button, Card, Table, Badge, Modal, Input, SearchableDropdown } from 'ui-assets'
 
 const { t } = useI18n()
 
@@ -140,6 +140,17 @@ const repairOptions = computed(() => {
 async function handleSubmit() {
   formError.value = ''
   submitting.value = true
+
+  const selectedRepairData = repairs.value?.find(r => r.id === form.value.repair_id)
+  if (selectedRepairData) {
+    const remaining = selectedRepairData.total_repair - (selectedRepairData.total_deposited ?? 0)
+    if (Number(form.value.total_deposit) > remaining) {
+      formError.value = t('repairDeposits.exceedRemaining', { remaining })
+      submitting.value = false
+      return
+    }
+  }
+
   try {
     const payload = {
       repair_id: form.value.repair_id,
@@ -234,7 +245,7 @@ const columns = computed(() => [
       <div class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
           <SearchableDropdown v-model="form.repair_id" :options="repairOptions" :label="t('repairDeposits.repairName')" :placeholder="t('repairDeposits.selectRepair')" required />
           <SearchableDropdown v-model="form.tailor_id" :options="tailors" :label="t('repairDeposits.tailor')" :placeholder="t('repairDeposits.selectTailor')" required :disabled="!!form.repair_id" />
         </div>
