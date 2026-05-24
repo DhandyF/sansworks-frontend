@@ -499,7 +499,7 @@ async function handleDelete() {
         <p class="text-surface-500">{{ t('preOrders.noPreOrders') }}</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="groupedOrders" expandable :per-page="15">
+        <Table :columns="columns" :rows="groupedOrders" expandable :per-page="15" showVerticalBorder>
           <template #name="{ row }">
             <span class="whitespace-nowrap min-w-40 inline-block">{{ row.name }}</span>
           </template>

@@ -268,7 +268,7 @@ const columns = computed(() => [
         <p class="text-surface-500">{{ t('repairs.noRepairs') }}</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="items" :per-page="15">
+        <Table :columns="columns" :rows="items" :per-page="15" showVerticalBorder>
           <template #name="{ value }"><span class="whitespace-nowrap font-medium text-surface-800">{{ value }}</span></template>
           <template #tailor="{ value }">{{ value?.name || '-' }}</template>
           <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>

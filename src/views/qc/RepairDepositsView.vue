@@ -231,7 +231,7 @@ const columns = computed(() => [
         <p class="text-surface-500">{{ t('repairDeposits.noDeposits') }}</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="items" :per-page="15">
+        <Table :columns="columns" :rows="items" :per-page="15" showVerticalBorder>
           <template #repair_name="{ row }"><span class="whitespace-nowrap font-medium text-surface-800">{{ row.repair?.name || '-' }}</span></template>
           <template #tailor="{ row }">{{ row.tailor?.name || '-' }}</template>
           <template #brand="{ row }"><Badge variant="primary" size="sm">{{ row.repair?.brand?.name || '-' }}</Badge></template>
