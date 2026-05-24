@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
-import { Card, Badge, Table } from 'ui-assets'
+import { Card, Badge, Table, Tabs } from 'ui-assets'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -15,6 +15,7 @@ const preOrder = ref(null)
 const summary = ref(null)
 const entries = ref([])
 const statusFilter = ref('')
+const activeTab = ref('production')
 
 const filteredEntries = computed(() => {
   if (!statusFilter.value) return entries.value
@@ -77,6 +78,35 @@ const statusLabel = (status) => {
   return t('common.inProgress')
 }
 
+const productionColumns = computed(() => [
+  { key: 'name', label: t('preOrderDetail.title') },
+  { key: 'article', label: t('common.article') },
+  { key: 'size', label: t('common.size') },
+  { key: 'total_pcs', label: t('common.totalPcs') },
+  { key: 'cut_qty', label: t('preOrderDetail.cuttingDone') },
+  { key: 'cutting_remaining', label: t('preOrderDetail.remaining') },
+  { key: 'distributed_qty', label: t('preOrderDetail.distributed') },
+  { key: 'deposited_qty', label: t('preOrderDetail.deposited') },
+  { key: 'progress', label: t('brandDetail.progress') },
+  { key: 'deadline_date', label: t('preOrderDetail.deadline') },
+])
+
+const shipmentColumns = computed(() => [
+  { key: 'name', label: t('preOrderDetail.title') },
+  { key: 'article', label: t('common.article') },
+  { key: 'size', label: t('common.size') },
+  { key: 'total_pcs', label: t('common.totalPcs') },
+  { key: 'shipped_qty', label: t('preOrderDetail.delivered') },
+  { key: 'remaining_ship', label: t('shipments.remaining') },
+  { key: 'progress', label: t('brandDetail.progress') },
+  { key: 'status', label: t('preOrderDetail.status') },
+])
+
+const tabs = computed(() => [
+  { key: 'production', label: 'Production' },
+  { key: 'shipment', label: 'Shipment' },
+])
+
 const formatDate = (date) => {
   return date ? new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
 }
@@ -84,6 +114,11 @@ const formatDate = (date) => {
 const getProgress = (row) => {
   if (!row.cut_qty || row.cut_qty === 0) return 0
   return Math.round((row.deposited_qty || 0) / row.cut_qty * 100)
+}
+
+const getShipmentProgress = (row) => {
+  if (!row.total_pcs || row.total_pcs === 0) return 0
+  return Math.round((row.shipped_qty || 0) / row.total_pcs * 100)
 }
 
 function groupByTailor(distributions) {
@@ -167,18 +202,21 @@ function groupByTailor(distributions) {
 
       <Card variant="bordered">
         <div class="px-4 py-3 border-b border-surface-200">
-          <h2 class="text-lg font-semibold text-surface-900">{{ t('preOrderDetail.details') }}</h2>
+          <div class="flex items-center justify-between">
+            <!-- <h2 class="text-lg font-semibold text-surface-900">{{ t('preOrderDetail.details') }}</h2> -->
+            <Tabs v-model="activeTab" :tabs="tabs" />
+          </div>
         </div>
         <div v-if="entries.length === 0" class="text-center py-12">
           <p class="text-surface-500">{{ t('preOrderDetail.noEntries') }}</p>
         </div>
         <template v-else>
-          <div class="px-4 py-2 flex items-center gap-2 border-b border-surface-200">
+          <div v-if="activeTab === 'production'" class="px-4 py-2 flex items-center gap-2 border-b border-surface-200">
             <button v-for="f in statusFilters" :key="f.value" @click="statusFilter = f.value" class="cursor-pointer">
               <Badge :variant="filterBadgeVariant(f.value)" size="sm">{{ f.label }}</Badge>
             </button>
           </div>
-          <Table :columns="columns" :rows="filteredEntries" :per-page="15" expandable>
+          <Table v-if="activeTab === 'production'" :columns="productionColumns" :rows="filteredEntries" :per-page="15" expandable>
             <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
             <template #article="{ value }">{{ value?.name || '-' }}</template>
             <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
@@ -187,8 +225,6 @@ function groupByTailor(distributions) {
             <template #cutting_remaining="{ value }"><span class="block text-right"><Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge></span></template>
             <template #distributed_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
             <template #deposited_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
-            <template #delivered="{ row }"><span class="block text-right">{{ row.shipped_qty ?? 0 }}</span></template>
-            <template #not_delivered="{ row }"><span class="block text-right"><Badge :variant="(row.total_pcs - (row.shipped_qty ?? 0)) > 0 ? 'danger' : 'success'" size="sm">{{ row.total_pcs - (row.shipped_qty ?? 0) }}</Badge></span></template>
             <template #progress="{ row }">
               <div class="flex items-center gap-2">
                 <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
@@ -237,6 +273,23 @@ function groupByTailor(distributions) {
               </div>
               <div v-else class="text-sm text-surface-400">{{ t('preOrderDetail.noDistributions') }}</div>
             </template>
+          </Table>
+          <Table v-else :columns="shipmentColumns" :rows="entries" :per-page="15">
+            <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
+            <template #article="{ value }">{{ value?.name || '-' }}</template>
+            <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
+            <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
+            <template #shipped_qty="{ value }"><span class="block text-right">{{ value ?? 0 }}</span></template>
+            <template #remaining_ship="{ row }"><span class="block text-right"><Badge :variant="(row.total_pcs - (row.shipped_qty ?? 0)) > 0 ? 'danger' : 'success'" size="sm">{{ row.total_pcs - (row.shipped_qty ?? 0) }}</Badge></span></template>
+            <template #progress="{ row }">
+              <div class="flex items-center gap-2">
+                <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
+                  <div :style="{ width: `${getShipmentProgress(row)}%`, height: '100%', background: '#3b82f6', borderRadius: '9999px' }"></div>
+                </div>
+                <span style="font-size: 11px; font-weight: 500; color: #374151;">{{ getShipmentProgress(row) }}%</span>
+              </div>
+            </template>
+            <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
           </Table>
         </template>
       </Card>
