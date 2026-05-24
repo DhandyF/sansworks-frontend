@@ -295,7 +295,7 @@ async function handleDelete() {
         <template #name="{ value }"><span class="whitespace-nowrap min-w-50 inline-block">{{ value }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #pre_order="{ value }"><span class="whitespace-nowrap min-w-40 inline-block">{{ value?.name || '-' }}</span></template>
-        <template #remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
+        <template #remaining="{ value }"><Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge></template>
         <template #progress="{ row }">
           <div class="flex items-center gap-2">
             <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
@@ -326,7 +326,7 @@ async function handleDelete() {
                   <td class="py-1.5 px-3">{{ entry.article?.name || '-' }}</td>
                   <td class="py-1.5 px-3"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
                   <td class="py-1.5 px-3 text-right">{{ entry.total_cutting }}</td>
-                  <td class="py-1.5 px-3 text-right"><Badge :variant="entry.remaining > 0 ? 'success' : 'danger'" size="sm">{{ entry.remaining }}</Badge></td>
+                  <td class="py-1.5 px-3 text-right"><Badge :variant="entry.remaining > 0 ? 'danger' : 'success'" size="sm">{{ entry.remaining }}</Badge></td>
                   <td class="py-1.5 px-3">{{ formatDate(entry.cutting_date) }}</td>
                   <td class="py-1.5 px-3"><Badge :variant="entry.remaining > 0 ? 'warning' : 'success'" size="sm">{{ entry.remaining > 0 ? t('common.inProgress') : t('common.done') }}</Badge></td>
                   <td class="py-1.5 px-3 text-right">

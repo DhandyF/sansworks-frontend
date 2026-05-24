@@ -513,7 +513,7 @@ async function handleDelete() {
             {{ formatDate(row.deadline_date) }}
           </template>
           <template #total_remaining="{ value }">
-            <Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge>
+            <Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge>
           </template>
           <template #progress="{ row }">
             <div class="flex items-center gap-2">
@@ -545,7 +545,7 @@ async function handleDelete() {
                       <th class="py-1.5 px-4 text-left font-medium text-surface-500">{{ t('preOrders.size') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('preOrders.totalPcs') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('preOrders.cutQty') }}</th>
-                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('common.remaining') }}</th>
+                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('preOrders.remaining') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -573,7 +573,7 @@ async function handleDelete() {
                           </button>
                         </div>
                       </td>
-                      <td class="py-1.5 px-4 text-right"><Badge :variant="entry.remaining > 0 ? 'success' : 'danger'" size="sm">{{ entry.remaining }}</Badge></td>
+                      <td class="py-1.5 px-4 text-right"><Badge :variant="entry.remaining > 0 ? 'danger' : 'success'" size="sm">{{ entry.remaining }}</Badge></td>
                     </tr>
                   </tbody>
                 </table>

@@ -278,14 +278,14 @@
     "invalidCombination": "Pilih kombinasi pre-order, artikel, dan ukuran yang valid.",
     "exceedsAvailable": "Total potong melebihi jumlah tersedia untuk item pre-order ini.",
     "deleteTitle": "Hapus Hasil Potong",
-    "remaining": "Blm Dicutting"
+    "remaining": "Sisa Cutting-an"
   },
   "cuttingDistributions": {
     "noResults": "Distribusi tidak ditemukan",
     "addDistribution": "Tambah Distribusi",
     "editDistribution": "Edit Distribusi",
     "name": "Nama",
-    "totalDistributed": "Total Didistribusikan",
+    "totalDistributed": "Total Di Penjahit",
     "cuttingResult": "Hasil Potong",
     "selectCuttingResult": "Pilih grup hasil potong",
     "preOrder": "Pre-Order",
@@ -300,7 +300,7 @@
     "searchCuttingResults": "Cari hasil potong...",
     "noCuttingResults": "Tidak ada hasil potong tersedia",
     "deleteTitle": "Hapus Distribusi",
-    "remaining": "Sisa Cutting-an"
+    "remaining": "Blm Setor"
   },
   "deposits": {
     "noResults": "Setoran tidak ditemukan",

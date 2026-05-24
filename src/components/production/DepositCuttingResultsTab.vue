@@ -356,7 +356,7 @@ function positionDistPicker() {
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
         <template #total_sewing_result="{ value }"><span class="font-medium">{{ value }}</span></template>
         <template #total_price="{ value }"><span class="font-medium whitespace-nowrap">{{ formatCurrency(value) }}</span></template>
-        <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
+        <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge></template>
         <template #progress="{ row }">
           <div class="flex items-center gap-2">
             <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">

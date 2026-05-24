@@ -61,7 +61,16 @@ onMounted(async () => {
       ...res.summary,
       cutting_left: res.summary.cut_qty - res.summary.distributed_qty
     }
-    entries.value = res.entries
+
+    // Sort entries: first by article name (group same articles), then by cutting_remaining descending
+    entries.value = res.entries.sort((a, b) => {
+      const articleA = a.article?.name?.toLowerCase() || ''
+      const articleB = b.article?.name?.toLowerCase() || ''
+      if (articleA !== articleB) {
+        return articleA.localeCompare(articleB)
+      }
+      return b.cutting_remaining - a.cutting_remaining
+    })
   } catch {
     router.push({ name: 'brands' })
   } finally {
@@ -225,7 +234,7 @@ function groupByTailor(distributions) {
           </div>
           <Table v-if="activeTab === 'production'" :columns="productionColumns" :rows="filteredEntries" :per-page="15" expandable showVerticalBorder>
             <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
-            <template #article="{ value }">{{ value?.name || '-' }}</template>
+            <template #article="{ value }"><span class="whitespace-nowrap">{{ value?.name || '-' }}</span></template>
             <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
             <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
             <template #cut_qty="{ value }"><span class="block text-right">{{ value }}</span></template>
@@ -283,7 +292,7 @@ function groupByTailor(distributions) {
           </Table>
           <Table v-else :columns="shipmentColumns" :rows="entries" :per-page="15" showVerticalBorder>
             <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
-            <template #article="{ value }">{{ value?.name || '-' }}</template>
+            <template #article="{ value }"><span class="whitespace-nowrap">{{ value?.name || '-' }}</span></template>
             <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
             <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
             <template #shipped_qty="{ value }"><span class="block text-right">{{ value ?? 0 }}</span></template>

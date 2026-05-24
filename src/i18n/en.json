@@ -283,7 +283,7 @@
     "addDistribution": "Add Distribution",
     "editDistribution": "Edit Distribution",
     "name": "Name",
-    "totalDistributed": "Total Distributed",
+    "totalDistributed": "Total in the Tailor",
     "cuttingResult": "Cutting Result",
     "selectCuttingResult": "Select a cutting result group",
     "preOrder": "Pre-Order",
@@ -298,7 +298,7 @@
     "searchCuttingResults": "Search cutting results...",
     "noCuttingResults": "No cutting results available",
     "deleteTitle": "Delete Distribution",
-    "remaining": "Cutting Left"
+    "remaining": "Not yet deposit"
   },
   "deposits": {
     "noResults": "No deposits found",

@@ -265,7 +265,7 @@ function positionCrPicker() {
         <template #name="{ value }"><span class="whitespace-nowrap min-w-[200px] inline-block">{{ value }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
-        <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'success' : 'danger'" size="sm">{{ value }}</Badge></template>
+        <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge></template>
         <template #progress="{ row }">
           <div class="flex items-center gap-2">
             <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
@@ -293,7 +293,7 @@ function positionCrPicker() {
                   <td class="py-1.5 px-3">{{ entry.article?.name || '-' }}</td>
                   <td class="py-1.5 px-3"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
                   <td class="py-1.5 px-3 text-right">{{ entry.total_cutting }}</td>
-                  <td class="py-1.5 px-3 text-right"><Badge :variant="(entry.deposit_remaining ?? entry.total_cutting) > 0 ? 'success' : 'danger'" size="sm">{{ entry.deposit_remaining ?? entry.total_cutting }}</Badge></td>
+                  <td class="py-1.5 px-3 text-right"><Badge :variant="(entry.deposit_remaining ?? entry.total_cutting) > 0 ? 'danger' : 'success'" size="sm">{{ entry.deposit_remaining ?? entry.total_cutting }}</Badge></td>
                   <td class="py-1.5 px-3">{{ formatDate(entry.taken_date) }}</td>
                   <td class="py-1.5 px-3">{{ formatDate(entry.deadline_date) }}</td>
                   <td class="py-1.5 px-3 text-right">
