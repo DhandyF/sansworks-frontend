@@ -110,7 +110,7 @@ function goToPreOrder(row) {
         <div v-if="preOrders.length === 0" class="text-center py-12">
           <p class="text-surface-500">{{ t('common.noResults') }}</p>
         </div>
-        <Table v-else :columns="columns" :rows="preOrders" :per-page="15" clickable @row-click="goToPreOrder">
+        <Table v-else :columns="columns" :rows="preOrders" :per-page="15" clickable @row-click="goToPreOrder" showVerticalBorder>
           <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
           <template #total_pcs="{ value }"><span class="block text-right">{{ value }}</span></template>
           <template #cut_qty="{ value }"><span class="block text-right">{{ value }}</span></template>

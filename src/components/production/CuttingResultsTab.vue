@@ -291,7 +291,7 @@ async function handleDelete() {
       <div v-else-if="items.length === 0" class="text-center py-12">
         <p class="text-surface-500">{{ t('cuttingResults.noResults') }}</p>
       </div>
-      <Table v-else :columns="columns" :rows="groupedResults" expandable :per-page="15">
+      <Table v-else :columns="columns" :rows="groupedResults" expandable :per-page="15" showVerticalBorder>
         <template #name="{ value }"><span class="whitespace-nowrap min-w-50 inline-block">{{ value }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #pre_order="{ value }"><span class="whitespace-nowrap min-w-40 inline-block">{{ value?.name || '-' }}</span></template>

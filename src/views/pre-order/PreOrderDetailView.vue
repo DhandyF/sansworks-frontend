@@ -216,7 +216,7 @@ function groupByTailor(distributions) {
               <Badge :variant="filterBadgeVariant(f.value)" size="sm">{{ f.label }}</Badge>
             </button>
           </div>
-          <Table v-if="activeTab === 'production'" :columns="productionColumns" :rows="filteredEntries" :per-page="15" expandable>
+          <Table v-if="activeTab === 'production'" :columns="productionColumns" :rows="filteredEntries" :per-page="15" expandable showVerticalBorder>
             <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
             <template #article="{ value }">{{ value?.name || '-' }}</template>
             <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
@@ -274,7 +274,7 @@ function groupByTailor(distributions) {
               <div v-else class="text-sm text-surface-400">{{ t('preOrderDetail.noDistributions') }}</div>
             </template>
           </Table>
-          <Table v-else :columns="shipmentColumns" :rows="entries" :per-page="15">
+          <Table v-else :columns="shipmentColumns" :rows="entries" :per-page="15" showVerticalBorder>
             <template #name="{ value }"><span class="whitespace-nowrap min-w-40 inline-block font-medium text-surface-800">{{ value }}</span></template>
             <template #article="{ value }">{{ value?.name || '-' }}</template>
             <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>

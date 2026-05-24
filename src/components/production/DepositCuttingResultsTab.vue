@@ -350,7 +350,7 @@ function positionDistPicker() {
       <div v-else-if="items.length === 0" class="text-center py-12">
         <p class="text-surface-500">{{ t('deposits.noResults') }}</p>
       </div>
-      <Table v-else :columns="columns" :rows="groupedDeposits" expandable :per-page="15">
+      <Table v-else :columns="columns" :rows="groupedDeposits" expandable :per-page="15" showVerticalBorder>
         <template #name="{ value }"><span class="whitespace-nowrap min-w-[200px] inline-block">{{ value }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>

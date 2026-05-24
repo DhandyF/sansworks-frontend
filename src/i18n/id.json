@@ -53,7 +53,9 @@
     "rem": "sisa",
     "tailor": "Penjahit",
     "article": "Artikel",
-    "size": "Size"
+    "size": "Size",
+    "close": "Tutup",
+    "preOrder": "Pre-Orders"
   },
   "login": {
     "title": "Masuk ke Sansworks",
@@ -213,7 +215,9 @@
     "selectBrandFirst": "Pilih brand terlebih dahulu...",
     "selectArticle": "Pilih artikel",
     "selectSize": "Pilih ukuran",
-    "noPreOrders": "Pre-order tidak ditemukan"
+    "noPreOrders": "Pre-order tidak ditemukan",
+    "shipmentDetails": "Detail Pengiriman",
+    "noShipments": "Belum ada pengiriman"
   },
   "preOrderDetail": {
     "title": "Detail Pre-Order",

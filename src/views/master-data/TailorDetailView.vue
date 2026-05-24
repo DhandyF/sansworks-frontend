@@ -193,7 +193,7 @@ function formatCurrency(value) {
         <div v-if="distributions.length === 0" class="text-center py-12">
           <p class="text-surface-500">{{ t('tailorDetail.noFilters') }}</p>
         </div>
-        <Table v-else :columns="columns" :rows="distributions" :pagination="pagination" @page-change="fetchData" expandable>
+        <Table v-else :columns="columns" :rows="distributions" :pagination="pagination" @page-change="fetchData" expandable showVerticalBorder>
           <template #name="{ value }"><span class="whitespace-nowrap min-w-[160px] inline-block font-medium text-surface-800">{{ value }}</span></template>
           <template #pre_order="{ value }"><span class="whitespace-nowrap">{{ value?.name || '-' }}</span></template>
           <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>

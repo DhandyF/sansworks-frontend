@@ -113,7 +113,7 @@ async function handleDelete() {
         <p class="text-surface-500">{{ t('tailors.searchPlaceholder') }}</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData" clickable @row-click="navToDetail">
+        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData" clickable @row-click="navToDetail" showVerticalBorder>
           <template #status="{ value }">
             <Badge :variant="value === 'active' ? 'success' : 'danger'" size="sm">{{ value === 'active' ? t('common.active') : t('common.inactive') }}</Badge>
           </template>

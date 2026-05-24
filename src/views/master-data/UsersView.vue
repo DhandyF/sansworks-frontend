@@ -111,7 +111,7 @@ async function handleDelete() {
         <p class="text-surface-500">{{ t('users.noResults') }}</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData">
+        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData" showVerticalBorder>
           <template #status="{ value }">
             <Badge :variant="value === 'active' ? 'success' : 'danger'" size="sm">{{ value === 'active' ? t('common.active') : t('common.inactive') }}</Badge>
           </template>

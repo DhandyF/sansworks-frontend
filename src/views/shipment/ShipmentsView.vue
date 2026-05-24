@@ -32,6 +32,14 @@ const shipmentError = ref('')
 const shipmentFormStyle = ref({})
 const shipmentFormRef = ref(null)
 
+const shipmentDetailForm = ref(null)
+const shipmentDetailSubmitting = ref(false)
+const shipmentDetailError = ref('')
+const editingShipment = ref(null)
+const showShipmentDetailModal = ref(false)
+const showDeleteModal = ref(false)
+const deletingShipmentId = ref(null)
+
 function openShipmentForm(entry, group, event) {
   const today = new Date().toISOString().split('T')[0]
   const remaining = entry.total_pcs - (entry.shipped ?? 0)
@@ -155,6 +163,98 @@ function hideTooltip() {
   tooltipStyle.value = {}
 }
 
+function openShipmentDetailForm(entry) {
+  shipmentDetailForm.value = {
+    pre_order_id: entry.id,
+    total_pcs: entry.total_pcs,
+    shipments: [...(entry.shipments || [])],
+  }
+  shipmentDetailError.value = ''
+  editingShipment.value = null
+  showShipmentDetailModal.value = true
+}
+
+function closeShipmentDetailForm() {
+  shipmentDetailForm.value = null
+  shipmentDetailSubmitting.value = false
+  shipmentDetailError.value = ''
+  editingShipment.value = null
+  showShipmentDetailModal.value = false
+}
+
+function startEditShipment(shipment) {
+  editingShipment.value = {
+    id: shipment.id,
+    total_shipment: String(shipment.total_shipment),
+    shipment_date: shipment.shipment_date,
+  }
+}
+
+function cancelEditShipment() {
+  editingShipment.value = null
+}
+
+async function updateShipment() {
+  if (!editingShipment.value) return
+  const f = editingShipment.value
+  if (!f.total_shipment || Number(f.total_shipment) <= 0) {
+    shipmentDetailError.value = t('shipments.shipmentQtyGreater0')
+    return
+  }
+  if (!f.shipment_date) {
+    shipmentDetailError.value = t('shipments.shipmentDateRequired')
+    return
+  }
+
+  const otherShipmentsTotal = shipmentDetailForm.value?.shipments
+    .filter(s => s.id !== f.id)
+    .reduce((sum, s) => sum + s.total_shipment, 0) ?? 0
+
+  const newTotalShipped = otherShipmentsTotal + Number(f.total_shipment)
+  if (newTotalShipped > shipmentDetailForm.value.total_pcs) {
+    shipmentDetailError.value = t('shipments.shipmentQtyExceeds')
+    return
+  }
+
+  shipmentDetailSubmitting.value = true
+  shipmentDetailError.value = ''
+  try {
+    await request(`/shipments/${f.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        shipment_date: f.shipment_date,
+        total_shipment: Number(f.total_shipment),
+      }),
+    })
+    await fetchData(1)
+    closeShipmentDetailForm()
+  } catch (e) {
+    shipmentDetailError.value = e.message
+  } finally {
+    shipmentDetailSubmitting.value = false
+  }
+}
+
+async function deleteShipment(shipmentId) {
+  deletingShipmentId.value = shipmentId
+  showDeleteModal.value = true
+}
+
+async function confirmDelete() {
+  if (!deletingShipmentId.value) return
+  try {
+    await request(`/shipments/${deletingShipmentId.value}`, { method: 'DELETE' })
+    await fetchData(1)
+    closeShipmentDetailForm()
+    showDeleteModal.value = false
+  } catch { /* ignore */ }
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false
+  deletingShipmentId.value = null
+}
+
 const groupedOrders = computed(() => {
   const map = new Map()
   for (const item of items.value) {
@@ -270,7 +370,7 @@ function getProgress(row) {
         <p class="text-surface-500">{{ t('shipments.noPreOrders') }}</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="groupedOrders" expandable :per-page="15">
+        <Table :columns="columns" :rows="groupedOrders" expandable :per-page="15" showVerticalBorder>
           <template #name="{ row }">
             <span class="whitespace-nowrap min-w-40 inline-block">{{ row.name }}</span>
           </template>
@@ -329,6 +429,14 @@ function getProgress(row) {
                           >{{ entry.shipped }}</span>
                           <span v-else class="text-surface-800 font-medium">{{ entry.shipped ?? 0 }}</span>
                           <button
+                            v-if="entry.shipments && entry.shipments.length > 0"
+                            @click="openShipmentDetailForm(entry)"
+                            class="p-1 rounded-md transition-colors cursor-pointer text-surface-600 hover:bg-surface-100"
+                            :title="t('common.edit')"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                          </button>
+                          <button
                             data-shipment-btn
                             @click="entry.remaining_ship > 0 && shipmentForm?.pre_order_id !== entry.id ? openShipmentForm(entry, row, $event) : (shipmentForm?.pre_order_id === entry.id ? closeShipmentForm() : null)"
                             :disabled="entry.remaining_ship <= 0"
@@ -369,6 +477,48 @@ function getProgress(row) {
           <span class="font-medium">{{ s.total_shipment }} {{ t('common.pcs') }}</span>
         </div>
       </div>
+      <Modal v-model="showShipmentDetailModal" :title="t('shipments.shipmentDetails')" size="md" :closeOnOverlay="false">
+        <div v-if="shipmentDetailError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">{{ shipmentDetailError }}</div>
+        <div v-if="shipmentDetailForm && shipmentDetailForm.shipments.length === 0" class="text-center py-8 text-surface-400">{{ t('shipments.noShipments') }}</div>
+        <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+          <div v-for="s in shipmentDetailForm?.shipments || []" :key="s.id" class="p-3 border border-surface-200 rounded-lg">
+            <div v-if="editingShipment?.id === s.id" class="space-y-3">
+              <Input v-model="editingShipment.shipment_date" :label="t('shipments.shipmentDate')" type="date" required />
+              <Input v-model="editingShipment.total_shipment" :label="t('shipments.shipmentQty')" type="number" placeholder="0" required />
+              <div class="flex items-center gap-2">
+                <Button :loading="shipmentDetailSubmitting" @click="updateShipment" size="sm">{{ t('common.save') }}</Button>
+                <Button variant="outline" @click="cancelEditShipment" size="sm">{{ t('common.cancel') }}</Button>
+              </div>
+            </div>
+            <div v-else class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-sm text-surface-600">{{ formatDate(s.shipment_date) }}</span>
+                <Badge variant="primary" size="sm">{{ s.total_shipment }} {{ t('common.pcs') }}</Badge>
+              </div>
+              <div class="flex items-center gap-1">
+                <button @click="startEditShipment(s)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button @click="deleteShipment(s.id)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <Button variant="outline" @click="closeShipmentDetailForm">{{ t('common.close') }}</Button>
+        </template>
+      </Modal>
+      <Modal v-model="showDeleteModal" :title="t('common.delete')" size="sm" :closeOnOverlay="false">
+        <p class="text-surface-700">{{ t('common.cannotUndo') }}</p>
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <Button variant="outline" @click="closeDeleteModal">{{ t('common.cancel') }}</Button>
+            <Button variant="danger" @click="confirmDelete">{{ t('common.delete') }}</Button>
+          </div>
+        </template>
+      </Modal>
     </Teleport>
   </div>
 </template>

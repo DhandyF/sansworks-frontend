@@ -93,7 +93,7 @@ async function handleDelete() {
         <p class="text-surface-500">No sizes found</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData">
+        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData" showVerticalBorder>
           <template #actions="{ row }">
             <div class="flex items-center gap-1">
               <button @click="openEditForm(row)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">

@@ -53,7 +53,9 @@
     "rem": "rem",
     "tailor": "Tailor",
     "article": "Article",
-    "size": "Size"
+    "size": "Size",
+    "close": "Close",
+    "preOrder": "Pre-Orders"
   },
   "login": {
     "title": "Sign in to Sansworks",
@@ -211,7 +213,9 @@
     "selectBrandFirst": "Select a brand first...",
     "selectArticle": "Select an article",
     "selectSize": "Select a size",
-    "noPreOrders": "No pre-orders found"
+    "noPreOrders": "No pre-orders found",
+    "shipmentDetails": "Shipment Details",
+    "noShipments": "No shipments yet"
   },
   "preOrderDetail": {
     "title": "Pre-Order Detail",

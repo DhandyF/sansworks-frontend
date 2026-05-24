@@ -152,7 +152,7 @@ async function handleDelete() {
         <p class="text-surface-500">No articles found</p>
       </div>
       <template v-else>
-        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData">
+        <Table :columns="columns" :rows="items" :pagination="pagination" @page-change="fetchData" showVerticalBorder>
           <template #brand="{ row }">
             <Badge variant="primary" size="sm">{{ row.brand?.name || '-' }}</Badge>
           </template>
