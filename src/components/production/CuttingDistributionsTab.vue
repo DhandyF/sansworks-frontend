@@ -47,7 +47,7 @@ const columns = computed(() => [
   { key: 'name', label: t('cuttingDistributions.name') },
   { key: 'tailor', label: t('cuttingDistributions.tailor') },
   { key: 'total_distributed', label: t('cuttingDistributions.totalDistributed') },
-  { key: 'total_deposit_remaining', label: t('common.remaining') },
+  { key: 'total_deposit_remaining', label: t('cuttingDistributions.remaining') },
   { key: 'progress', label: t('brandDetail.progress') },
 ])
 
@@ -282,7 +282,7 @@ function positionCrPicker() {
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('cuttingDistributions.article') }}</th>
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('cuttingDistributions.size') }}</th>
                   <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('cuttingDistributions.quantityToDistribute') }}</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('common.remaining') }}</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('cuttingDistributions.remaining') }}</th>
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('cuttingDistributions.takenDate') }}</th>
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('cuttingDistributions.deadlineDate') }}</th>
                   <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('common.edit') }}/{{ t('common.delete') }}</th>

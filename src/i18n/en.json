@@ -196,7 +196,9 @@
     "selectBrandFirst": "Select a brand first...",
     "noPreOrders": "No pre-orders found",
     "selectArticle": "Select an article",
-    "selectSize": "Select a size"
+    "selectSize": "Select a size",
+    "remaining": "Remaining",
+    "totalPcs": "Total PO"
   },
   "shipments": {
     "title": "Shipments",
@@ -243,7 +245,8 @@
     "delivered": "Delivered",
     "notDelivered": "Not Delivered",
     "deliveredTooltip": "(From total PO)",
-    "notDeliveredTooltip": "Total PO - total delivered"
+    "notDeliveredTooltip": "Total PO - total delivered",
+    "cuttingLeft": "Cutting Left"
   },
   "production": {
     "title": "Production",
@@ -272,7 +275,8 @@
     "optionalNotes": "Optional notes",
     "invalidCombination": "Please select a valid pre-order, article, and size combination.",
     "exceedsAvailable": "Total cutting exceeds available quantity for this pre-order item.",
-    "deleteTitle": "Delete Cutting Result"
+    "deleteTitle": "Delete Cutting Result",
+    "remaining": "Remaining"
   },
   "cuttingDistributions": {
     "noResults": "No distributions found",
@@ -293,7 +297,8 @@
     "selectTailor": "Select a tailor",
     "searchCuttingResults": "Search cutting results...",
     "noCuttingResults": "No cutting results available",
-    "deleteTitle": "Delete Distribution"
+    "deleteTitle": "Delete Distribution",
+    "remaining": "Cutting Left"
   },
   "deposits": {
     "noResults": "No deposits found",
@@ -314,7 +319,8 @@
     "searchDistributions": "Search distributions...",
     "noDistributions": "No available distributions",
     "article": "Article",
-    "deleteTitle": "Delete Deposit"
+    "deleteTitle": "Delete Deposit",
+    "remaining": "Remaining"
   },
   "payslip": {
     "title": "Payslip",

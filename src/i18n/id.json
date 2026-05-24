@@ -159,7 +159,7 @@
     "address": "Alamat",
     "status": "Status",
     "orderDate": "Tanggal Pesan",
-    "deadline": "Batas Waktu",
+    "deadline": "Deadline",
     "cuttingDone": "Potong Selesai",
     "distributed": "Didistribusikan",
     "deposited": "Disetor",
@@ -173,14 +173,14 @@
     "searchPlaceholder": "Cari berdasarkan nama pre-order...",
     "preOrderName": "Nama Pre-Order",
     "orderDate": "Tanggal Pesan",
-    "deadline": "Batas Waktu",
+    "deadline": "Deadline",
     "cuttingDone": "Potong Selesai",
     "distributed": "Didistribusikan",
     "deposited": "Disetor",
     "cuttingDate": "Tanggal Potong",
     "article": "Artikel",
     "size": "Size",
-    "cutQty": "Jml Potong",
+    "cutQty": "Hasil Cutting",
     "deleteTitle": "Hapus Pre-Order",
     "deleteMessage": "Ini akan menghapus semua ukuran dalam pre-order ini.",
     "addCuttingResult": "Tambah hasil potong",
@@ -193,11 +193,13 @@
     "addSize": "Tambah Ukuran",
     "removeArticle": "Hapus Artikel",
     "preOrderDate": "Tanggal Pre-Order",
-    "deadlineDate": "Batas Waktu",
+    "deadlineDate": "Deadline",
     "selectBrandFirst": "Pilih brand terlebih dahulu...",
     "noPreOrders": "Pre-order tidak ditemukan",
     "selectArticle": "Pilih artikel",
-    "selectSize": "Pilih ukuran"
+    "selectSize": "Pilih ukuran",
+    "remaining": "Blm Dicutting",
+    "totalPcs": "Total PO"
   },
   "shipments": {
     "title": "Pengiriman",
@@ -214,7 +216,7 @@
     "remainingAvailable": "Sisa deposit tersedia:",
     "remove": "Hapus",
     "preOrderDate": "Tanggal Pre-Order",
-    "deadlineDate": "Batas Waktu",
+    "deadlineDate": "Deadline",
     "selectBrandFirst": "Pilih brand terlebih dahulu...",
     "selectArticle": "Pilih artikel",
     "selectSize": "Pilih ukuran",
@@ -225,7 +227,7 @@
   "preOrderDetail": {
     "title": "Detail Pre-Order",
     "totalPcs": "Total Order",
-    "cuttingDone": "Potong Selesai",
+    "cuttingDone": "Hasil Cutting",
     "distributed": "Didistribusikan",
     "deposited": "Disetor",
     "details": "Detail",
@@ -238,14 +240,15 @@
     "filterDone": "Selesai",
     "filterInProgress": "Dalam Proses",
     "filterOverdue": "Terlambat",
-    "deadline": "Batas Waktu",
+    "deadline": "Deadline",
     "status": "Status",
     "remaining": "Sisa Potongan",
     "progress": "Progress Jahit",
     "delivered": "Terkirim",
     "deliveredTooltip": "(Dari jumlah PO)",
     "notDelivered": "Belum Terkirim",
-    "notDeliveredTooltip": "(Jumlah PO dikurang yang terkirim)"
+    "notDeliveredTooltip": "(Jumlah PO dikurang yang terkirim)",
+    "cuttingLeft": "Sisa Cuttingan"
   },
   "production": {
     "title": "Produksi",
@@ -260,7 +263,7 @@
     "addCuttingResult": "Tambah Hasil Potong",
     "editCuttingResult": "Edit Hasil Potong",
     "name": "Nama",
-    "totalCutting": "Total Potong",
+    "totalCutting": "Hasil Cutting",
     "cuttingDate": "Tanggal Potong",
     "selectBrandFirst": "Pilih brand terlebih dahulu",
     "selectPreOrder": "Pilih pre-order",
@@ -274,7 +277,8 @@
     "optionalNotes": "Catatan opsional",
     "invalidCombination": "Pilih kombinasi pre-order, artikel, dan ukuran yang valid.",
     "exceedsAvailable": "Total potong melebihi jumlah tersedia untuk item pre-order ini.",
-    "deleteTitle": "Hapus Hasil Potong"
+    "deleteTitle": "Hapus Hasil Potong",
+    "remaining": "Blm Dicutting"
   },
   "cuttingDistributions": {
     "noResults": "Distribusi tidak ditemukan",
@@ -291,11 +295,12 @@
     "tailor": "Penjahit",
     "quantityToDistribute": "Jumlah Distribusi",
     "takenDate": "Tanggal Ambil",
-    "deadlineDate": "Batas Waktu",
+    "deadlineDate": "Deadline",
     "selectTailor": "Pilih penjahit",
     "searchCuttingResults": "Cari hasil potong...",
     "noCuttingResults": "Tidak ada hasil potong tersedia",
-    "deleteTitle": "Hapus Distribusi"
+    "deleteTitle": "Hapus Distribusi",
+    "remaining": "Sisa Cutting-an"
   },
   "deposits": {
     "noResults": "Setoran tidak ditemukan",
@@ -316,7 +321,8 @@
     "searchDistributions": "Cari distribusi...",
     "noDistributions": "Tidak ada distribusi tersedia",
     "article": "Artikel",
-    "deleteTitle": "Hapus Setoran"
+    "deleteTitle": "Hapus Setoran",
+    "remaining": "Blm Setor"
   },
   "payslip": {
     "title": "Slip Gaji",
@@ -367,7 +373,7 @@
     "totalRepair": "Total Perbaikan",
     "sewingPrice": "Harga Jahit",
     "takenDate": "Tanggal Diambil",
-    "deadlineDate": "Batas Waktu",
+    "deadlineDate": "Deadline",
     "deadlineHint": "Default 3 hari dari tanggal diambil",
     "status": "Status",
     "remaining": "Sisa",
@@ -394,7 +400,7 @@
     "totalDeposit": "Total Setoran (pcs)",
     "depositDate": "Tanggal Setor",
     "daysDelay": "Hari keterlambatan",
-    "daysDelayHint": "Lebih {days} hari dari batas waktu",
+    "daysDelayHint": "Lebih {days} hari dari Deadline",
     "charge": "Denda",
     "chargePercent": "%",
     "noDeposits": "Belum ada data setoran",

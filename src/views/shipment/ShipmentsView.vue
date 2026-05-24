@@ -304,7 +304,7 @@ const columns = computed(() => [
   { key: 'name', label: t('preOrders.preOrderName') },
   { key: 'pre_order_date', label: t('preOrders.orderDate') },
   { key: 'deadline_date', label: t('preOrders.deadline') },
-  { key: 'total_pcs', label: t('common.totalPcs') },
+  { key: 'total_pcs', label: t('preOrders.totalPcs') },
   { key: 'shipped', label: t('shipments.shipped') },
   { key: 'remaining', label: t('shipments.remaining') },
   { key: 'progress', label: t('brandDetail.progress') },
@@ -410,7 +410,7 @@ function getProgress(row) {
                   <thead>
                     <tr class="border-b border-surface-200">
                       <th class="py-1.5 px-4 text-left font-medium text-surface-500">{{ t('common.size') }}</th>
-                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('common.totalPcs') }}</th>
+                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('preOrders.totalPcs') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('shipments.shipped') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('shipments.remaining') }}</th>
                     </tr>

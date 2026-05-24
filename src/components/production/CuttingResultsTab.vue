@@ -51,7 +51,7 @@ const columns = computed(() => [
   { key: 'name', label: t('cuttingResults.name') },
   { key: 'pre_order', label: t('common.preOrder') },
   { key: 'total_cutting', label: t('cuttingResults.totalCutting') },
-  { key: 'remaining', label: t('common.remaining') },
+  { key: 'remaining', label: t('cuttingResults.remaining') },
   { key: 'progress', label: t('brandDetail.progress') },
   { key: 'status', label: t('common.status') },
 ])
@@ -315,7 +315,7 @@ async function handleDelete() {
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.article') }}</th>
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.size') }}</th>
                   <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('cuttingResults.totalCutting') }}</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('common.remaining') }}</th>
+                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('cuttingResults.remaining') }}</th>
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('cuttingResults.cuttingDate') }}</th>
                   <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.status') }}</th>
                   <th class="py-1.5 px-3 text-right font-medium text-surface-500">Actions</th>

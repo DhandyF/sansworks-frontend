@@ -93,7 +93,7 @@ const columns = computed(() => [
   { key: 'tailor', label: t('common.tailor') },
   { key: 'total_sewing_result', label: t('deposits.sewingResult') },
   { key: 'total_price', label: t('deposits.totalPrice') },
-  { key: 'total_deposit_remaining', label: t('common.remaining') },
+  { key: 'total_deposit_remaining', label: t('deposits.remaining') },
   { key: 'progress', label: t('brandDetail.progress') },
   { key: 'status', label: t('common.status') },
 ])

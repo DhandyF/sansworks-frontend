@@ -41,7 +41,7 @@ const columns = computed(() => [
   { key: 'name', label: t('preOrderDetail.title') },
   { key: 'article', label: t('common.article') },
   { key: 'size', label: t('common.size') },
-  { key: 'total_pcs', label: t('common.totalPcs') },
+  { key: 'total_pcs', label: t('preOrders.totalPcs') },
   { key: 'cut_qty', label: t('preOrderDetail.cuttingDone') },
   { key: 'cutting_remaining', label: t('preOrderDetail.remaining') },
   { key: 'distributed_qty', label: t('preOrderDetail.distributed') },
@@ -57,7 +57,10 @@ onMounted(async () => {
   try {
     const res = await request(`/pre-orders/${route.params.id}/detail-stats`)
     preOrder.value = res.pre_order
-    summary.value = res.summary
+    summary.value = {
+      ...res.summary,
+      cutting_left: res.summary.cut_qty - res.summary.distributed_qty
+    }
     entries.value = res.entries
   } catch {
     router.push({ name: 'brands' })
@@ -82,7 +85,7 @@ const productionColumns = computed(() => [
   { key: 'name', label: t('preOrderDetail.title') },
   { key: 'article', label: t('common.article') },
   { key: 'size', label: t('common.size') },
-  { key: 'total_pcs', label: t('common.totalPcs') },
+  { key: 'total_pcs', label: t('preOrders.totalPcs') },
   { key: 'cut_qty', label: t('preOrderDetail.cuttingDone') },
   { key: 'cutting_remaining', label: t('preOrderDetail.remaining') },
   { key: 'distributed_qty', label: t('preOrderDetail.distributed') },
@@ -95,7 +98,7 @@ const shipmentColumns = computed(() => [
   { key: 'name', label: t('preOrderDetail.title') },
   { key: 'article', label: t('common.article') },
   { key: 'size', label: t('common.size') },
-  { key: 'total_pcs', label: t('common.totalPcs') },
+  { key: 'total_pcs', label: t('preOrders.totalPcs') },
   { key: 'shipped_qty', label: t('preOrderDetail.delivered') },
   { key: 'remaining_ship', label: t('shipments.remaining') },
   { key: 'progress', label: t('brandDetail.progress') },
@@ -103,8 +106,8 @@ const shipmentColumns = computed(() => [
 ])
 
 const tabs = computed(() => [
-  { key: 'production', label: 'Production' },
-  { key: 'shipment', label: 'Shipment' },
+  { key: 'production', label: t('nav.production') },
+  { key: 'shipment', label: t('nav.shipments') },
 ])
 
 const formatDate = (date) => {
@@ -166,14 +169,18 @@ function groupByTailor(distributions) {
     </div>
 
     <template v-else-if="preOrder">
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <Card variant="bordered" class="text-center py-4">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+        <Card variant="bordered" class="text-center py-4 bg-red">
           <p class="text-2xl font-bold text-surface-900">{{ summary.total_pcs }}</p>
           <p class="text-xs text-surface-500 mt-1">{{ t('common.totalPcs') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.cut_qty }}</p>
           <p class="text-xs text-surface-500 mt-1">{{ t('preOrderDetail.cuttingDone') }}</p>
+        </Card>
+        <Card variant="bordered" background="bg-red-400" class="text-center py-4">
+          <p class="text-2xl font-bold">{{ summary.cutting_left }}</p>
+          <p class="text-xs mt-1">{{ t('preOrderDetail.cuttingLeft') }}</p>
         </Card>
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.distributed_qty }}</p>
