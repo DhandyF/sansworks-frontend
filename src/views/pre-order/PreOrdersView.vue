@@ -27,6 +27,14 @@ const cuttingSubmitting = ref(false)
 const cuttingError = ref('')
 const cuttingFormStyle = ref({})
 
+const cuttingDetailForm = ref(null)
+const cuttingDetailSubmitting = ref(false)
+const cuttingDetailError = ref('')
+const editingCutting = ref(null)
+const showCuttingDetailModal = ref(false)
+const showCuttingDeleteModal = ref(false)
+const deletingCuttingId = ref(null)
+
 const tooltipData = ref(null)
 const tooltipStyle = ref({})
 const today = new Date().toISOString().split('T')[0]
@@ -93,6 +101,99 @@ function closeCuttingForm() {
   cuttingSubmitting.value = false
   cuttingError.value = ''
   cuttingFormStyle.value = {}
+}
+
+function openCuttingDetailForm(entry) {
+  cuttingDetailForm.value = {
+    pre_order_id: entry.id,
+    total_pcs: entry.total_pcs,
+    cut_qty: entry.cut_qty ?? 0,
+    cutting_results: [...(entry.cutting_results || [])],
+  }
+  cuttingDetailError.value = ''
+  editingCutting.value = null
+  showCuttingDetailModal.value = true
+}
+
+function closeCuttingDetailForm() {
+  cuttingDetailForm.value = null
+  cuttingDetailSubmitting.value = false
+  cuttingDetailError.value = ''
+  editingCutting.value = null
+  showCuttingDetailModal.value = false
+}
+
+function startEditCutting(cutting) {
+  editingCutting.value = {
+    id: cutting.id,
+    total_cutting: String(cutting.total_cutting),
+    cutting_date: cutting.cutting_date,
+  }
+}
+
+function cancelEditCutting() {
+  editingCutting.value = null
+}
+
+async function updateCutting() {
+  if (!editingCutting.value) return
+  const f = editingCutting.value
+  if (!f.total_cutting || Number(f.total_cutting) <= 0) {
+    cuttingDetailError.value = t('preOrders.cuttingQtyGreater0')
+    return
+  }
+  if (!f.cutting_date) {
+    cuttingDetailError.value = t('preOrders.cuttingDateRequired')
+    return
+  }
+
+  const otherCuttingsTotal = cuttingDetailForm.value?.cutting_results
+    .filter(c => c.id !== f.id)
+    .reduce((sum, c) => sum + c.total_cutting, 0) ?? 0
+
+  const newTotalCut = otherCuttingsTotal + Number(f.total_cutting)
+  if (newTotalCut > cuttingDetailForm.value.total_pcs) {
+    cuttingDetailError.value = t('preOrders.cuttingQtyExceeds')
+    return
+  }
+
+  cuttingDetailSubmitting.value = true
+  cuttingDetailError.value = ''
+  try {
+    await request(`/cutting-results/${f.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        cutting_date: f.cutting_date,
+        total_cutting: Number(f.total_cutting),
+      }),
+    })
+    await fetchData(1)
+    closeCuttingDetailForm()
+  } catch (e) {
+    cuttingDetailError.value = e.message
+  } finally {
+    cuttingDetailSubmitting.value = false
+  }
+}
+
+async function deleteCutting(cuttingId) {
+  deletingCuttingId.value = cuttingId
+  showCuttingDeleteModal.value = true
+}
+
+async function confirmDeleteCutting() {
+  if (!deletingCuttingId.value) return
+  try {
+    await request(`/cutting-results/${deletingCuttingId.value}`, { method: 'DELETE' })
+    await fetchData(1)
+    closeCuttingDetailForm()
+    showCuttingDeleteModal.value = false
+  } catch { /* ignore */ }
+}
+
+function closeCuttingDeleteModal() {
+  showCuttingDeleteModal.value = false
+  deletingCuttingId.value = null
 }
 
 async function submitCuttingResult() {
@@ -556,11 +657,19 @@ async function handleDelete() {
                         <div class="flex items-center justify-end gap-1.5">
                           <span
                             v-if="entry.cutting_results && entry.cutting_results.length > 0"
-                            class="cursor-help text-surface-800 font-medium"
+                            class="text-surface-800 font-medium"
                             @mouseenter="showTooltip(entry, $event)"
                             @mouseleave="hideTooltip"
                           >{{ entry.cut_qty }}</span>
                           <span v-else class="text-surface-800 font-medium">{{ entry.cut_qty }}</span>
+                          <button
+                            v-if="entry.cutting_results && entry.cutting_results.length > 0"
+                            @click="openCuttingDetailForm(entry)"
+                            class="p-1 rounded-md transition-colors cursor-pointer text-surface-600 hover:bg-surface-100"
+                            :title="t('common.edit')"
+                          >
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                          </button>
                           <button
                             data-cutting-btn
                             @click="entry.remaining > 0 && cuttingForm?.pre_order_id !== entry.id ? openCuttingForm(entry, row, $event) : (cuttingForm?.pre_order_id === entry.id ? closeCuttingForm() : null)"
@@ -694,12 +803,48 @@ async function handleDelete() {
           </div>
         </div>
       </div>
-      <div v-if="tooltipData" class="fixed z-50 w-56 p-2 bg-black/80 text-white rounded-lg shadow-lg text-xs" :style="tooltipStyle" @mouseenter="() => {}" @mouseleave="hideTooltip">
-        <div v-for="cr in tooltipData" :key="cr.id" class="flex justify-between py-0.5">
-          <span>{{ cr.cutting_date ? formatDate(cr.cutting_date) : '-' }}</span>
-          <span class="font-medium">{{ cr.total_cutting }} {{ t('common.pcs') }}</span>
+      <Modal v-model="showCuttingDetailModal" :title="t('preOrders.cuttingDetails')" size="md" :closeOnOverlay="false" style="z-index: 50">
+        <div v-if="cuttingDetailError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">{{ cuttingDetailError }}</div>
+        <div v-if="cuttingDetailForm && cuttingDetailForm.cutting_results.length === 0" class="text-center py-8 text-surface-400">{{ t('preOrders.noCuttings') }}</div>
+        <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+          <div v-for="c in cuttingDetailForm?.cutting_results || []" :key="c.id" class="p-3 border border-surface-200 rounded-lg">
+            <div v-if="editingCutting?.id === c.id" class="space-y-3">
+              <Input v-model="editingCutting.cutting_date" :label="t('preOrders.cuttingDate')" type="date" required />
+              <Input v-model="editingCutting.total_cutting" :label="t('preOrders.cutQty')" type="number" placeholder="0" required />
+              <div class="flex items-center gap-2">
+                <Button :loading="cuttingDetailSubmitting" @click="updateCutting" size="sm">{{ t('common.save') }}</Button>
+                <Button variant="outline" @click="cancelEditCutting" size="sm">{{ t('common.cancel') }}</Button>
+              </div>
+            </div>
+            <div v-else class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-sm text-surface-600">{{ formatDate(c.cutting_date) }}</span>
+                <Badge variant="primary" size="sm">{{ c.total_cutting }} {{ t('common.pcs') }}</Badge>
+              </div>
+              <div class="flex items-center gap-1">
+                <button @click="startEditCutting(c)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button @click="deleteCutting(c.id)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+        <template #footer>
+          <Button variant="outline" @click="closeCuttingDetailForm">{{ t('common.close') }}</Button>
+        </template>
+      </Modal>
+      <Modal v-model="showCuttingDeleteModal" :title="t('common.delete')" size="sm" :closeOnOverlay="false" style="z-index: 40">
+        <p class="text-surface-700">{{ t('common.cannotUndo') }}</p>
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <Button variant="outline" @click="closeCuttingDeleteModal">{{ t('common.cancel') }}</Button>
+            <Button variant="danger" @click="confirmDeleteCutting">{{ t('common.delete') }}</Button>
+          </div>
+        </template>
+      </Modal>
     </Teleport>
   </div>
 </template>
