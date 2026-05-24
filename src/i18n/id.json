@@ -242,13 +242,13 @@
     "filterOverdue": "Terlambat",
     "deadline": "Deadline",
     "status": "Status",
-    "remaining": "Sisa Potongan",
+    "remaining": "Sisa Cutting-an",
     "progress": "Progress Jahit",
     "delivered": "Terkirim",
     "deliveredTooltip": "(Dari jumlah PO)",
     "notDelivered": "Belum Terkirim",
     "notDeliveredTooltip": "(Jumlah PO dikurang yang terkirim)",
-    "cuttingLeft": "Sisa Cuttingan"
+    "cuttingLeft": "Sisa Cutting-an"
   },
   "production": {
     "title": "Produksi",
