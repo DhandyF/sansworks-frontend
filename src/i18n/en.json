@@ -198,6 +198,7 @@
     "description": "Manage finished goods shipments",
     "shipped": "Shipped",
     "remaining": "Remaining",
+    "paid": "DONE",
     "addShipment": "Add shipment",
     "shipmentDate": "Shipment Date",
     "shipmentQty": "Shipment Qty",

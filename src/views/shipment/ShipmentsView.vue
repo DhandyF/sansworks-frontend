@@ -34,12 +34,12 @@ const shipmentFormRef = ref(null)
 
 function openShipmentForm(entry, group, event) {
   const today = new Date().toISOString().split('T')[0]
-  const remainingFromDeposit = (entry.deposited_qty ?? 0) - (entry.shipped ?? 0)
+  const remaining = entry.total_pcs - (entry.shipped ?? 0)
   shipmentForm.value = {
     pre_order_id: entry.id,
     shipment_date: today,
     total_shipment: '',
-    remaining: remainingFromDeposit > 0 ? remainingFromDeposit : 0,
+    remaining: remaining > 0 ? remaining : 0,
   }
   shipmentError.value = ''
   nextTick(() => positionShipmentForm(event))
@@ -205,7 +205,6 @@ const columns = computed(() => [
   { key: 'pre_order_date', label: t('preOrders.orderDate') },
   { key: 'deadline_date', label: t('preOrders.deadline') },
   { key: 'total_pcs', label: t('common.totalPcs') },
-  { key: 'deposited', label: t('preOrderDetail.deposited') },
   { key: 'shipped', label: t('shipments.shipped') },
   { key: 'remaining', label: t('shipments.remaining') },
   { key: 'progress', label: t('brandDetail.progress') },
@@ -226,12 +225,6 @@ function getShipped(row) {
 function getRemainingShip(row) {
   return row.articles.reduce((sum, ag) => {
     return sum + ag.entries.reduce((s, e) => s + (e.remaining_ship ?? 0), 0)
-  }, 0)
-}
-
-function getDeposited(row) {
-  return row.articles.reduce((sum, ag) => {
-    return sum + ag.entries.reduce((s, e) => s + (e.deposited_qty ?? 0), 0)
   }, 0)
 }
 
@@ -293,14 +286,11 @@ function getProgress(row) {
           <template #total_pcs="{ row }">
             <span class="text-surface-800 font-medium">{{ row.total_pcs }}</span>
           </template>
-          <template #deposited="{ row }">
-            <span class="text-surface-800 font-medium">{{ getDeposited(row) }}</span>
-          </template>
           <template #shipped="{ row }">
             <span class="text-surface-800 font-medium">{{ getShipped(row) }}</span>
           </template>
           <template #remaining="{ row }">
-            <Badge :variant="getRemainingShip(row) > 0 ? 'danger' : 'success'" size="sm">{{ getRemainingShip(row) }}</Badge>
+            <Badge :variant="getRemainingShip(row) > 0 ? 'danger' : 'success'" size="sm">{{ getRemainingShip(row) > 0 ? getRemainingShip(row) : t('shipments.paid') }}</Badge>
           </template>
           <template #progress="{ row }">
             <div class="flex items-center gap-2">
@@ -321,7 +311,6 @@ function getProgress(row) {
                     <tr class="border-b border-surface-200">
                       <th class="py-1.5 px-4 text-left font-medium text-surface-500">{{ t('common.size') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('common.totalPcs') }}</th>
-                      <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('preOrderDetail.deposited') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('shipments.shipped') }}</th>
                       <th class="py-1.5 px-4 text-right font-medium text-surface-500">{{ t('shipments.remaining') }}</th>
                     </tr>
@@ -330,7 +319,6 @@ function getProgress(row) {
                     <tr v-for="entry in ag.entries" :key="entry.id" class="border-b border-surface-100 last:border-0">
                       <td class="py-1.5 px-4"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
                       <td class="py-1.5 px-4 text-right">{{ entry.total_pcs }}</td>
-                      <td class="py-1.5 px-4 text-right">{{ entry.deposited_qty ?? 0 }}</td>
                       <td class="py-1.5 px-4">
                         <div class="flex items-center justify-end gap-1.5">
                           <span
@@ -352,7 +340,7 @@ function getProgress(row) {
                           </button>
                         </div>
                       </td>
-                      <td class="py-1.5 px-4 text-right"><Badge :variant="entry.remaining_ship > 0 ? 'danger' : 'success'" size="sm">{{ entry.remaining_ship ?? entry.total_pcs }}</Badge></td>
+                      <td class="py-1.5 px-4 text-right"><Badge :variant="entry.remaining_ship > 0 ? 'danger' : 'success'" size="sm">{{ entry.remaining_ship > 0 ? entry.remaining_ship : t('shipments.paid') }}</Badge></td>
                     </tr>
                   </tbody>
                 </table>
@@ -369,7 +357,6 @@ function getProgress(row) {
         <div class="space-y-3">
           <Input v-model="shipmentForm.shipment_date" :label="t('shipments.shipmentDate')" type="date" required />
           <Input v-model="shipmentForm.total_shipment" :label="t('shipments.shipmentQty')" type="number" placeholder="0" required />
-          <p class="text-xs text-surface-500">{{ t('shipments.remainingAvailable') }}: <strong>{{ shipmentForm.remaining }}</strong></p>
           <div class="flex items-center gap-2 pt-1">
             <Button :loading="shipmentSubmitting" @click="submitShipment" size="sm">{{ t('common.create') }}</Button>
             <Button variant="outline" @click="closeShipmentForm" size="sm">{{ t('common.cancel') }}</Button>
