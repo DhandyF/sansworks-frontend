@@ -194,7 +194,10 @@
     "removeArticle": "Hapus Artikel",
     "preOrderDate": "Tanggal Pre-Order",
     "deadlineDate": "Batas Waktu",
-    "selectBrandFirst": "Pilih brand terlebih dahulu..."
+    "selectBrandFirst": "Pilih brand terlebih dahulu...",
+    "noPreOrders": "Pre-order tidak ditemukan",
+    "selectArticle": "Pilih artikel",
+    "selectSize": "Pilih ukuran"
   },
   "shipments": {
     "title": "Pengiriman",

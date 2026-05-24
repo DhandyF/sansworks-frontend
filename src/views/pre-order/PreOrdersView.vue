@@ -687,7 +687,7 @@ async function handleDelete() {
         <div class="space-y-3">
           <Input v-model="cuttingForm.cutting_date" :label="t('preOrders.cuttingDate')" type="date" required />
           <Input v-model="cuttingForm.total_cutting" :label="t('preOrders.cutQty')" type="number" placeholder="0" required />
-          <p class="text-xs text-surface-500">{{ t('preOrders.remainingAvailable') }}: <strong>{{ cuttingForm.remaining }}</strong></p>
+          <p class="text-xs text-surface-500">{{ t('preOrders.remainingAvailable') }} <strong>{{ cuttingForm.remaining }}</strong></p>
           <div class="flex items-center gap-2 pt-1">
             <Button :loading="cuttingSubmitting" @click="submitCuttingResult" size="sm">{{ t('common.create') }}</Button>
             <Button variant="outline" @click="closeCuttingForm" size="sm">{{ t('common.cancel') }}</Button>

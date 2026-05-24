@@ -193,7 +193,10 @@
     "addSize": "Add Size",
     "removeArticle": "Remove Article",
     "remove": "Remove",
-    "selectBrandFirst": "Select a brand first..."
+    "selectBrandFirst": "Select a brand first...",
+    "noPreOrders": "No pre-orders found",
+    "selectArticle": "Select an article",
+    "selectSize": "Select a size"
   },
   "shipments": {
     "title": "Shipments",
