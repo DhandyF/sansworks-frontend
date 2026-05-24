@@ -16,6 +16,13 @@ const tailors = ref([])
 const payslip = ref(null)
 
 onMounted(async () => {
+  const today = new Date()
+  const sevenDaysAgo = new Date(today)
+  sevenDaysAgo.setDate(today.getDate() - 6)
+
+  endDate.value = today.toISOString().split('T')[0]
+  startDate.value = sevenDaysAgo.toISOString().split('T')[0]
+
   try {
     const res = await request('/tailors?per_page=1000000')
     tailors.value = res.data.map(t => ({ value: t.id, label: t.name }))
