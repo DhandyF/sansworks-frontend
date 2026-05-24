@@ -36,17 +36,39 @@ onMounted(async () => {
   } catch { /* ignore */ }
 })
 
-const articlesWithPrice = ref([])
+const articlesCache = ref(new Map())
+const sewingPriceEditable = ref(false)
 
 async function fetchArticles(brandId) {
   articles.value = []
-  articlesWithPrice.value = []
   if (!brandId) return
+
+  if (articlesCache.value.has(brandId)) {
+    const cached = articlesCache.value.get(brandId)
+    articles.value = cached.map(a => ({ value: a.id, label: a.name }))
+    return
+  }
+
   try {
     const res = await request(`/repairs/available-articles?brand_id=${brandId}`)
-    articlesWithPrice.value = res.data
+    articlesCache.value.set(brandId, res.data)
     articles.value = res.data.map(a => ({ value: a.id, label: a.name }))
   } catch { /* ignore */ }
+}
+
+async function fetchSewingPrice() {
+  if (!form.value.tailor_id || !form.value.article_id) {
+    sewingPriceEditable.value = false
+    return
+  }
+
+  try {
+    const res = await request(`/repairs/sewing-price?tailor_id=${form.value.tailor_id}&article_id=${form.value.article_id}`)
+    form.value.sewing_price = String(res.price)
+    sewingPriceEditable.value = res.price === 0
+  } catch {
+    sewingPriceEditable.value = true
+  }
 }
 
 const showForm = ref(false)
@@ -71,18 +93,16 @@ const form = ref({
 watch(() => form.value.brand_id, (newVal) => {
   form.value.article_id = ''
   form.value.sewing_price = ''
+  sewingPriceEditable.value = false
   fetchArticles(newVal)
 })
 
-watch(() => form.value.article_id, (newArticleId) => {
-  if (!newArticleId) {
-    form.value.sewing_price = ''
-    return
-  }
-  const article = articlesWithPrice.value.find(a => a.id === newArticleId)
-  if (article?.cutting_price_per_pcs) {
-    form.value.sewing_price = String(article.cutting_price_per_pcs)
-  }
+watch(() => form.value.article_id, () => {
+  fetchSewingPrice()
+})
+
+watch(() => form.value.tailor_id, () => {
+  fetchSewingPrice()
 })
 
 watch([() => form.value.tailor_id, () => form.value.article_id], async () => {
@@ -113,6 +133,7 @@ function openAddForm() {
   }
   formError.value = ''
   generatedName.value = ''
+  sewingPriceEditable.value = false
   showForm.value = true
 }
 
@@ -129,6 +150,7 @@ async function openEditForm(item) {
     deadline_date: item.deadline_date ? item.deadline_date.split('T')[0] : '',
   }
   formError.value = ''
+  sewingPriceEditable.value = true
   await fetchArticles(item.brand_id)
   showForm.value = true
 }
@@ -292,7 +314,7 @@ const columns = computed(() => [
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input v-model="form.total_repair" :label="t('repairs.totalRepair')" type="number" placeholder="0" required />
-          <Input v-model="form.sewing_price" :label="t('repairs.sewingPrice')" type="number" placeholder="0" required disabled />
+          <Input v-model="form.sewing_price" :label="t('repairs.sewingPrice')" type="number" placeholder="0" required :disabled="!sewingPriceEditable" />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
