@@ -657,7 +657,7 @@ async function handleDelete() {
                         <div class="flex items-center justify-end gap-1.5">
                           <span
                             v-if="entry.cutting_results && entry.cutting_results.length > 0"
-                            class="text-surface-800 font-medium"
+                            class="cursor-help text-surface-800 font-medium"
                             @mouseenter="showTooltip(entry, $event)"
                             @mouseleave="hideTooltip"
                           >{{ entry.cut_qty }}</span>
@@ -803,7 +803,14 @@ async function handleDelete() {
           </div>
         </div>
       </div>
-      <Modal v-model="showCuttingDetailModal" :title="t('preOrders.cuttingDetails')" size="md" :closeOnOverlay="false" style="z-index: 50">
+      <div v-if="tooltipData" class="fixed z-50 w-56 p-2 bg-black/80 text-white rounded-lg shadow-lg text-xs" :style="tooltipStyle" @mouseenter="() => {}" @mouseleave="hideTooltip">
+        <div class="space-y-1">
+          <div v-for="(cut, idx) in tooltipData" :key="idx">
+            {{ formatDate(cut.cutting_date) }}: <strong>{{ cut.total_cutting }} {{ t('common.pcs') }}</strong>
+          </div>
+        </div>
+      </div>
+      <Modal v-model="showCuttingDetailModal" :title="t('preOrders.cuttingDetails')" size="md" :closeOnOverlay="false">
         <div v-if="cuttingDetailError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">{{ cuttingDetailError }}</div>
         <div v-if="cuttingDetailForm && cuttingDetailForm.cutting_results.length === 0" class="text-center py-8 text-surface-400">{{ t('preOrders.noCuttings') }}</div>
         <div v-else class="space-y-3 max-h-96 overflow-y-auto">
