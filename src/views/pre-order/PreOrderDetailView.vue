@@ -62,13 +62,26 @@ onMounted(async () => {
       cutting_left: res.summary.cut_qty - res.summary.distributed_qty
     }
 
-    // Sort entries: first by article name (group same articles), then by cutting_remaining descending
+    // Sort entries: first by article's max cutting_remaining (descending), then by article name (group same articles), then by entry's cutting_remaining descending
     entries.value = res.entries.sort((a, b) => {
       const articleA = a.article?.name?.toLowerCase() || ''
       const articleB = b.article?.name?.toLowerCase() || ''
+
       if (articleA !== articleB) {
+        // Get max cutting_remaining for each article
+        const maxA = res.entries.filter(e => e.article?.name?.toLowerCase() === articleA).reduce((max, e) => Math.max(max, e.cutting_remaining), 0)
+        const maxB = res.entries.filter(e => e.article?.name?.toLowerCase() === articleB).reduce((max, e) => Math.max(max, e.cutting_remaining), 0)
+
+        // Sort by max cutting_remaining descending
+        if (maxA !== maxB) {
+          return maxB - maxA
+        }
+
+        // If same max, sort by article name
         return articleA.localeCompare(articleB)
       }
+
+      // Same article, sort by cutting_remaining descending
       return b.cutting_remaining - a.cutting_remaining
     })
   } catch {
