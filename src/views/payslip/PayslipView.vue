@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
-import { Card, Badge, Button, SearchableDropdown } from 'ui-assets'
+import { Card, Badge, Button, SearchableDropdown, Modal, Input } from 'ui-assets'
 
 const { t } = useI18n()
 const { request } = useApi()
@@ -14,6 +14,15 @@ const startDate = ref('')
 const endDate = ref('')
 const tailors = ref([])
 const payslip = ref(null)
+
+// Compensation management
+const showCompensationModal = ref(false)
+const compensationForm = ref({
+  amount: '',
+  reason: '',
+  penalty_item_id: null
+})
+const compensations = ref([])
 
 onMounted(async () => {
   const today = new Date()
@@ -41,6 +50,7 @@ async function generate() {
   if (!selectedTailor.value || !startDate.value || !endDate.value) return
   generating.value = true
   showPayslip.value = false
+  compensations.value = [] // Reset compensations when generating new payslip
   try {
     const params = new URLSearchParams({
       tailor_id: selectedTailor.value,
@@ -50,8 +60,9 @@ async function generate() {
     const res = await request(`/payslips/generate?${params}`)
     payslip.value = res
     showPayslip.value = true
-  } catch { /* ignore */ }
-  finally {
+  } catch (error) {
+    console.error('Error generating payslip:', error)
+  } finally {
     generating.value = false
   }
 }
@@ -63,6 +74,8 @@ function printPayslip() {
   const isWeekMode = p.period.use_weeks
   const cols = p.columns || []
   const colCount = cols.length
+  const totalCompensation = compensations.value.reduce((sum, c) => sum + Number(c.amount), 0)
+  const netEarnings = p.summary.earnings - p.summary.repair_charges + totalCompensation
 
   const rows = p.items.map(item => {
     const cells = cols.map(c => {
@@ -84,6 +97,14 @@ function printPayslip() {
     <div>${c.label}</div>
     <div style="font-weight:400;font-size:9px;margin-top:1px">${c.sub_label}</div>
   </th>`).join('')
+
+  const compensationRows = compensations.value.length > 0 ? compensations.value.map(comp => {
+    return `<tr>
+      <td class="px-3 py-1.5 text-sm border border-surface-300" colspan="${colCount + 3}">${comp.reason || 'Kompensasi'}</td>
+      <td class="px-3 py-1.5 text-sm text-right border border-surface-300 text-green-600">+${formatCurrency(comp.amount)}</td>
+      <td class="px-3 py-1.5 text-sm border border-surface-300"></td>
+    </tr>`
+  }).join('') : ''
 
   const html = `<!DOCTYPE html>
 <html>
@@ -162,6 +183,7 @@ function printPayslip() {
       </thead>
       <tbody>
         ${p.items.length === 0 ? `<tr class="empty-row"><td colspan="${colCount + 5}">${t('payslip.noProductionData')}</td></tr>` : rows}
+        ${compensationRows}
       </tbody>
       <tfoot>
         <tr>
@@ -171,9 +193,13 @@ function printPayslip() {
           <td class="col-total" style="font-size:13px">${formatCurrency(p.summary.earnings)}</td>
           <td class="col-total" style="font-size:13px">${p.summary.repair_charges > 0 ? formatCurrency(p.summary.repair_charges) : '-'}</td>
         </tr>
+        ${compensations.value.length > 0 ? `<tr>
+          <td colspan="${colCount + 3}" class="text-right font-bold">${t('payslip.compensation')}</td>
+          <td colspan="2" class="col-total font-bold text-green-600" style="font-size:13px">+${formatCurrency(totalCompensation)}</td>
+        </tr>` : ''}
         <tr>
           <td colspan="${colCount + 3}" class="text-right font-bold">${t('payslip.netTotal')}</td>
-          <td colspan="2" class="col-total font-bold" style="font-size:13px">${formatCurrency(p.summary.net_total)}</td>
+          <td colspan="2" class="col-total font-bold" style="font-size:13px">${formatCurrency(netEarnings)}</td>
         </tr>
       </tfoot>
     </table>
@@ -192,6 +218,56 @@ function printPayslip() {
     win.document.write(html)
     win.document.close()
   }
+}
+
+function openCompensationModal() {
+  compensationForm.value = {
+    amount: '',
+    reason: '',
+    penalty_item_id: null
+  }
+  showCompensationModal.value = true
+}
+
+function closeCompensationModal() {
+  showCompensationModal.value = false
+  compensationForm.value = {
+    amount: '',
+    reason: '',
+    penalty_item_id: null
+  }
+}
+
+function addCompensation() {
+  if (!compensationForm.value.amount || Number(compensationForm.value.amount) <= 0) {
+    return
+  }
+
+  compensations.value.push({
+    id: Date.now(),
+    amount: Number(compensationForm.value.amount),
+    reason: compensationForm.value.reason || 'Kompensasi',
+    created_at: new Date().toISOString()
+  })
+
+  closeCompensationModal()
+}
+
+function removeCompensation(id) {
+  const index = compensations.value.findIndex(c => c.id === id)
+  if (index !== -1) {
+    compensations.value.splice(index, 1)
+  }
+}
+
+function getNetEarnings() {
+  if (!payslip.value) return 0
+  const totalCompensation = compensations.value.reduce((sum, c) => sum + Number(c.amount), 0)
+  return payslip.value.summary.earnings - payslip.value.summary.repair_charges + totalCompensation
+}
+
+function getTotalCompensation() {
+  return compensations.value.reduce((sum, c) => sum + Number(c.amount), 0)
 }
 </script>
 
@@ -228,10 +304,25 @@ function printPayslip() {
         </div>
         <div class="flex gap-2">
           <Button @click="generate" :loading="generating" :disabled="!selectedTailor || !startDate || !endDate">{{ t('payslip.generate') }}</Button>
+          <Button v-if="showPayslip" variant="outline" @click="openCompensationModal">{{ t('payslip.addCompensation') }}</Button>
           <Button v-if="showPayslip" variant="outline" @click="printPayslip">{{ t('payslip.print') }}</Button>
         </div>
       </div>
     </Card>
+
+    <!-- Compensation Modal -->
+    <Modal v-model="showCompensationModal" :title="t('payslip.addCompensation')" size="sm">
+      <div class="space-y-4">
+        <Input v-model="compensationForm.amount" :label="t('payslip.compensationAmount')" type="number" placeholder="0" />
+        <Input v-model="compensationForm.reason" :label="t('payslip.compensationReason')" :placeholder="t('payslip.compensationReasonPlaceholder')" />
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <Button variant="outline" @click="closeCompensationModal">{{ t('common.cancel') }}</Button>
+          <Button @click="addCompensation" :disabled="!compensationForm.amount || Number(compensationForm.amount) <= 0">{{ t('common.add') }}</Button>
+        </div>
+      </template>
+    </Modal>
 
     <div v-if="generating" class="flex items-center justify-center py-20">
       <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
@@ -284,6 +375,21 @@ function printPayslip() {
                 <td class="px-4 py-2.5 text-right font-semibold text-green-600">{{ formatCurrency(item.earnings) }}</td>
                 <td class="px-4 py-2.5 text-right font-semibold text-red-600">{{ item.repair_charges > 0 ? formatCurrency(item.repair_charges) : '-' }}</td>
               </tr>
+              <!-- Compensation rows -->
+              <tr v-for="comp in compensations" :key="comp.id" class="border-b border-surface-100 bg-green-50">
+                <td class="px-4 py-2.5 font-medium text-green-800 whitespace-nowrap">{{ comp.reason }}</td>
+                <td :colspan="payslip.columns.length + 2" class="px-4 py-2.5"></td>
+                <td class="px-4 py-2.5 text-right"></td>
+                <td class="px-4 py-2.5 text-right font-semibold text-green-600 flex items-center justify-end gap-2">
+                  <span>+{{ formatCurrency(comp.amount) }}</span>
+                  <button @click="removeCompensation(comp.id)" class="p-1 rounded hover:bg-red-100 transition-colors cursor-pointer" :title="t('common.remove')">
+                    <svg class="w-4 h-4 text-red-600 hover:text-red-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </td>
+                <td class="px-4 py-2.5"></td>
+              </tr>
             </tbody>
             <tfoot>
               <tr class="bg-surface-50 border-t-2 border-surface-300">
@@ -293,9 +399,13 @@ function printPayslip() {
                 <td class="px-4 py-3 text-right font-bold text-lg text-green-600">{{ formatCurrency(payslip.summary.earnings) }}</td>
                 <td class="px-4 py-3 text-right font-bold text-lg text-red-600">{{ payslip.summary.repair_charges > 0 ? formatCurrency(payslip.summary.repair_charges) : '-' }}</td>
               </tr>
+              <tr v-if="compensations.length > 0" class="bg-surface-50">
+                <td :colspan="payslip.columns.length + 3" class="px-4 py-2 text-right font-bold text-surface-900">{{ t('payslip.compensation') }}</td>
+                <td colspan="2" class="px-4 py-2 text-right font-bold text-lg text-green-600">+{{ formatCurrency(getTotalCompensation()) }}</td>
+              </tr>
               <tr class="bg-surface-100">
                 <td :colspan="payslip.columns.length + 3" class="px-4 py-2 text-right font-bold text-surface-900">{{ t('payslip.netTotal') }}</td>
-                <td colspan="2" class="px-4 py-2 text-right font-bold text-lg text-surface-900">{{ formatCurrency(payslip.summary.net_total) }}</td>
+                <td colspan="2" class="px-4 py-2 text-right font-bold text-lg text-surface-900">{{ formatCurrency(getNetEarnings()) }}</td>
               </tr>
             </tfoot>
           </table>

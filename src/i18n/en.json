@@ -55,7 +55,8 @@
     "article": "Article",
     "size": "Size",
     "close": "Close",
-    "preOrder": "Pre-Orders"
+    "preOrder": "Pre-Orders",
+    "remove": "Remove"
   },
   "login": {
     "title": "Sign in to Sansworks",
@@ -357,7 +358,12 @@
     "grandTotal": "GRAND TOTAL",
     "generated": "Generated:",
     "footer": "Sansworks Production Management System",
-    "note": "Note: This payslip is auto-generated. Please contact admin for any discrepancies."
+    "note": "Note: This payslip is auto-generated. Please contact admin for any discrepancies.",
+    "addCompensation": "Add Compensation",
+    "compensationAmount": "Compensation Amount",
+    "compensationReason": "Compensation Reason",
+    "compensationReasonPlaceholder": "e.g. Delay from office",
+    "compensation": "Compensation"
   },
   "repairs": {
     "title": "Repairs (QC)",

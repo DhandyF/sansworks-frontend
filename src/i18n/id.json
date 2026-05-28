@@ -55,7 +55,8 @@
     "article": "Artikel",
     "size": "Size",
     "close": "Tutup",
-    "preOrder": "Pre-Orders"
+    "preOrder": "Pre-Orders",
+    "remove": "Hapus"
   },
   "login": {
     "title": "Masuk ke Sansworks",
@@ -359,7 +360,12 @@
     "grandTotal": "TOTAL KESELURUHAN",
     "generated": "Dibuat:",
     "footer": "Sistem Manajemen Produksi Sansworks",
-    "note": "Catatan: Slip gaji ini dibuat otomatis. Hubungi admin untuk ketidaksesuaian."
+    "note": "Catatan: Slip gaji ini dibuat otomatis. Hubungi admin untuk ketidaksesuaian.",
+    "addCompensation": "Tambah Kompensasi",
+    "compensationAmount": "Jumlah Kompensasi",
+    "compensationReason": "Alasan Kompensasi",
+    "compensationReasonPlaceholder": "Contoh: Keterlambatan dari kantor",
+    "compensation": "Kompensasi"
   },
   "repairs": {
     "title": "Perbaikan (QC)",
