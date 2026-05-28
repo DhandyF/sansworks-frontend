@@ -31,6 +31,10 @@ const groupedDistributions = computed(() => {
         tailor: item.tailor,
         total_distributed: 0,
         total_deposit_remaining: 0,
+        taken_dates: [],
+        deadline_dates: [],
+        taken_date: null,
+        deadline_date: null,
         entries: [],
       })
     }
@@ -38,6 +42,18 @@ const groupedDistributions = computed(() => {
     group.entries.push(item)
     group.total_distributed += Number(item.total_cutting)
     group.total_deposit_remaining += Number(item.deposit_remaining ?? item.total_cutting)
+    if (item.taken_date && !group.taken_dates.includes(item.taken_date)) {
+      group.taken_dates.push(item.taken_date)
+      if (!group.taken_date || new Date(item.taken_date) < new Date(group.taken_date)) {
+        group.taken_date = item.taken_date
+      }
+    }
+    if (item.deadline_date && !group.deadline_dates.includes(item.deadline_date)) {
+      group.deadline_dates.push(item.deadline_date)
+      if (!group.deadline_date || new Date(item.deadline_date) < new Date(group.deadline_date)) {
+        group.deadline_date = item.deadline_date
+      }
+    }
   }
   return Array.from(map.values())
 })
@@ -48,6 +64,8 @@ const columns = computed(() => [
   { key: 'tailor', label: t('cuttingDistributions.tailor') },
   { key: 'total_distributed', label: t('cuttingDistributions.totalDistributed') },
   { key: 'total_deposit_remaining', label: t('cuttingDistributions.remaining') },
+  { key: 'taken_date', label: t('cuttingDistributions.takenDate'), sortable: true },
+  { key: 'deadline_date', label: t('cuttingDistributions.deadlineDate'), sortable: true },
   { key: 'progress', label: t('brandDetail.progress') },
 ])
 
@@ -266,6 +284,34 @@ function positionCrPicker() {
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge></template>
+        <template #taken_date="{ row }">
+          <div v-if="row.taken_dates.length === 0">-</div>
+          <div
+            v-else-if="row.taken_dates.length === 1"
+            class="whitespace-nowrap"
+          >{{ formatDate(row.taken_dates[0]) }}</div>
+          <div v-else>
+            <div
+              v-for="(date, i) in row.taken_dates"
+              :key="'taken-' + i"
+              class="whitespace-nowrap"
+            >{{ formatDate(date) }}</div>
+          </div>
+        </template>
+        <template #deadline_date="{ row }">
+          <div v-if="row.deadline_dates.length === 0">-</div>
+          <div
+            v-else-if="row.deadline_dates.length === 1"
+            class="whitespace-nowrap"
+          >{{ formatDate(row.deadline_dates[0]) }}</div>
+          <div v-else>
+            <div
+              v-for="(date, i) in row.deadline_dates"
+              :key="'deadline-' + i"
+              class="whitespace-nowrap"
+            >{{ formatDate(date) }}</div>
+          </div>
+        </template>
         <template #progress="{ row }">
           <div class="flex items-center gap-2">
             <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">

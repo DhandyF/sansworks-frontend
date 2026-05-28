@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://sansworks-backend.test/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'https://sansworks-backend.test/api'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)

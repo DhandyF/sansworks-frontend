@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://sansworks-backend.test/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'https://sansworks-backend.test/api'
 
 export function useApi() {
   const loading = ref(false)
