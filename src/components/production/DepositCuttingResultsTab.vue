@@ -35,6 +35,8 @@ const groupedDeposits = computed(() => {
         total_price: 0,
         has_overdue: false,
         distIds: new Set(),
+        deposit_dates: [],
+        deposit_date: null,
         entries: [],
       })
     }
@@ -43,6 +45,12 @@ const groupedDeposits = computed(() => {
     group.total_sewing_result += Number(item.total_sewing_result)
     group.total_price += Number(item.total_price || 0)
     if (item.status === 'overdue') group.has_overdue = true
+    if (item.deposit_date && !group.deposit_dates.includes(item.deposit_date)) {
+      group.deposit_dates.push(item.deposit_date)
+      if (!group.deposit_date || new Date(item.deposit_date) < new Date(group.deposit_date)) {
+        group.deposit_date = item.deposit_date
+      }
+    }
     const distId = item.cutting_distribution_id
     if (distId && !group.distIds.has(distId)) {
       group.distIds.add(distId)
@@ -94,6 +102,7 @@ const columns = computed(() => [
   { key: 'total_sewing_result', label: t('deposits.sewingResult') },
   { key: 'total_price', label: t('deposits.totalPrice') },
   { key: 'total_deposit_remaining', label: t('deposits.remaining') },
+  { key: 'deposit_date', label: t('deposits.depositDate'), sortable: true },
   { key: 'progress', label: t('brandDetail.progress') },
   { key: 'status', label: t('common.status') },
 ])
@@ -357,6 +366,20 @@ function positionDistPicker() {
         <template #total_sewing_result="{ value }"><span class="font-medium">{{ value }}</span></template>
         <template #total_price="{ value }"><span class="font-medium whitespace-nowrap">{{ formatCurrency(value) }}</span></template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge></template>
+        <template #deposit_date="{ row }">
+          <div v-if="row.deposit_dates.length === 0">-</div>
+          <div
+            v-else-if="row.deposit_dates.length === 1"
+            class="whitespace-nowrap"
+          >{{ formatDate(row.deposit_dates[0]) }}</div>
+          <div v-else>
+            <div
+              v-for="(date, i) in row.deposit_dates"
+              :key="'deposit-' + i"
+              class="whitespace-nowrap"
+            >{{ formatDate(date) }}</div>
+          </div>
+        </template>
         <template #progress="{ row }">
           <div class="flex items-center gap-2">
             <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
