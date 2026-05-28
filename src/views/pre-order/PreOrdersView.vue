@@ -62,6 +62,7 @@ function openCuttingForm(entry, group, event) {
     size_id: entry.size_id,
     total_pcs: entry.total_pcs,
     cut_qty: entry.cut_qty ?? 0,
+    excess_cutting: entry.excess_cutting ?? 0,
     remaining: entry.remaining ?? entry.total_pcs,
     total_cutting: '',
     cutting_date: today,
@@ -108,6 +109,8 @@ function openCuttingDetailForm(entry) {
     pre_order_id: entry.id,
     total_pcs: entry.total_pcs,
     cut_qty: entry.cut_qty ?? 0,
+    excess_cutting: entry.excess_cutting ?? 0,
+    remaining: entry.remaining ?? entry.total_pcs,
     cutting_results: [...(entry.cutting_results || [])],
   }
   cuttingDetailError.value = ''
@@ -152,9 +155,12 @@ async function updateCutting() {
     .reduce((sum, c) => sum + c.total_cutting, 0) ?? 0
 
   const newTotalCut = otherCuttingsTotal + Number(f.total_cutting)
+  let excess = 0
+
+  // Calculate excess if cutting exceeds total_pcs
   if (newTotalCut > cuttingDetailForm.value.total_pcs) {
-    cuttingDetailError.value = t('preOrders.cuttingQtyExceeds')
-    return
+    excess = newTotalCut - cuttingDetailForm.value.total_pcs
+    cuttingDetailError.value = `Warning: Total cutting exceeds total by ${excess} pcs`
   }
 
   cuttingDetailSubmitting.value = true
@@ -165,6 +171,7 @@ async function updateCutting() {
       body: JSON.stringify({
         cutting_date: f.cutting_date,
         total_cutting: Number(f.total_cutting),
+        excess_cutting: excess,
       }),
     })
     await fetchData(1)
@@ -204,8 +211,8 @@ async function submitCuttingResult() {
     return
   }
   if (Number(f.total_cutting) > f.remaining) {
-    cuttingError.value = t('preOrders.cuttingQtyExceeds')
-    return
+    // Allow excess cutting, just show a warning note
+    cuttingError.value = `Warning: Cutting exceeds remaining by ${Number(f.total_cutting) - f.remaining} pcs`
   }
   if (!f.cutting_date) {
     cuttingError.value = t('preOrders.cuttingQtyRequired')
@@ -214,25 +221,36 @@ async function submitCuttingResult() {
   cuttingSubmitting.value = true
   cuttingError.value = ''
   try {
+    const qty = Number(f.total_cutting)
+    let excess = 0
+
+    // Calculate excess if cutting exceeds remaining
+    if (qty > f.remaining) {
+      excess = qty - f.remaining
+    }
+
     const res = await request('/cutting-results', {
       method: 'POST',
       body: JSON.stringify({
         pre_order_id: f.pre_order_id,
         article_id: f.article_id,
         size_id: f.size_id,
-        total_cutting: Number(f.total_cutting),
+        total_cutting: qty,
+        excess_cutting: excess,
         cutting_date: f.cutting_date,
       }),
     })
-    const qty = Number(f.total_cutting)
+
     const item = items.value.find(i => i.id === f.pre_order_id)
     if (item) {
       item.cut_qty = (item.cut_qty ?? 0) + qty
-      item.remaining = (item.remaining ?? item.total_pcs) - qty
+      item.excess_cutting = (item.excess_cutting ?? 0) + excess
+      item.remaining = Math.max(0, (item.remaining ?? item.total_pcs) - qty)
       if (!item.cutting_results) item.cutting_results = []
       item.cutting_results.push({
         id: res.id,
         total_cutting: qty,
+        excess_cutting: excess,
         cutting_date: f.cutting_date,
       })
     }
@@ -300,6 +318,7 @@ const groupedOrders = computed(() => {
         deadline_date: item.deadline_date,
         total_pcs: 0,
         total_remaining: 0,
+        total_excess_cutting: 0,
         articles: [],
         rawIds: [],
       })
@@ -311,9 +330,10 @@ const groupedOrders = computed(() => {
       articleGroup = { article_id: item.article_id, article: item.article, entries: [] }
       group.articles.push(articleGroup)
     }
-    articleGroup.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs, cut_qty: item.cut_qty ?? 0, remaining: item.remaining ?? item.total_pcs, cutting_results: item.cutting_results || [] })
+    articleGroup.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs, cut_qty: item.cut_qty ?? 0, excess_cutting: item.excess_cutting ?? 0, remaining: item.remaining ?? item.total_pcs, cutting_results: item.cutting_results || [] })
     group.total_pcs += Number(item.total_pcs)
     group.total_remaining += Number(item.remaining ?? item.total_pcs)
+    group.total_excess_cutting += Number(item.excess_cutting ?? 0)
     group.rawIds.push(item.id)
   }
   return Array.from(map.values())
@@ -326,6 +346,7 @@ const columns = computed(() => [
   { key: 'deadline_date', label: t('preOrders.deadline') },
   { key: 'total_pcs', label: t('preOrders.totalPcs') },
   { key: 'total_remaining', label: t('preOrders.remaining') },
+  { key: 'total_excess_cutting', label: t('preOrders.excessCutting') },
   { key: 'progress', label: t('brandDetail.progress') },
   { key: 'actions', label: t('common.actions') },
 ])
@@ -340,6 +361,11 @@ function getProgress(row) {
   if (!row.total_pcs || row.total_pcs === 0) return 0
   const cutQty = row.total_pcs - row.total_remaining
   return Math.round((cutQty / row.total_pcs) * 100)
+}
+
+function formatCutQty(entry) {
+  if (!entry.cut_qty) return '0'
+  return String(entry.cut_qty)
 }
 
 const showForm = ref(false)
@@ -616,6 +642,10 @@ async function handleDelete() {
           <template #total_remaining="{ value }">
             <Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge>
           </template>
+          <template #total_excess_cutting="{ row }">
+            <Badge v-if="row.total_excess_cutting > 0" variant="success" size="sm">+{{ row.total_excess_cutting }}</Badge>
+            <span v-else class="text-surface-400">-</span>
+          </template>
           <template #progress="{ row }">
             <div class="flex items-center gap-2">
               <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
@@ -660,8 +690,8 @@ async function handleDelete() {
                             class="cursor-help text-surface-800 font-medium"
                             @mouseenter="showTooltip(entry, $event)"
                             @mouseleave="hideTooltip"
-                          >{{ entry.cut_qty }}</span>
-                          <span v-else class="text-surface-800 font-medium">{{ entry.cut_qty }}</span>
+                          >{{ entry.cut_qty }}<span v-if="entry.excess_cutting > 0" class="text-green-600"> (+{{ entry.excess_cutting }})</span></span>
+                          <span v-else class="text-surface-800 font-medium">{{ entry.cut_qty }}<span v-if="entry.excess_cutting > 0" class="text-green-600"> (+{{ entry.excess_cutting }})</span></span>
                           <button
                             v-if="entry.cutting_results && entry.cutting_results.length > 0"
                             @click="openCuttingDetailForm(entry)"
@@ -670,12 +700,11 @@ async function handleDelete() {
                           >
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                           </button>
+                          <!-- :disabled="entry.remaining <= 0" -->
                           <button
                             data-cutting-btn
-                            @click="entry.remaining > 0 && cuttingForm?.pre_order_id !== entry.id ? openCuttingForm(entry, row, $event) : (cuttingForm?.pre_order_id === entry.id ? closeCuttingForm() : null)"
-                            :disabled="entry.remaining <= 0"
-                            class="p-1 rounded-md transition-colors cursor-pointer"
-                            :class="entry.remaining > 0 ? 'text-primary-600 hover:bg-primary-50' : 'text-surface-300 cursor-not-allowed'"
+                            @click="cuttingForm?.pre_order_id !== entry.id ? openCuttingForm(entry, row, $event) : (cuttingForm?.pre_order_id === entry.id ? closeCuttingForm() : null)"
+                            class="p-1 rounded-md transition-colors cursor-pointer text-primary-600 hover:bg-primary-50"
                             :title="t('preOrders.addCuttingResult')"
                           >
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>

@@ -202,7 +202,8 @@
     "selectArticle": "Pilih artikel",
     "selectSize": "Pilih ukuran",
     "remaining": "Blm Dicutting",
-    "totalPcs": "Total PO"
+    "totalPcs": "Total PO",
+    "excessCutting": "Kelebihan"
   },
   "shipments": {
     "title": "Pengiriman",

@@ -201,7 +201,8 @@
     "selectArticle": "Select an article",
     "selectSize": "Select a size",
     "remaining": "Remaining",
-    "totalPcs": "Total PO"
+    "totalPcs": "Total PO",
+    "excessCutting": "Excess Cutting"
   },
   "shipments": {
     "title": "Shipments",
