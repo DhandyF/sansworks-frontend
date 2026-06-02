@@ -3,19 +3,21 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
+import { useAuthStore } from '@/stores/auth'
 import { Card, Badge, Table, Tabs } from 'ui-assets'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { request } = useApi()
+const auth = useAuthStore()
 
 const loading = ref(true)
 const preOrder = ref(null)
 const summary = ref(null)
 const entries = ref([])
 const statusFilter = ref('')
-const activeTab = ref('production')
+const activeTab = ref(auth.isClient ? 'shipment' : 'production')
 
 const filteredEntries = computed(() => {
   if (!statusFilter.value) return entries.value
@@ -87,7 +89,9 @@ onMounted(async () => {
       return b.cutting_remaining - a.cutting_remaining
     })
   } catch {
-    router.push({ name: 'brands' })
+    router.push(auth.isClient && auth.userBrands.length > 0
+      ? { name: 'client-brand-detail', params: { id: auth.userBrands[0].id } }
+      : { name: 'brands' })
   } finally {
     loading.value = false
   }
@@ -129,10 +133,13 @@ const shipmentColumns = computed(() => [
   { key: 'status', label: t('preOrderDetail.status') },
 ])
 
-const tabs = computed(() => [
-  { key: 'production', label: t('nav.production') },
-  { key: 'shipment', label: t('nav.shipments') },
-])
+const tabs = computed(() => {
+  if (auth.isClient) return [{ key: 'shipment', label: t('nav.shipments') }]
+  return [
+    { key: 'production', label: t('nav.production') },
+    { key: 'shipment', label: t('nav.shipments') },
+  ]
+})
 
 const formatDate = (date) => {
   return date ? new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
@@ -202,7 +209,7 @@ function groupByTailor(distributions) {
           <p class="text-2xl font-bold text-surface-900">{{ summary.cut_qty }}</p>
           <p class="text-xs text-surface-500 mt-1">{{ t('preOrderDetail.cuttingDone') }}</p>
         </Card>
-        <Card variant="bordered" background="bg-red-400" class="text-center py-4">
+        <Card variant="bordered" class="text-center py-4 bg-red-400!">
           <p class="text-2xl font-bold">{{ summary.cutting_left }}</p>
           <p class="text-xs mt-1">{{ t('preOrderDetail.cuttingLeft') }}</p>
         </Card>

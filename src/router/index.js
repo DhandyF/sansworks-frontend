@@ -81,6 +81,23 @@ const routes = [
       },
     ],
   },
+  {
+    path: '/client',
+    component: () => import('@/layouts/ClientLayout.vue'),
+    meta: { requiresAuth: true, clientOnly: true },
+    children: [
+      {
+        path: 'brands/:id',
+        name: 'client-brand-detail',
+        component: () => import('@/views/master-data/BrandDetailView.vue'),
+      },
+      {
+        path: 'pre-orders/:id',
+        name: 'client-pre-order-detail',
+        component: () => import('@/views/pre-order/PreOrderDetailView.vue'),
+      },
+    ],
+  },
 ]
 
 const router = createRouter({
@@ -91,13 +108,49 @@ const router = createRouter({
 router.beforeEach((to) => {
   const auth = useAuthStore()
 
+  // Authentication check
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login' }
   }
 
+  // Guest route handling
   if (to.meta.guest && auth.isAuthenticated) {
+    // Admin and operator users go to dashboard
+    if (auth.isAdmin || auth.isOperator) {
+      return { path: '/' }
+    }
+
+    // Client users redirect to their assigned brand
+    if (auth.isClient && auth.userBrands.length > 0) {
+      return { name: 'client-brand-detail', params: { id: auth.userBrands[0].id } }
+    }
+
     return { path: '/' }
   }
+
+  // Client-specific restrictions
+  if (auth.isClient) {
+    // Only allow client routes for client users
+    if (to.name !== 'client-brand-detail' && to.name !== 'client-pre-order-detail') {
+      if (auth.userBrands.length > 0) {
+        return { name: 'client-brand-detail', params: { id: auth.userBrands[0].id } }
+      }
+      return { name: 'login' }
+    }
+
+    // Check brand access only for brand routes
+    if (to.name === 'client-brand-detail') {
+      const brandId = to.params.id
+      if (!auth.hasBrandAccess(brandId)) {
+        if (auth.userBrands.length > 0) {
+          return { name: 'client-brand-detail', params: { id: auth.userBrands[0].id } }
+        }
+        return { name: 'login' }
+      }
+    }
+  }
+
+  // Admin and operator users: no restrictions, allow all routes
 })
 
 export default router

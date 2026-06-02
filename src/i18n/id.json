@@ -83,7 +83,13 @@
     "admin": "Admin",
     "client": "Klien",
     "operator": "Operator",
-    "deleteTitle": "Hapus Pengguna"
+    "deleteTitle": "Hapus Pengguna",
+    "brands": "Brands",
+    "selectBrands": "Pilih brands...",
+    "noBrandsAssigned": "Tidak ada brand yang ditugaskan",
+    "accessDenied": "Anda tidak memiliki akses ke brand ini",
+    "mustSelectBrands": "Minimal satu brand harus dipilih untuk pengguna klien",
+    "noResults": "Tidak ada pengguna yang ditemukan"
   },
   "brands": {
     "title": "Brands",

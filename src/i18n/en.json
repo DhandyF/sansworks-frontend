@@ -83,7 +83,13 @@
     "admin": "Admin",
     "client": "Client",
     "operator": "Operator",
-    "deleteTitle": "Delete User"
+    "deleteTitle": "Delete User",
+    "brands": "Brands",
+    "selectBrands": "Select brands...",
+    "noBrandsAssigned": "No brands assigned",
+    "accessDenied": "You don't have access to this brand",
+    "mustSelectBrands": "At least one brand must be selected for client users",
+    "noResults": "No users found"
   },
   "brands": {
     "title": "Brands",

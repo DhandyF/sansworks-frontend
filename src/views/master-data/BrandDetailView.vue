@@ -1,14 +1,19 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
+import { useAuthStore } from '@/stores/auth'
 import { Card, Badge, Table } from 'ui-assets'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 const { request } = useApi()
+
+const isClient = computed(() => auth.isClient)
+const userBrands = computed(() => auth.userBrands)
 
 const loading = ref(true)
 const brand = ref(null)
@@ -60,18 +65,37 @@ const getProgress = (row) => {
 }
 
 function goToPreOrder(row) {
-  router.push({ name: 'pre-order-detail', params: { id: row.id } })
+  router.push({ name: auth.isClient ? 'client-pre-order-detail' : 'pre-order-detail', params: { id: row.id } })
 }
+
+function switchBrand(brandId) {
+  router.push({ name: 'brand-detail', params: { id: brandId } })
+}
+
+const showBrandSelector = computed(() => {
+  return isClient.value && userBrands.value.length > 1
+})
 </script>
 
 <template>
   <div>
     <div class="flex items-center gap-3 mb-6">
-      <button @click="router.push({ name: 'brands' })" class="p-2 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer" :title="t('common.back')">
+      <button v-if="!isClient" @click="router.push({ name: 'brands' })" class="p-2 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer" :title="t('common.back')">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <div>
+      <div class="flex-1 flex items-center justify-between">
         <h1 class="text-2xl font-bold text-surface-900">{{ t('brandDetail.title') }}</h1>
+        <div v-if="showBrandSelector" class="flex items-center gap-2">
+          <select
+            :value="route.params.id"
+            @change="switchBrand($event.target.value)"
+            class="rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+          >
+            <option v-for="brand in userBrands" :key="brand.id" :value="brand.id">
+              {{ brand.name }}
+            </option>
+          </select>
+        </div>
       </div>
     </div>
 

@@ -1,17 +1,54 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMasterData } from '@/composables/useMasterData'
 import { useDebounce } from '@/composables/useDebounce'
-import { Button, Card, Table, Badge, Input, Modal } from 'ui-assets'
+import { useApi } from '@/composables/useApi'
+import { Button, Card, Table, Badge, Input, Modal, SearchableDropdown } from 'ui-assets'
 
 const { t } = useI18n()
 const search = ref('')
 const { debounce } = useDebounce(500)
+const { request } = useApi()
 
 const { items, loading, pagination, fetchData, addItem, editItem, deleteItem } = useMasterData('/users', () => ({ search: search.value }))
 
+const brands = ref([])
+
+const roleOptions = [
+  { value: 'admin', label: t('users.admin') },
+  { value: 'client', label: t('users.client') },
+  { value: 'operator', label: t('users.operator') },
+]
+
+const statusOptions = [
+  { value: 'active', label: t('common.active') },
+  { value: 'inactive', label: t('common.inactive') },
+]
+
+const form = ref({ name: '', username: '', password: '', phone: '', role: 'operator', status: 'active', brand_id: '' })
+
+onMounted(async () => {
+  await fetchBrands()
+  fetchData(1)
+})
+
+async function fetchBrands() {
+  try {
+    const res = await request('/brands?per_page=1000')
+    brands.value = res.data.map(b => ({ value: b.id, label: b.name }))
+  } catch {
+    // ignore
+  }
+}
+
 watch(search, () => debounce(() => fetchData(1)))
+
+watch(() => form.value.role, (newRole, oldRole) => {
+  if (oldRole === 'client' && newRole !== 'client') {
+    form.value.brand_id = ''
+  }
+})
 
 const columns = computed(() => [
   { key: 'name', label: t('common.name') },
@@ -29,22 +66,28 @@ const deletingItem = ref(null)
 const formError = ref('')
 const submitting = ref(false)
 
-const form = ref({ name: '', username: '', password: '', phone: '', role: 'operator', status: 'active' })
-
 const showPassword = ref(false)
 
 function upper(v) { return typeof v === 'string' ? v.toUpperCase() : v }
 
 function openAddForm() {
   editing.value = null
-  form.value = { name: '', username: '', password: '', phone: '', role: 'operator', status: 'active' }
+  form.value = { name: '', username: '', password: '', phone: '', role: 'operator', status: 'active', brand_id: '' }
   formError.value = ''
   showForm.value = true
 }
 
 function openEditForm(item) {
   editing.value = item
-  form.value = { name: item.name, username: item.username, password: '', phone: item.phone || '', role: item.role, status: item.status }
+  form.value = {
+    name: item.name,
+    username: item.username,
+    password: '',
+    phone: item.phone || '',
+    role: item.role,
+    status: item.status,
+    brand_id: item.brands?.[0]?.id || ''
+  }
   formError.value = ''
   showForm.value = true
 }
@@ -58,7 +101,16 @@ async function handleSubmit() {
   formError.value = ''
   submitting.value = true
   try {
-    const payload = { ...form.value }
+    const { brand_id, ...rest } = form.value
+    const payload = { ...rest, brands: rest.role === 'client' ? (brand_id ? [brand_id] : []) : [] }
+
+    // Validate client role requires at least one brand
+    if (payload.role === 'client' && payload.brands.length === 0) {
+      formError.value = t('users.mustSelectBrands')
+      submitting.value = false
+      return
+    }
+
     if (editing.value) {
       if (!payload.password) delete payload.password
       await editItem(editing.value.id, payload)
@@ -133,10 +185,10 @@ async function handleDelete() {
     </Card>
 
     <Modal v-model="showForm" :title="editing ? t('users.editUser') : t('users.addUser')" size="md" contentClass="h-[80vh]" :closeOnOverlay="false">
-      <form @submit.prevent="handleSubmit" class="space-y-4">
+      <div class="space-y-4">
         <div v-if="formError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ formError }}</div>
         <Input :model-value="form.name" @update:model-value="v => form.name = upper(v)" :label="t('users.fullName')" :placeholder="t('users.fullName')" required />
-        <Input :model-value="form.username" @update:model-value="v => form.username = upper(v)" :label="t('users.username')" :placeholder="t('users.username')" required />
+        <Input v-model="form.username" :label="t('users.username')" :placeholder="t('users.username')" required />
         <div class="relative">
           <Input v-if="!editing" v-model="form.password" :type="showPassword ? 'text' : 'password'" :label="t('users.password')" :placeholder="t('users.minChars')" required>
             <template #rightIcon>
@@ -156,22 +208,10 @@ async function handleDelete() {
           </Input>
         </div>
         <Input :model-value="form.phone" @update:model-value="v => form.phone = upper(v)" :label="t('common.phone')" :placeholder="t('common.phone')" />
-        <div class="space-y-1">
-          <label class="block text-sm font-medium text-surface-700">{{ t('users.role') }}</label>
-          <select v-model="form.role" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500">
-            <option value="admin">{{ t('users.admin') }}</option>
-            <option value="client">{{ t('users.client') }}</option>
-            <option value="operator">{{ t('users.operator') }}</option>
-          </select>
-        </div>
-        <div class="space-y-1">
-          <label class="block text-sm font-medium text-surface-700">{{ t('common.status') }}</label>
-          <select v-model="form.status" class="w-full rounded-lg border border-surface-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500">
-            <option value="active">{{ t('common.active') }}</option>
-            <option value="inactive">{{ t('common.inactive') }}</option>
-          </select>
-        </div>
-      </form>
+        <SearchableDropdown v-model="form.role" :options="roleOptions" :label="t('users.role')" :placeholder="t('users.role')" />
+        <SearchableDropdown v-if="form.role === 'client'" v-model="form.brand_id" :options="brands" :label="t('users.brands')" :placeholder="t('common.selectBrand')" />
+        <SearchableDropdown v-model="form.status" :options="statusOptions" :label="t('common.status')" :placeholder="t('common.status')" />
+      </div>
       <template #footer>
         <div class="flex justify-end gap-3">
           <Button variant="outline" @click="showForm = false">{{ t('common.cancel') }}</Button>

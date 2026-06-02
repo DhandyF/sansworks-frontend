@@ -9,6 +9,22 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
+  const isClient = computed(() => user.value?.role === 'client')
+  const isOperator = computed(() => user.value?.role === 'operator')
+  const userBrands = computed(() => user.value?.brands || [])
+
+  function hasBrandAccess(brandId) {
+    // Admin and operator have full access to all brands
+    if (isAdmin.value || isOperator.value) return true
+
+    // Client users can only access assigned brands
+    if (isClient.value) {
+      return userBrands.value.some(brand => String(brand.id) === String(brandId))
+    }
+
+    // Default: no access
+    return false
+  }
 
   function setUser(userData) {
     user.value = userData
@@ -91,5 +107,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, token, isAuthenticated, isAdmin, login, logout, fetchUser, setUser, setToken, initializeFromStorage }
+  return { user, token, isAuthenticated, isAdmin, isClient, isOperator, userBrands, hasBrandAccess, login, logout, fetchUser, setUser, setToken, initializeFromStorage }
 })
