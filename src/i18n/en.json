@@ -41,9 +41,10 @@
     "inProgress": "In Progress",
     "overdue": "Overdue",
     "remaining": "Remaining",
-    "totalPcs": "Total Pcs",
+    "totalPcs": "Total PO",
     "total": "Total",
     "pcs": "pcs",
+    "of": "of",
     "back": "Back",
     "loading": "Loading...",
     "confirmDelete": "Are you sure you want to delete",
@@ -258,7 +259,8 @@
     "notDeliveredTooltip": "Total PO - total delivered",
     "cuttingLeft": "Cutting Left",
     "totalShipped": "Total Shipped",
-    "shipmentRemaining": "Shipment Remaining"
+    "shipmentRemaining": "Shipment Remaining",
+    "daysLeft": "Days Left"
   },
   "production": {
     "title": "Production",

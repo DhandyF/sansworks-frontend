@@ -5,6 +5,10 @@ import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useAuthStore } from '@/stores/auth'
 import { Card, Badge, Table, Tabs } from 'ui-assets'
+import { Doughnut } from 'vue-chartjs'
+import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
+
+ChartJS.register(ArcElement, Tooltip)
 
 const { t } = useI18n()
 const route = useRoute()
@@ -155,6 +159,32 @@ const getShipmentProgress = (row) => {
   return Math.round((row.shipped_qty || 0) / row.total_pcs * 100)
 }
 
+const daysLeft = computed(() => {
+  if (!preOrder.value?.deadline_date) return null
+  const diff = new Date(preOrder.value.deadline_date) - new Date()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+})
+
+const shipmentChartData = computed(() => {
+  const shipped = summary.value?.total_shipped ?? 0
+  const total = summary.value?.total_pcs ?? 0
+  const remaining = Math.max(total - shipped, 0)
+  return {
+    datasets: [{
+      data: [shipped, remaining],
+      backgroundColor: ['#3b82f6', '#e5e7eb'],
+      borderWidth: 0,
+      hoverOffset: 4,
+    }],
+  }
+})
+
+const shipmentChartOptions = {
+  cutout: '72%',
+  plugins: { tooltip: { enabled: false } },
+  animation: { animateRotate: true },
+}
+
 function groupByTailor(distributions) {
   if (!distributions || distributions.length === 0) return []
   const map = new Map()
@@ -223,12 +253,12 @@ function groupByTailor(distributions) {
         </Card>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+      <!-- <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.total_shipped }}</p>
           <p class="text-xs text-surface-500 mt-1">{{ t('preOrderDetail.totalShipped') }}</p>
         </Card>
-        <Card variant="bordered" background="bg-blue-400" class="text-center py-4">
+        <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold">{{ summary.shipment_remaining }}</p>
           <p class="text-xs mt-1">{{ t('preOrderDetail.shipmentRemaining') }}</p>
         </Card>
@@ -236,9 +266,55 @@ function groupByTailor(distributions) {
           <p class="text-2xl font-bold text-surface-900">{{ summary.total_pcs }}</p>
           <p class="text-xs text-surface-500 mt-1">{{ t('common.totalPcs') }}</p>
         </Card>
+      </div> -->
+
+      <div class="flex justify-center items-center gap-6 px-6 py-4">
+        <!-- Shipment progress doughnut -->
+        <Card variant="bordered" class="mb-6 min-w-fit" contentClass="px-6 py-4 flex">
+          <div class="relative w-40 h-40 shrink-0 mr-4">
+            <Doughnut :data="shipmentChartData" :options="shipmentChartOptions" />
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-3xl  font-bold text-surface-800">
+                {{ summary.total_pcs > 0 ? Math.round(summary.total_shipped / summary.total_pcs * 100) : 0 }}%
+              </span>
+            </div>
+          </div>
+          <div class="mr-6 flex flex-col justify-center">
+            <div class="flex items-center text-blue-600">
+              <p class="text-3xl font-bold mr-2">{{ summary.total_shipped }}</p>
+              <p class="text-xs h-fit">{{ t('preOrderDetail.totalShipped') }}</p>
+            </div>
+            <div class="flex items-center">
+              <p class="text-3xl font-bold text-surface-900 mr-2">{{ summary.total_pcs }}</p>
+              <p class="text-xs text-surface-500 h-fit">{{ t('common.totalPcs') }}</p>
+            </div>
+            <div class="flex items-center text-orange-400!">
+              <p class="text-3xl font-bold mr-2">{{ summary.shipment_remaining }}</p>
+              <p class="text-xs h-fit">{{ t('preOrderDetail.shipmentRemaining') }}</p>
+            </div>
+            <!-- <p class="text-xs text-surface-400 mt-0.5">{{ t('common.of') }} {{ summary.total_pcs }} {{ t('common.pcs') }}</p> -->
+          </div>
+        </Card>
+
+        <div class="w-px h-10 bg-surface-200 shrink-0"></div>
+
+        <!-- Deadline countdown -->
+        <Card variant="bordered" class="mb-6 min-w-fit h-48" contentClass="px-6 py-4 h-full">
+          <div class="flex flex-col justify-between h-full text-center">
+            <p class="text-surface-500">{{ t('preOrderDetail.deadline') }}</p>
+            <p class="text-6xl font-bold"
+              :class="daysLeft !== null && daysLeft <= 0 ? 'text-red-600' : daysLeft !== null && daysLeft <= 7 ? 'text-amber-600' : 'text-surface-900'">
+              {{ daysLeft !== null ? (daysLeft <= 0 ? t('preOrderDetail.overdue') : daysLeft) : '-' }}
+            </p>
+            <p class="text-xs text-surface-400">
+              {{ daysLeft !== null && daysLeft > 0 ? t('preOrderDetail.daysLeft') : '' }}
+              {{ preOrder.deadline_date ? formatDate(preOrder.deadline_date) : '' }}
+            </p>
+          </div>
+        </Card>
       </div>
 
-      <div class="grid grid-cols-3 gap-4 mb-6">
+      <!-- <div class="grid grid-cols-3 gap-4 mb-6">
         <Card variant="bordered" class="text-center py-3">
           <p class="text-xl font-semibold text-green-600">{{ summary.done_count }}</p>
           <p class="text-xs text-surface-500 mt-0.5">{{ t('common.done') }}</p>
@@ -251,7 +327,7 @@ function groupByTailor(distributions) {
           <p class="text-xl font-semibold text-red-600">{{ summary.overdue_count }}</p>
           <p class="text-xs text-surface-500 mt-0.5">{{ t('common.overdue') }}</p>
         </Card>
-      </div>
+      </div> -->
 
       <Card variant="bordered">
         <div class="px-4 py-3 border-b border-surface-200">

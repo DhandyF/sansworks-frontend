@@ -48,7 +48,7 @@ watch(() => form.value.role, (newRole, oldRole) => {
   if (oldRole === 'client' && newRole !== 'client') {
     form.value.brand_id = ''
   }
-})
+}, { flush: 'post' })
 
 const columns = computed(() => [
   { key: 'name', label: t('common.name') },

@@ -41,9 +41,10 @@
     "inProgress": "Dalam Proses",
     "overdue": "Terlambat",
     "remaining": "Sisa",
-    "totalPcs": "Total Pcs",
+    "totalPcs": "Total PO",
     "total": "Total",
     "pcs": "pcs",
+    "of": "dari",
     "back": "Kembali",
     "loading": "Memuat...",
     "confirmDelete": "Yakin ingin menghapus",
@@ -260,7 +261,8 @@
     "notDeliveredTooltip": "(Jumlah PO dikurang yang terkirim)",
     "cuttingLeft": "Sisa Cutting-an",
     "totalShipped": "Total Terkirim",
-    "shipmentRemaining": "Sisa Pengiriman"
+    "shipmentRemaining": "Sisa Pengiriman",
+    "daysLeft": "Hari Tersisa"
   },
   "production": {
     "title": "Produksi",
