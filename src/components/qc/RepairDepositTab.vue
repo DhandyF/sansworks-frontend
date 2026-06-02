@@ -131,10 +131,12 @@ function openDeleteModal(item) {
 
 const repairOptions = computed(() => {
   if (!repairs.value) return []
-  return repairs.value.map(r => ({
-    value: r.id,
-    label: `${r.name} (Sisa: ${r.total_repair - (r.total_deposited ?? 0)} pcs)`,
-  }))
+  return repairs.value
+    .filter(r => (r.total_repair - (r.total_deposited ?? 0)) > 0)
+    .map(r => ({
+      value: r.id,
+      label: `${r.name} (Sisa: ${r.total_repair - (r.total_deposited ?? 0)} pcs)`,
+    }))
 })
 
 async function handleSubmit() {
