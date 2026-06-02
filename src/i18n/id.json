@@ -252,7 +252,9 @@
     "deliveredTooltip": "(Dari jumlah PO)",
     "notDelivered": "Belum Terkirim",
     "notDeliveredTooltip": "(Jumlah PO dikurang yang terkirim)",
-    "cuttingLeft": "Sisa Cutting-an"
+    "cuttingLeft": "Sisa Cutting-an",
+    "totalShipped": "Total Terkirim",
+    "shipmentRemaining": "Sisa Pengiriman"
   },
   "production": {
     "title": "Produksi",

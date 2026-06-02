@@ -250,7 +250,9 @@
     "notDelivered": "Not Delivered",
     "deliveredTooltip": "(From total PO)",
     "notDeliveredTooltip": "Total PO - total delivered",
-    "cuttingLeft": "Cutting Left"
+    "cuttingLeft": "Cutting Left",
+    "totalShipped": "Total Shipped",
+    "shipmentRemaining": "Shipment Remaining"
   },
   "production": {
     "title": "Production",

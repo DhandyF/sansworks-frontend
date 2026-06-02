@@ -59,7 +59,9 @@ onMounted(async () => {
     preOrder.value = res.pre_order
     summary.value = {
       ...res.summary,
-      cutting_left: res.summary.cut_qty - res.summary.distributed_qty
+      cutting_left: res.summary.cut_qty - res.summary.distributed_qty,
+      total_shipped: res.entries.reduce((sum, e) => sum + (e.shipped_qty || 0), 0),
+      shipment_remaining: res.entries.reduce((sum, e) => sum + (e.total_pcs - (e.shipped_qty || 0)), 0)
     }
 
     // Sort entries: first by article's max cutting_remaining (descending), then by article name (group same articles), then by entry's cutting_remaining descending
@@ -211,6 +213,21 @@ function groupByTailor(distributions) {
         <Card variant="bordered" class="text-center py-4">
           <p class="text-2xl font-bold text-surface-900">{{ summary.deposited_qty }}</p>
           <p class="text-xs text-surface-500 mt-1">{{ t('preOrderDetail.deposited') }}</p>
+        </Card>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+        <Card variant="bordered" class="text-center py-4">
+          <p class="text-2xl font-bold text-surface-900">{{ summary.total_shipped }}</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('preOrderDetail.totalShipped') }}</p>
+        </Card>
+        <Card variant="bordered" background="bg-blue-400" class="text-center py-4">
+          <p class="text-2xl font-bold">{{ summary.shipment_remaining }}</p>
+          <p class="text-xs mt-1">{{ t('preOrderDetail.shipmentRemaining') }}</p>
+        </Card>
+        <Card variant="bordered" class="text-center py-4">
+          <p class="text-2xl font-bold text-surface-900">{{ summary.total_pcs }}</p>
+          <p class="text-xs text-surface-500 mt-1">{{ t('common.totalPcs') }}</p>
         </Card>
       </div>
 
