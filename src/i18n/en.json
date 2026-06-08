@@ -359,6 +359,8 @@
     "dateRange": "Date Range:",
     "articles": "Articles:",
     "articleItem": "Article / Item",
+    "cuttingQty": "Cutting",
+    "repairQty": "Repair",
     "totalQty": "Total Qty",
     "pricePcs": "Price/Pcs",
     "totalAmount": "Total Amount",
