@@ -19,68 +19,8 @@ const { items, loading, fetchData } = deposits
 function refresh() { fetchData(1) }
 defineExpose({ refresh })
 
-const groupedDeposits = computed(() => {
-  const map = new Map()
-  for (const item of items.value) {
-    const distName = item.cutting_distribution?.name || item.name?.replace(/-DEP\d+$/, '') || '-'
-    const key = `${distName}_${item.brand_id}_${item.tailor_id}`
-    if (!map.has(key)) {
-      map.set(key, {
-        id: key,
-        name: distName,
-        brand: item.brand,
-        tailor: item.tailor,
-        pre_order: item.cutting_distribution?.cutting_result?.pre_order,
-        total_sewing_result: 0,
-        total_price: 0,
-        has_overdue: false,
-        distIds: new Set(),
-        deposit_dates: [],
-        deposit_date: null,
-        entries: [],
-      })
-    }
-    const group = map.get(key)
-    group.entries.push(item)
-    group.total_sewing_result += Number(item.total_sewing_result)
-    group.total_price += Number(item.total_price || 0)
-    if (item.status === 'overdue') group.has_overdue = true
-    if (item.deposit_date && !group.deposit_dates.includes(item.deposit_date)) {
-      group.deposit_dates.push(item.deposit_date)
-      if (!group.deposit_date || new Date(item.deposit_date) < new Date(group.deposit_date)) {
-        group.deposit_date = item.deposit_date
-      }
-    }
-    const distId = item.cutting_distribution_id
-    if (distId && !group.distIds.has(distId)) {
-      group.distIds.add(distId)
-    }
-  }
-  const allDistsByGroup = new Map()
-  for (const item of items.value) {
-    const distName = item.cutting_distribution?.name || item.name?.replace(/-DEP\d+$/, '') || '-'
-    const key = `${distName}_${item.brand_id}_${item.tailor_id}`
-    if (!allDistsByGroup.has(key)) allDistsByGroup.set(key, new Map())
-    const distId = item.cutting_distribution_id
-    if (distId && !allDistsByGroup.get(key).has(distId)) {
-      allDistsByGroup.get(key).set(distId, item.cutting_distribution)
-    }
-  }
-  for (const group of map.values()) {
-    let totalDistributed = 0
-    let totalRemaining = 0
-    const dists = allDistsByGroup.get(group.id)
-    if (dists) {
-      for (const dist of dists.values()) {
-        totalDistributed += Number(dist.total_cutting || 0)
-        totalRemaining += Number(dist.deposit_remaining ?? dist.total_cutting ?? 0)
-      }
-    }
-    group.total_distributed = totalDistributed
-    group.total_deposit_remaining = totalRemaining
-  }
-  return Array.from(map.values())
-})
+// Backend now returns grouped data, so items is already grouped
+const groupedDeposits = computed(() => items.value)
 
 function groupStatus(group) {
   if (group.total_deposit_remaining <= 0) return 'done'
@@ -97,7 +37,8 @@ function translateStatus(status) {
 
 const columns = computed(() => [
   { key: 'brand', label: t('common.brand') },
-  { key: 'name', label: t('deposits.distribution') },
+  { key: 'article', label: t('deposits.article') },
+  { key: 'size', label: t('common.size') },
   { key: 'tailor', label: t('common.tailor') },
   { key: 'total_sewing_result', label: t('deposits.sewingResult') },
   { key: 'total_price', label: t('deposits.totalPrice') },
@@ -360,14 +301,15 @@ function positionDistPicker() {
         <p class="text-surface-500">{{ t('deposits.noResults') }}</p>
       </div>
       <Table v-else :columns="columns" :rows="groupedDeposits" expandable :per-page="15" showVerticalBorder>
-        <template #name="{ value }"><span class="whitespace-nowrap min-w-[200px] inline-block">{{ value }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
+        <template #article="{ value }">{{ value?.name || '-' }}</template>
+        <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
         <template #total_sewing_result="{ value }"><span class="font-medium">{{ value }}</span></template>
         <template #total_price="{ value }"><span class="font-medium whitespace-nowrap">{{ formatCurrency(value) }}</span></template>
         <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge></template>
         <template #deposit_date="{ row }">
-          <div v-if="row.deposit_dates.length === 0">-</div>
+          <div v-if="!row.deposit_dates || row.deposit_dates.length === 0">-</div>
           <div
             v-else-if="row.deposit_dates.length === 1"
             class="whitespace-nowrap"
