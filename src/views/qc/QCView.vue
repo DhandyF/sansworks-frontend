@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
+import { usePersistentFilters } from '@/composables/usePersistentFilters'
 import { Input, SearchableDropdown } from 'ui-assets'
 import RepairTab from '@/components/qc/RepairTab.vue'
 import RepairDepositTab from '@/components/qc/RepairDepositTab.vue'
@@ -14,8 +15,10 @@ const { request } = useApi()
 const { t } = useI18n()
 
 const activeTab = ref(route.query.tab || 'repair')
-const search = ref('')
-const tailorFilter = ref('')
+const { search, tailorFilter } = usePersistentFilters('qc-filters', {
+  search: '',
+  tailorFilter: ''
+})
 const { debounce } = useDebounce(500)
 
 const tabs = [

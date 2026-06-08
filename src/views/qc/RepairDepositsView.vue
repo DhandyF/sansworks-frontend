@@ -4,12 +4,15 @@ import { useI18n } from 'vue-i18n'
 import { useMasterData } from '@/composables/useMasterData'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
+import { usePersistentFilters } from '@/composables/usePersistentFilters'
 import { Button, Card, Table, Badge, Input, Modal, SearchableDropdown } from 'ui-assets'
 
 const { t } = useI18n()
 
-const search = ref('')
-const tailorFilter = ref('')
+const { search, tailorFilter } = usePersistentFilters('repair-deposits-filters', {
+  search: '',
+  tailorFilter: ''
+})
 const { debounce } = useDebounce(500)
 
 const { items, loading, fetchData, deleteItem } = useMasterData('/repair-deposits', () => ({

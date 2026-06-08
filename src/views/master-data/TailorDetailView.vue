@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
+import { usePersistentFilters } from '@/composables/usePersistentFilters'
 import { Card, Badge, Table } from 'ui-assets'
 
 const { t } = useI18n()
@@ -19,9 +20,11 @@ const brands = ref([])
 const distributions = ref([])
 const pagination = ref({ currentPage: 1, perPage: 15, total: 0, lastPage: 1, from: 0, to: 0 })
 
-const searchQuery = ref('')
-const brandFilter = ref('')
-const statusFilter = ref('')
+const { searchQuery, brandFilter, statusFilter } = usePersistentFilters('tailor-detail-filters', {
+  searchQuery: '',
+  brandFilter: '',
+  statusFilter: ''
+})
 
 const statusFilters = computed(() => [
   { value: '', label: t('tailorDetail.filterAll') },

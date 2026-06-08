@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useDebounce } from '@/composables/useDebounce'
+import { usePersistentFilters } from '@/composables/usePersistentFilters'
 import { Input, SearchableDropdown } from 'ui-assets'
 import CuttingResultsTab from '@/components/production/CuttingResultsTab.vue'
 import CuttingDistributionsTab from '@/components/production/CuttingDistributionsTab.vue'
@@ -15,8 +16,10 @@ const { request } = useApi()
 const { t } = useI18n()
 
 const activeTab = ref(route.query.tab || 'cutting')
-const search = ref('')
-const brandFilter = ref('')
+const { search, brandFilter } = usePersistentFilters('production-filters', {
+  search: '',
+  brandFilter: ''
+})
 const { debounce } = useDebounce(500)
 
 const tabs = [

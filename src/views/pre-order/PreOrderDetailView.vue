@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useAuthStore } from '@/stores/auth'
+import { usePersistentFilters } from '@/composables/usePersistentFilters'
 import { Card, Badge, Table, Tabs } from 'ui-assets'
 import { Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
@@ -20,7 +21,9 @@ const loading = ref(true)
 const preOrder = ref(null)
 const summary = ref(null)
 const entries = ref([])
-const statusFilter = ref('')
+const { statusFilter } = usePersistentFilters('preorder-detail-filters', {
+  statusFilter: ''
+})
 const activeTab = ref(auth.isClient ? 'shipment' : 'production')
 
 const filteredEntries = computed(() => {
