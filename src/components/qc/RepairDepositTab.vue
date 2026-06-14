@@ -35,12 +35,14 @@ const repairInfo = ref(null)
 const daysDelay = ref(0)
 const calculatedCharge = ref(0)
 const calculatedChargePercent = ref(0)
+const defaultChargePerPcs = ref('')
 
 const form = ref({
   repair_id: '',
   tailor_id: '',
   total_deposit: '',
   deposit_date: '',
+  default_charge_per_pcs: '',
 })
 
 watch(() => form.value.repair_id, async (newVal) => {
@@ -50,6 +52,7 @@ watch(() => form.value.repair_id, async (newVal) => {
     daysDelay.value = 0
     calculatedCharge.value = 0
     calculatedChargePercent.value = 0
+    defaultChargePerPcs.value = ''
     return
   }
   try {
@@ -67,6 +70,12 @@ watch([() => form.value.deposit_date, () => form.value.total_deposit], () => {
   calculateCharge()
 })
 
+watch(defaultChargePerPcs, () => calculateCharge())
+
+watch(() => form.value.default_charge_per_pcs, (newValue) => {
+  defaultChargePerPcs.value = newValue
+})
+
 function calculateCharge() {
   if (!selectedRepair.value || !form.value.deposit_date) {
     daysDelay.value = 0
@@ -80,19 +89,23 @@ function calculateCharge() {
   if (depositDate > deadlineDate) {
     daysDelay.value = Math.ceil((depositDate - deadlineDate) / (1000 * 60 * 60 * 24))
   }
-  const totalValue = (selectedRepair.value.sewing_price || 0) * (Number(form.value.total_deposit) || 0)
+
+  const depositQty = Number(form.value.total_deposit) || 0
+  const defaultCharge = Number(defaultChargePerPcs.value) || 0
+  const sewingPrice = selectedRepair.value.sewing_price || 0
+
   if (daysDelay.value >= 1 && daysDelay.value <= 3) {
-    calculatedChargePercent.value = 10
-    calculatedCharge.value = totalValue * 0.10
+    calculatedCharge.value = defaultCharge * depositQty
+    calculatedChargePercent.value = null
   } else if (daysDelay.value >= 4 && daysDelay.value <= 10) {
-    calculatedChargePercent.value = 50
-    calculatedCharge.value = totalValue * 0.50
-  } else if (daysDelay.value > 10) {
+    calculatedCharge.value = (defaultCharge * 2) * depositQty
+    calculatedChargePercent.value = null
+  } else if (daysDelay.value >= 11) {
+    calculatedCharge.value = sewingPrice * depositQty
     calculatedChargePercent.value = 100
-    calculatedCharge.value = totalValue
   } else {
-    calculatedChargePercent.value = 0
     calculatedCharge.value = 0
+    calculatedChargePercent.value = 0
   }
 }
 
@@ -103,6 +116,7 @@ async function openAddForm() {
     tailor_id: '',
     total_deposit: '',
     deposit_date: today,
+    default_charge_per_pcs: '',
   }
   formError.value = ''
   selectedRepair.value = null
@@ -110,6 +124,7 @@ async function openAddForm() {
   daysDelay.value = 0
   calculatedCharge.value = 0
   calculatedChargePercent.value = 0
+  defaultChargePerPcs.value = ''
 
   try {
     const res = await request('/repairs?per_page=1000000')
@@ -159,6 +174,7 @@ async function handleSubmit() {
       tailor_id: form.value.tailor_id,
       total_deposit: Number(form.value.total_deposit),
       deposit_date: form.value.deposit_date,
+      default_charge_per_pcs: form.value.default_charge_per_pcs ? Number(form.value.default_charge_per_pcs) : null,
     }
     await request('/repair-deposits', {
       method: 'POST',
@@ -231,7 +247,13 @@ const columns = computed(() => [
           <template #total_deposit="{ value }"><span class="block text-right">{{ value }}</span></template>
           <template #deposit_date="{ value }">{{ formatDate(value) }}</template>
           <template #charge_amount="{ row }">
-            <span v-if="row.charge_amount > 0" class="text-red-600 font-medium">{{ formatCurrency(row.charge_amount) }} <span class="text-xs text-surface-500">({{ row.charge_percent }}%)</span></span>
+            <span v-if="row.charge_amount > 0" class="text-red-600 font-medium">
+              {{ formatCurrency(row.charge_amount) }}
+              <span v-if="row.charge_percent" class="text-xs text-surface-500">({{ row.charge_percent }}%)</span>
+              <span v-else class="text-xs text-surface-500">
+                ({{ formatCurrency(row.default_charge_per_pcs) }}/pcs)
+              </span>
+            </span>
             <span v-else class="text-surface-400">-</span>
           </template>
           <template #actions="{ row }">
@@ -266,12 +288,24 @@ const columns = computed(() => [
           <Input v-model="form.deposit_date" :label="t('repairDeposits.depositDate')" type="date" required />
         </div>
 
+        <!-- Show charge input only when there's a delay -->
+        <div v-if="daysDelay > 0" class="grid grid-cols-1 gap-4">
+          <Input
+            v-model="form.default_charge_per_pcs"
+            :label="t('repairDeposits.defaultChargePerPcs')"
+            type="number"
+            :placeholder="t('repairDeposits.defaultChargePlaceholder')"
+            min="0"
+          />
+          <p class="text-xs text-surface-500 -mt-3">{{ t('repairDeposits.defaultChargeHint') }}</p>
+        </div>
+
         <div v-if="daysDelay > 0" class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
           <p class="text-amber-800">
             {{ t('repairDeposits.daysDelayHint', { days: daysDelay }) }}
           </p>
           <p class="text-amber-800 font-medium mt-1">
-            {{ t('repairDeposits.charge') }}: {{ calculatedChargePercent }}% = {{ formatCurrency(calculatedCharge) }}
+            {{ t('repairDeposits.charge') }}: {{ calculatedChargePercent ? calculatedChargePercent + '%' : formatCurrency(calculatedCharge / (Number(form.total_deposit) || 1)) + '/pcs' }} = {{ formatCurrency(calculatedCharge) }}
           </p>
         </div>
       </div>
