@@ -307,7 +307,7 @@ function groupByTailor(distributions) {
             <p class="text-surface-500">{{ t('preOrderDetail.deadline') }}</p>
             <p class="text-6xl font-bold"
               :class="daysLeft !== null && daysLeft <= 0 ? 'text-red-600' : daysLeft !== null && daysLeft <= 7 ? 'text-amber-600' : 'text-surface-900'">
-              {{ daysLeft !== null ? (daysLeft <= 0 ? t('preOrderDetail.overdue') : daysLeft) : '-' }}
+              {{ daysLeft !== null ? (daysLeft <= 0 ? t('common.overdue') : daysLeft) : '-' }}
             </p>
             <p class="text-xs text-surface-400">
               {{ daysLeft !== null && daysLeft > 0 ? t('preOrderDetail.daysLeft') : '' }}
