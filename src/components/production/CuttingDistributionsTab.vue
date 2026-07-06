@@ -252,6 +252,33 @@ async function handleDelete() {
   deletingItem.value = null
 }
 
+const showTrashModal = ref(false)
+const trashedItems = ref([])
+const loadingTrashed = ref(false)
+const restoringId = ref(null)
+
+async function openTrashModal() {
+  showTrashModal.value = true
+  loadingTrashed.value = true
+  try {
+    const res = await request('/cutting-distributions/trashed')
+    trashedItems.value = res.data
+  } catch { /* ignore */ } finally {
+    loadingTrashed.value = false
+  }
+}
+
+async function restoreItem(id) {
+  restoringId.value = id
+  try {
+    await request(`/cutting-distributions/${id}/restore`, { method: 'POST' })
+    trashedItems.value = trashedItems.value.filter(i => i.id !== id)
+    fetchData(1)
+  } catch { /* ignore */ } finally {
+    restoringId.value = null
+  }
+}
+
 function positionCrPicker() {
   if (!crTriggerRef.value) return
   const rect = crTriggerRef.value.getBoundingClientRect()
@@ -266,7 +293,8 @@ function positionCrPicker() {
 
 <template>
   <div>
-    <div class="flex justify-end mb-4">
+    <div class="flex justify-end gap-2 mb-4">
+      <Button variant="outline" @click="openTrashModal">{{ t('cuttingDistributions.viewTrash') }}</Button>
       <Button @click="openAddForm">{{ '+ ' + t('cuttingDistributions.addDistribution') }}</Button>
     </div>
     <Card variant="bordered">
@@ -448,11 +476,43 @@ function positionCrPicker() {
     </Modal>
 
     <Modal v-model="showDeleteModal" :title="t('cuttingDistributions.deleteTitle')" size="sm" :closeOnOverlay="false">
-      <p class="text-surface-700">{{ t('common.confirmDelete') }} <strong>{{ deletingItem?.name }}</strong>? {{ t('common.cannotUndo') }}</p>
+      <p class="text-surface-700">{{ t('common.confirmDelete') }} <strong>{{ deletingItem?.name }}</strong>?</p>
       <template #footer>
         <div class="flex justify-end gap-3">
           <Button variant="outline" @click="showDeleteModal = false">{{ t('common.cancel') }}</Button>
           <Button variant="danger" @click="handleDelete">{{ t('common.delete') }}</Button>
+        </div>
+      </template>
+    </Modal>
+
+    <Modal v-model="showTrashModal" :title="t('cuttingDistributions.trashTitle')" size="lg" :closeOnOverlay="false">
+      <div v-if="loadingTrashed" class="flex items-center justify-center py-8">
+        <svg class="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      </div>
+      <div v-else-if="trashedItems.length === 0" class="text-center py-8 text-surface-500">
+        {{ t('cuttingDistributions.noDeletedDistributions') }}
+      </div>
+      <div v-else class="space-y-2">
+        <div v-for="item in trashedItems" :key="item.id" class="flex items-center justify-between p-3 bg-surface-50 rounded-lg">
+          <div class="text-sm">
+            <p class="font-medium text-surface-800">{{ item.name }}</p>
+            <p class="text-surface-500">
+              <Badge variant="primary" size="sm">{{ item.brand?.name || '-' }}</Badge>
+              &nbsp;{{ item.article?.name || '-' }} · {{ item.size?.abbreviation || '-' }}
+            </p>
+            <p class="text-xs text-surface-400 mt-0.5">{{ t('cuttingDistributions.deletedAt') }}: {{ item.deleted_at ? new Date(item.deleted_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' }}</p>
+          </div>
+          <Button size="sm" :loading="restoringId === item.id" @click="restoreItem(item.id)">
+            {{ restoringId === item.id ? t('cuttingDistributions.restoring') : t('cuttingDistributions.restore') }}
+          </Button>
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end">
+          <Button variant="outline" @click="showTrashModal = false">{{ t('common.close') }}</Button>
         </div>
       </template>
     </Modal>

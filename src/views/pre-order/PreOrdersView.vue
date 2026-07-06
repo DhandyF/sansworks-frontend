@@ -378,6 +378,39 @@ const deletingGroup = ref(null)
 const formError = ref('')
 const submitting = ref(false)
 
+const showTrashModal = ref(false)
+const trashedItems = ref([])
+const loadingTrashed = ref(false)
+const restoringId = ref(null)
+
+async function openTrashModal() {
+  showTrashModal.value = true
+  loadingTrashed.value = true
+  try {
+    const res = await request('/pre-orders/trashed?per_page=100')
+    trashedItems.value = res.data || []
+  } catch (e) {
+    trashedItems.value = []
+  } finally {
+    loadingTrashed.value = false
+  }
+}
+
+async function restorePreOrder(id) {
+  restoringId.value = id
+  try {
+    await request(`/pre-orders/${id}/restore`, { method: 'POST' })
+    trashedItems.value = trashedItems.value.filter(i => i.id !== id)
+    await fetchData(1)
+  } catch (e) { /* ignore */ }
+  restoringId.value = null
+}
+
+function formatDeletedAt(dateStr) {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString()
+}
+
 function createEmptyArticle() {
   return { article_id: '', sizes: [{ size_id: '', total_pcs: '' }] }
 }
@@ -600,7 +633,13 @@ async function handleDelete() {
         <h1 class="text-2xl font-bold text-surface-900">{{ t('preOrders.title') }}</h1>
         <p class="mt-1 text-sm text-surface-500">{{ t('preOrders.description') }}</p>
       </div>
-      <Button @click="openAddForm">+ {{ t('preOrders.addPreOrder') }}</Button>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" @click="openTrashModal">
+          <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          {{ t('preOrders.viewTrash') }}
+        </Button>
+        <Button @click="openAddForm">+ {{ t('preOrders.addPreOrder') }}</Button>
+      </div>
     </div>
 
     <div class="flex flex-col sm:flex-row gap-3 mb-4">
@@ -813,12 +852,52 @@ async function handleDelete() {
 
     <Modal v-model="showDeleteModal" :title="t('preOrders.deleteTitle')" size="sm" :closeOnOverlay="false">
       <p class="text-surface-700">{{ t('preOrders.deleteMessage', { name: deletingGroup?.name }) }}</p>
-      <p class="text-sm text-surface-500 mt-1">{{ t('common.cannotUndo') }}</p>
       <template #footer>
         <div class="flex justify-end gap-3">
           <Button variant="outline" @click="showDeleteModal = false">{{ t('common.cancel') }}</Button>
           <Button variant="danger" @click="handleDelete">{{ t('common.delete') }}</Button>
         </div>
+      </template>
+    </Modal>
+
+    <Modal v-model="showTrashModal" :title="t('preOrders.trashTitle')" size="lg">
+      <div v-if="loadingTrashed" class="flex items-center justify-center py-8">
+        <svg class="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      </div>
+      <div v-else-if="trashedItems.length === 0" class="text-center py-8 text-surface-400">
+        {{ t('preOrders.noDeletedPreOrders') }}
+      </div>
+      <div v-else class="space-y-2 max-h-[60vh] overflow-y-auto">
+        <div
+          v-for="item in trashedItems"
+          :key="item.id"
+          class="flex items-center justify-between p-3 border border-surface-200 rounded-lg hover:bg-surface-50"
+        >
+          <div class="flex flex-col gap-0.5">
+            <span class="font-medium text-surface-800 text-sm">{{ item.name }}</span>
+            <div class="flex items-center gap-2 text-xs text-surface-500">
+              <span v-if="item.brand">{{ item.brand.name }}</span>
+              <span v-if="item.article"> · {{ item.article.name }}</span>
+              <span v-if="item.size"> · {{ item.size.abbreviation }}</span>
+              <span> · {{ item.total_pcs }} pcs</span>
+            </div>
+            <span class="text-xs text-red-500">{{ t('preOrders.deletedAt') }}: {{ formatDeletedAt(item.deleted_at) }}</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            :loading="restoringId === item.id"
+            @click="restorePreOrder(item.id)"
+          >
+            {{ restoringId === item.id ? t('preOrders.restoring') : t('preOrders.restore') }}
+          </Button>
+        </div>
+      </div>
+      <template #footer>
+        <Button variant="outline" @click="showTrashModal = false">{{ t('common.close') }}</Button>
       </template>
     </Modal>
 
