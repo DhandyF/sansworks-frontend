@@ -233,7 +233,7 @@ function groupByTailor(distributions) {
     </div>
 
     <template v-else-if="preOrder">
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+      <div v-if="!auth.isClient" class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
         <Card variant="bordered" class="text-center py-4 bg-red">
           <p class="text-2xl font-bold text-surface-900">{{ summary.total_pcs }}</p>
           <p class="text-xs text-surface-500 mt-1">{{ t('common.totalPcs') }}</p>
