@@ -305,10 +305,14 @@ function groupByTailor(distributions) {
         <Card variant="bordered" class="mb-6 min-w-fit h-48" contentClass="px-6 py-4 h-full">
           <div class="flex flex-col justify-between h-full text-center">
             <p class="text-surface-500">{{ t('preOrderDetail.deadline') }}</p>
-            <p class="text-6xl font-bold"
+            <p class="text-3xl font-bold"
               :class="daysLeft !== null && daysLeft <= 0 ? 'text-red-600' : daysLeft !== null && daysLeft <= 7 ? 'text-amber-600' : 'text-surface-900'">
               {{ daysLeft !== null ? (daysLeft <= 0 ? t('common.overdue') : daysLeft) : '-' }}
             </p>
+            <div v-if="daysLeft !== null && daysLeft <= 0 && summary.shipment_remaining > 0" class="flex items-center justify-center gap-1 mt-1">
+              <span class="text-xl font-bold text-orange-500">{{ summary.shipment_remaining }}</span>
+              <span class="text-surface-400">{{ t('preOrderDetail.notSentYet') }}</span>
+            </div>
             <p class="text-xs text-surface-400">
               {{ daysLeft !== null && daysLeft > 0 ? t('preOrderDetail.daysLeft') : '' }}
               {{ preOrder.deadline_date ? formatDate(preOrder.deadline_date) : '' }}

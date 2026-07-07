@@ -266,6 +266,7 @@
     "cuttingLeft": "Cutting Left",
     "totalShipped": "Total Shipped",
     "shipmentRemaining": "Shipment Remaining",
+    "notSentYet": "Not sent yet",
     "daysLeft": "Days Left"
   },
   "production": {
