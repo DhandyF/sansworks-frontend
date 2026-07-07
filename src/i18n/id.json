@@ -216,7 +216,9 @@
     "selectSize": "Pilih ukuran",
     "remaining": "Blm Dicutting",
     "totalPcs": "Total PO",
-    "excessCutting": "Kelebihan"
+    "excessCutting": "Kelebihan",
+    "deleteWarningDistributed": "Peringatan: Beberapa hasil cutting di pre-order ini sudah didistribusikan ke penjahit. Menghapus juga akan menghapus distribusi tersebut.",
+    "deleteCuttingWarningDistributed": "Peringatan: Hasil cutting ini sudah sebagian didistribusikan ke penjahit. Menghapus juga akan menghapus distribusi tersebut."
   },
   "shipments": {
     "title": "Pengiriman",

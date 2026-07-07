@@ -215,7 +215,9 @@
     "selectSize": "Select a size",
     "remaining": "Remaining",
     "totalPcs": "Total PO",
-    "excessCutting": "Excess Cutting"
+    "excessCutting": "Excess Cutting",
+    "deleteWarningDistributed": "Warning: Some cutting results in this pre-order have already been distributed to tailors. Deleting will also remove those distributions.",
+    "deleteCuttingWarningDistributed": "Warning: This cutting result has already been partially distributed to tailors. Deleting will also remove those distributions."
   },
   "shipments": {
     "title": "Shipments",

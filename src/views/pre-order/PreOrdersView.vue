@@ -37,6 +37,7 @@ const editingCutting = ref(null)
 const showCuttingDetailModal = ref(false)
 const showCuttingDeleteModal = ref(false)
 const deletingCuttingId = ref(null)
+const deletingCuttingHasDistributions = ref(false)
 
 const tooltipData = ref(null)
 const tooltipStyle = ref({})
@@ -186,8 +187,10 @@ async function updateCutting() {
   }
 }
 
-async function deleteCutting(cuttingId) {
-  deletingCuttingId.value = cuttingId
+async function deleteCutting(cutting) {
+  const distributed = cutting.total_cutting - (cutting.excess_cutting || 0) - (cutting.remaining || 0)
+  deletingCuttingHasDistributions.value = distributed > 0
+  deletingCuttingId.value = cutting.id
   showCuttingDeleteModal.value = true
 }
 
@@ -204,6 +207,7 @@ async function confirmDeleteCutting() {
 function closeCuttingDeleteModal() {
   showCuttingDeleteModal.value = false
   deletingCuttingId.value = null
+  deletingCuttingHasDistributions.value = false
 }
 
 async function submitCuttingResult() {
@@ -375,6 +379,7 @@ const showForm = ref(false)
 const showDeleteModal = ref(false)
 const editing = ref(null)
 const deletingGroup = ref(null)
+const deletingGroupHasDistributions = ref(false)
 const formError = ref('')
 const submitting = ref(false)
 
@@ -510,6 +515,13 @@ async function openEditForm(group) {
 
 function openDeleteModal(group) {
   deletingGroup.value = group
+  deletingGroupHasDistributions.value = group.articles.some(ag =>
+    ag.entries.some(entry =>
+      entry.cutting_results.some(cr =>
+        (cr.total_cutting - (cr.excess_cutting || 0) - (cr.remaining || 0)) > 0
+      )
+    )
+  )
   showDeleteModal.value = true
 }
 
@@ -851,7 +863,12 @@ async function handleDelete() {
     </Modal>
 
     <Modal v-model="showDeleteModal" :title="t('preOrders.deleteTitle')" size="sm" :closeOnOverlay="false">
-      <p class="text-surface-700">{{ t('preOrders.deleteMessage', { name: deletingGroup?.name }) }}</p>
+      <div class="space-y-3">
+        <p class="text-surface-700">{{ t('preOrders.deleteMessage', { name: deletingGroup?.name }) }}</p>
+        <div v-if="deletingGroupHasDistributions" class="p-3 bg-amber-50 border border-amber-300 rounded-lg text-amber-800 text-sm">
+          {{ t('preOrders.deleteWarningDistributed') }}
+        </div>
+      </div>
       <template #footer>
         <div class="flex justify-end gap-3">
           <Button variant="outline" @click="showDeleteModal = false">{{ t('common.cancel') }}</Button>
@@ -943,7 +960,7 @@ async function handleDelete() {
                 <button @click="startEditCutting(c)" class="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </button>
-                <button @click="deleteCutting(c.id)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
+                <button @click="deleteCutting(c)" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </div>
@@ -955,7 +972,12 @@ async function handleDelete() {
         </template>
       </Modal>
       <Modal v-model="showCuttingDeleteModal" :title="t('common.delete')" size="sm" :closeOnOverlay="false" style="z-index: 40">
-        <p class="text-surface-700">{{ t('common.cannotUndo') }}</p>
+        <div class="space-y-3">
+          <p class="text-surface-700">{{ t('common.cannotUndo') }}</p>
+          <div v-if="deletingCuttingHasDistributions" class="p-3 bg-amber-50 border border-amber-300 rounded-lg text-amber-800 text-sm">
+            {{ t('preOrders.deleteCuttingWarningDistributed') }}
+          </div>
+        </div>
         <template #footer>
           <div class="flex justify-end gap-3">
             <Button variant="outline" @click="closeCuttingDeleteModal">{{ t('common.cancel') }}</Button>
