@@ -28,6 +28,7 @@ const columns = [
   { key: 'progress', label: t('brandDetail.progress') },
   { key: 'pre_order_date', label: t('brandDetail.orderDate') },
   { key: 'deadline_date', label: t('brandDetail.deadline') },
+  { key: 'completed_date', label: t('common.completedDate') },
   { key: 'status', label: t('brandDetail.status') },
 ]
 
@@ -150,6 +151,10 @@ const showBrandSelector = computed(() => {
           </template>
           <template #pre_order_date="{ value }"><span class="whitespace-nowrap">{{ formatDate(value) }}</span></template>
           <template #deadline_date="{ value }"><span class="whitespace-nowrap">{{ formatDate(value) }}</span></template>
+          <template #completed_date="{ value }">
+            <span v-if="value" class="whitespace-nowrap text-green-600 font-medium">{{ formatDate(value) }}</span>
+            <span v-else class="text-surface-400">-</span>
+          </template>
           <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
         </Table>
       </Card>

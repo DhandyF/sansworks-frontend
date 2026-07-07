@@ -337,13 +337,23 @@ const groupedOrders = computed(() => {
       articleGroup = { article_id: item.article_id, article: item.article, entries: [] }
       group.articles.push(articleGroup)
     }
-    articleGroup.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs, cut_qty: item.cut_qty ?? 0, excess_cutting: item.excess_cutting ?? 0, remaining: item.remaining ?? item.total_pcs, cutting_results: item.cutting_results || [] })
+    articleGroup.entries.push({ id: item.id, size: item.size, size_id: item.size_id, total_pcs: item.total_pcs, cut_qty: item.cut_qty ?? 0, excess_cutting: item.excess_cutting ?? 0, remaining: item.remaining ?? item.total_pcs, cutting_results: item.cutting_results || [], status: item.status || 'in_progress' })
     group.total_pcs += Number(item.total_pcs)
     group.total_remaining += Number(item.remaining ?? item.total_pcs)
     group.total_excess_cutting += Number(item.excess_cutting ?? 0)
     group.rawIds.push(item.id)
   }
-  return Array.from(map.values())
+  return Array.from(map.values()).map(group => {
+    const allStatuses = group.articles.flatMap(ag => ag.entries.map(e => e.status))
+    if (allStatuses.length > 0 && allStatuses.every(s => s === 'done')) {
+      group.status = 'done'
+    } else if (allStatuses.some(s => s === 'overdue')) {
+      group.status = 'overdue'
+    } else {
+      group.status = 'in_progress'
+    }
+    return group
+  })
 })
 
 const columns = computed(() => [
@@ -355,8 +365,20 @@ const columns = computed(() => [
   { key: 'total_remaining', label: t('preOrders.remaining') },
   { key: 'total_excess_cutting', label: t('preOrders.excessCutting') },
   { key: 'progress', label: t('brandDetail.progress') },
+  { key: 'status', label: t('common.status') },
   { key: 'actions', label: t('common.actions') },
 ])
+
+const statusBadge = (status) => {
+  if (status === 'done') return 'success'
+  if (status === 'overdue') return 'danger'
+  return 'warning'
+}
+const statusLabel = (status) => {
+  if (status === 'done') return t('common.done')
+  if (status === 'overdue') return t('common.overdue')
+  return t('common.inProgress')
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return '-'
@@ -707,6 +729,9 @@ async function handleDelete() {
               </div>
               <span style="font-size: 11px; font-weight: 500; color: #374151;">{{ getProgress(row) }}%</span>
             </div>
+          </template>
+          <template #status="{ row }">
+            <Badge :variant="statusBadge(row.status)" size="sm">{{ statusLabel(row.status) }}</Badge>
           </template>
           <template #actions="{ row }">
             <div class="flex items-center gap-1">

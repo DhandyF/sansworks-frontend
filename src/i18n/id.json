@@ -57,7 +57,8 @@
     "size": "Size",
     "close": "Tutup",
     "preOrder": "Pre-Orders",
-    "remove": "Hapus"
+    "remove": "Hapus",
+    "completedDate": "Tgl Selesai"
   },
   "login": {
     "title": "Masuk ke Sansworks",

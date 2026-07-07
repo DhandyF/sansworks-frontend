@@ -57,7 +57,8 @@
     "size": "Size",
     "close": "Close",
     "preOrder": "Pre-Orders",
-    "remove": "Remove"
+    "remove": "Remove",
+    "completedDate": "Completed"
   },
   "login": {
     "title": "Sign in to Sansworks",
