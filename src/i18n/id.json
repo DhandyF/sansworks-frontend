@@ -352,7 +352,12 @@
     "noDistributions": "Tidak ada distribusi tersedia",
     "article": "Artikel",
     "deleteTitle": "Hapus Setoran",
-    "remaining": "Blm Setor"
+    "remaining": "Blm Setor",
+    "charge": "Denda",
+    "daysDelayHint": "Lebih {days} hari dari Deadline",
+    "defaultChargePerPcs": "Default Denda per Pcs",
+    "defaultChargePlaceholder": "Masukkan nominal default denda per pcs",
+    "defaultChargeHint": "Berlaku untuk keterlambatan 1-3 hari. Keterlambatan 4-10 hari = 2x lipat. Keterlambatan 11+ hari = 100% dari harga cutting."
   },
   "payslip": {
     "title": "Slip Gaji",
@@ -394,7 +399,9 @@
     "compensationAmount": "Jumlah Kompensasi",
     "compensationReason": "Alasan Kompensasi",
     "compensationReasonPlaceholder": "Contoh: Keterlambatan dari kantor",
-    "compensation": "Kompensasi"
+    "compensation": "Kompensasi",
+    "repairCharge": "Denda Perbaikan",
+    "cuttingCharge": "Denda Setoran Cutting"
   },
   "repairs": {
     "title": "Perbaikan (QC)",

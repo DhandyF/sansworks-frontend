@@ -19,15 +19,6 @@ const { items, loading, fetchData } = deposits
 function refresh() { fetchData(1) }
 defineExpose({ refresh })
 
-// Backend now returns grouped data, so items is already grouped
-const groupedDeposits = computed(() => items.value)
-
-function groupStatus(group) {
-  if (group.total_deposit_remaining <= 0) return 'done'
-  if (group.has_overdue) return 'overdue'
-  return 'in_progress'
-}
-
 function translateStatus(status) {
   if (status === 'done') return t('common.done')
   if (status === 'overdue') return t('common.overdue')
@@ -36,22 +27,19 @@ function translateStatus(status) {
 }
 
 const columns = computed(() => [
+  { key: 'name', label: t('common.name') },
   { key: 'brand', label: t('common.brand') },
   { key: 'article', label: t('deposits.article') },
   { key: 'size', label: t('common.size') },
   { key: 'tailor', label: t('common.tailor') },
   { key: 'total_sewing_result', label: t('deposits.sewingResult') },
+  { key: 'cutting_price_per_pcs', label: t('deposits.cuttingPricePerPcs') },
   { key: 'total_price', label: t('deposits.totalPrice') },
-  { key: 'total_deposit_remaining', label: t('deposits.remaining') },
-  { key: 'deposit_date', label: t('deposits.depositDate'), sortable: true },
-  { key: 'progress', label: t('brandDetail.progress') },
+  { key: 'deposit_date', label: t('deposits.depositDate') },
+  { key: 'charge_amount', label: t('deposits.charge') },
   { key: 'status', label: t('common.status') },
+  { key: 'actions', label: t('common.actions') },
 ])
-
-function getProgress(row) {
-  if (!row.total_distributed || row.total_distributed === 0) return 0
-  return Math.round((row.total_sewing_result / row.total_distributed) * 100)
-}
 
 const allDistributions = ref([])
 const showDistPicker = ref(false)
@@ -60,38 +48,15 @@ const distPickerRef = ref(null)
 const distTriggerRef = ref(null)
 const distDropdownRef = ref(null)
 
-const distGroups = computed(() => {
+const distOptions = computed(() => {
   const available = allDistributions.value.filter(d => (d.deposit_remaining ?? d.total_cutting) > 0)
   const q = distSearch.value.toLowerCase()
-  const matches = q
+  return q
     ? available.filter(d =>
         d.name?.toLowerCase().includes(q) ||
         d.tailor?.name?.toLowerCase().includes(q) ||
-        d.brand?.name?.toLowerCase().includes(q) ||
-        d.cutting_result?.pre_order?.name?.toLowerCase().includes(q)
-      )
+        d.brand?.name?.toLowerCase().includes(q))
     : available
-
-  const map = new Map()
-  for (const d of matches) {
-    const key = d.name
-    if (!map.has(key)) {
-      map.set(key, {
-        name: d.name,
-        brand: d.brand,
-        tailor: d.tailor,
-        pre_order: d.cutting_result?.pre_order,
-        entries: [],
-        total_distributed: 0,
-        total_remaining: 0,
-      })
-    }
-    const group = map.get(key)
-    group.entries.push(d)
-    group.total_distributed += Number(d.total_cutting)
-    group.total_remaining += Number(d.deposit_remaining ?? d.total_cutting)
-  }
-  return Array.from(map.values())
 })
 
 async function fetchDistributionOptions() {
@@ -112,17 +77,23 @@ function toggleDistPicker() {
   }
 }
 
-function selectDistGroup(group) {
-  form.value.cutting_distribution_ids = group.entries.map(e => e.id)
-  form.value.total_sewing_result = String(group.total_remaining)
-  selectedDistGroup.value = group
+function selectDist(dist) {
+  selectedDist.value = dist
+  form.value.cutting_distribution_ids = [dist.id]
+  form.value.total_sewing_result = String(dist.deposit_remaining ?? dist.total_cutting)
   showDistPicker.value = false
   distSearch.value = ''
   distRemaining.value = {
-    total_cutting: group.total_distributed,
-    deposited: group.total_distributed - group.total_remaining,
-    available: group.total_remaining,
+    total_cutting: dist.total_cutting,
+    deposited: dist.total_cutting - (dist.deposit_remaining ?? dist.total_cutting),
+    available: dist.deposit_remaining ?? dist.total_cutting,
   }
+  daysDelay.value = 0
+  calculatedCharge.value = 0
+  calculatedChargePercent.value = 0
+  defaultChargePerPcs.value = ''
+  form.value.default_charge_per_pcs = ''
+  calculateCharge()
 }
 
 function handleDistClickOutside(e) {
@@ -145,9 +116,23 @@ const formError = ref('')
 const submitting = ref(false)
 const distRemaining = ref(null)
 
-const form = ref({ cutting_distribution_ids: [], cutting_distribution_id: '', total_sewing_result: '', cutting_price_per_pcs: '', deposit_date: '', quality_notes: '', notes: '' })
-const selectedDistGroup = ref(null)
+const form = ref({
+  cutting_distribution_ids: [],
+  cutting_distribution_id: '',
+  total_sewing_result: '',
+  cutting_price_per_pcs: '',
+  deposit_date: '',
+  quality_notes: '',
+  notes: '',
+  default_charge_per_pcs: '',
+})
+const selectedDist = ref(null)
 const selectedDistribution = ref(null)
+
+const daysDelay = ref(0)
+const calculatedCharge = ref(0)
+const calculatedChargePercent = ref(0)
+const defaultChargePerPcs = ref('')
 
 const computedTotalPrice = computed(() => {
   const price = Number(form.value.cutting_price_per_pcs) || 0
@@ -159,6 +144,42 @@ function formatCurrency(value) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value)
 }
 
+function calculateCharge() {
+  const dist = editing.value ? selectedDistribution.value : selectedDist.value
+  if (!dist?.deadline_date || !form.value.deposit_date) {
+    daysDelay.value = 0
+    calculatedCharge.value = 0
+    calculatedChargePercent.value = 0
+    return
+  }
+  const depositDate = new Date(form.value.deposit_date)
+  const deadline = new Date(dist.deadline_date)
+  daysDelay.value = depositDate > deadline
+    ? Math.ceil((depositDate - deadline) / (1000 * 60 * 60 * 24)) : 0
+
+  const qty = Number(form.value.total_sewing_result) || 0
+  const defaultCharge = Number(defaultChargePerPcs.value) || 0
+  const cutPrice = Number(form.value.cutting_price_per_pcs) || 0
+
+  if (daysDelay.value >= 1 && daysDelay.value <= 3) {
+    calculatedCharge.value = defaultCharge * qty
+    calculatedChargePercent.value = null
+  } else if (daysDelay.value >= 4 && daysDelay.value <= 10) {
+    calculatedCharge.value = (defaultCharge * 2) * qty
+    calculatedChargePercent.value = null
+  } else if (daysDelay.value >= 11) {
+    calculatedCharge.value = cutPrice * qty
+    calculatedChargePercent.value = 100
+  } else {
+    calculatedCharge.value = 0
+    calculatedChargePercent.value = 0
+  }
+}
+
+watch([() => form.value.deposit_date, () => form.value.total_sewing_result, () => form.value.cutting_price_per_pcs], calculateCharge)
+watch(defaultChargePerPcs, calculateCharge)
+watch(() => form.value.default_charge_per_pcs, v => { defaultChargePerPcs.value = v })
+
 function openAddForm() {
   editing.value = null
   const today = new Date().toISOString().split('T')[0]
@@ -169,13 +190,18 @@ function openAddForm() {
     cutting_price_per_pcs: '',
     deposit_date: today,
     quality_notes: '',
-    notes: ''
+    notes: '',
+    default_charge_per_pcs: '',
   }
   formError.value = ''
-  selectedDistGroup.value = null
+  selectedDist.value = null
   distRemaining.value = null
   showDistPicker.value = false
   distSearch.value = ''
+  daysDelay.value = 0
+  calculatedCharge.value = 0
+  calculatedChargePercent.value = 0
+  defaultChargePerPcs.value = ''
   fetchDistributionOptions()
   showForm.value = true
 }
@@ -190,6 +216,7 @@ function openEditForm(item) {
     deposit_date: item.deposit_date ? item.deposit_date.split('T')[0] : '',
     quality_notes: item.quality_notes || '',
     notes: item.notes || '',
+    default_charge_per_pcs: String(item.default_charge_per_pcs ?? ''),
   }
   formError.value = ''
   selectedDistribution.value = item.cutting_distribution
@@ -226,6 +253,9 @@ async function handleSubmit() {
         deposit_date: form.value.deposit_date,
         quality_notes: form.value.quality_notes || null,
         notes: form.value.notes || null,
+        default_charge_per_pcs: form.value.default_charge_per_pcs ? Number(form.value.default_charge_per_pcs) : null,
+        charge_amount: calculatedCharge.value || null,
+        charge_percent: calculatedChargePercent.value || null,
       }
       await request(`/deposit-cutting-results/${editing.value.id}`, { method: 'PUT', body: JSON.stringify(payload) })
     } else {
@@ -242,6 +272,9 @@ async function handleSubmit() {
         deposit_date: form.value.deposit_date,
         quality_notes: form.value.quality_notes || null,
         notes: form.value.notes || null,
+        default_charge_per_pcs: form.value.default_charge_per_pcs ? Number(form.value.default_charge_per_pcs) : null,
+        charge_amount: calculatedCharge.value || null,
+        charge_percent: calculatedChargePercent.value || null,
       }
       await request('/deposit-cutting-results/batch', { method: 'POST', body: JSON.stringify(payload) })
     }
@@ -300,77 +333,34 @@ function positionDistPicker() {
       <div v-else-if="items.length === 0" class="text-center py-12">
         <p class="text-surface-500">{{ t('deposits.noResults') }}</p>
       </div>
-      <Table v-else :columns="columns" :rows="groupedDeposits" expandable :per-page="15" showVerticalBorder>
+      <Table v-else :columns="columns" :rows="items" :per-page="15" showVerticalBorder>
+        <template #name="{ value }"><span class="whitespace-nowrap font-medium">{{ value || '-' }}</span></template>
         <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
         <template #article="{ value }">{{ value?.name || '-' }}</template>
         <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
         <template #tailor="{ value }">{{ value?.name || '-' }}</template>
         <template #total_sewing_result="{ value }"><span class="font-medium">{{ value }}</span></template>
+        <template #cutting_price_per_pcs="{ value }"><span class="block text-right">{{ formatCurrency(value) }}</span></template>
         <template #total_price="{ value }"><span class="font-medium whitespace-nowrap">{{ formatCurrency(value) }}</span></template>
-        <template #total_deposit_remaining="{ value }"><Badge :variant="value > 0 ? 'danger' : 'success'" size="sm">{{ value }}</Badge></template>
-        <template #deposit_date="{ row }">
-          <div v-if="!row.deposit_dates || row.deposit_dates.length === 0">-</div>
-          <div
-            v-else-if="row.deposit_dates.length === 1"
-            class="whitespace-nowrap"
-          >{{ formatDate(row.deposit_dates[0]) }}</div>
-          <div v-else>
-            <div
-              v-for="(date, i) in row.deposit_dates"
-              :key="'deposit-' + i"
-              class="whitespace-nowrap"
-            >{{ formatDate(date) }}</div>
-          </div>
-        </template>
-        <template #progress="{ row }">
-          <div class="flex items-center gap-2">
-            <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
-              <div :style="{ width: `${getProgress(row)}%`, height: '100%', background: '#3b82f6', borderRadius: '9999px' }"></div>
-            </div>
-            <span style="font-size: 11px; font-weight: 500; color: #374151;">{{ getProgress(row) }}%</span>
-          </div>
+        <template #deposit_date="{ value }"><span class="whitespace-nowrap">{{ formatDate(value) }}</span></template>
+        <template #charge_amount="{ row }">
+          <span v-if="row.charge_amount > 0" class="text-red-600 font-medium">
+            {{ formatCurrency(row.charge_amount) }}
+            <span v-if="row.charge_percent" class="text-xs text-surface-500">({{ row.charge_percent }}%)</span>
+            <span v-else class="text-xs text-surface-500">({{ formatCurrency(row.default_charge_per_pcs) }}/pcs)</span>
+          </span>
+          <span v-else class="text-surface-400">-</span>
         </template>
         <template #status="{ row }">
-          <Badge :variant="statusBadge(groupStatus(row))" size="sm">{{ translateStatus(groupStatus(row)) }}</Badge>
+          <Badge :variant="statusBadge(row.status)" size="sm">{{ translateStatus(row.status) }}</Badge>
         </template>
-        <template #expanded="{ row }">
-          <Card variant="bordered" class="shadow-none!">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-surface-200">
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.name') }}</th>
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('deposits.article') }}</th>
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.size') }}</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('deposits.sewingResult') }}</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('deposits.cuttingPricePerPcs') }}</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('deposits.totalPrice') }}</th>
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('deposits.depositDate') }}</th>
-                  <th class="py-1.5 px-3 text-left font-medium text-surface-500">{{ t('common.status') }}</th>
-                  <th class="py-1.5 px-3 text-right font-medium text-surface-500">{{ t('common.edit') }}/{{ t('common.delete') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="entry in row.entries" :key="entry.id" class="border-b border-surface-100 last:border-0">
-                  <td class="py-1.5 px-3 whitespace-nowrap">{{ entry.name }}</td>
-                  <td class="py-1.5 px-3">{{ entry.article?.name || '-' }}</td>
-                  <td class="py-1.5 px-3"><Badge variant="default" size="sm">{{ entry.size?.abbreviation || '-' }}</Badge></td>
-                  <td class="py-1.5 px-3 text-right">{{ entry.total_sewing_result }}</td>
-                  <td class="py-1.5 px-3 text-right">{{ formatCurrency(entry.cutting_price_per_pcs) }}</td>
-                  <td class="py-1.5 px-3 text-right font-medium">{{ formatCurrency(entry.total_price) }}</td>
-                  <td class="py-1.5 px-3">{{ formatDate(entry.deposit_date) }}</td>
-                  <td class="py-1.5 px-3"><Badge :variant="statusBadge(entry.status)" size="sm">{{ translateStatus(entry.status) }}</Badge></td>
-                  <td class="py-1.5 px-3 text-right">
-                    <button @click="openEditForm(entry)" class="p-1 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    </button>
-                    <button @click="openDeleteModal(entry)" class="p-1 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </Card>
+        <template #actions="{ row }">
+          <button @click="openEditForm(row)" class="p-1 rounded-lg text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer" :title="t('common.edit')">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </button>
+          <button @click="openDeleteModal(row)" class="p-1 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer" :title="t('common.delete')">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
         </template>
       </Table>
     </Card>
@@ -387,8 +377,8 @@ function positionDistPicker() {
             :class="showDistPicker ? 'border-primary-500 ring-2 ring-primary-500/30' : 'border-surface-300'"
             @click="toggleDistPicker"
           >
-            <span class="flex-1 truncate text-left" :class="selectedDistGroup ? 'text-surface-800' : 'text-surface-400'">
-              {{ selectedDistGroup ? `${selectedDistGroup.name} — ${selectedDistGroup.tailor?.name || ''}` : t('deposits.selectDistribution') }}
+            <span class="flex-1 truncate text-left" :class="selectedDist ? 'text-surface-800' : 'text-surface-400'">
+              {{ selectedDist ? `${selectedDist.name} — ${selectedDist.tailor?.name || ''}` : t('deposits.selectDistribution') }}
             </span>
             <svg class="w-4 h-4 text-surface-500 transition-transform duration-150 shrink-0" :class="{ 'rotate-180': showDistPicker }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
           </button>
@@ -405,26 +395,26 @@ function positionDistPicker() {
                     <input v-model="distSearch" class="w-full bg-transparent outline-none text-sm placeholder:text-surface-400" :placeholder="t('deposits.searchDistributions')" />
                   </div>
                 </div>
-                <div v-if="distGroups.length === 0" class="px-4 py-3 text-sm text-surface-400 text-center">{{ t('deposits.noDistributions') }}</div>
+                <div v-if="distOptions.length === 0" class="px-4 py-3 text-sm text-surface-400 text-center">{{ t('deposits.noDistributions') }}</div>
                 <div v-else class="max-h-72 overflow-y-auto">
                   <div
-                    v-for="group in distGroups"
-                    :key="group.name"
+                    v-for="dist in distOptions"
+                    :key="dist.id"
                     class="px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-primary-50"
-                    :class="{ 'bg-primary-50 text-primary-700': selectedDistGroup?.name === group.name }"
-                    @click="selectDistGroup(group)"
+                    :class="{ 'bg-primary-50 text-primary-700': selectedDist?.id === dist.id }"
+                    @click="selectDist(dist)"
                   >
                     <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <Badge variant="primary" size="sm">{{ group.brand?.name || '-' }}</Badge>
-                        <span class="font-medium text-surface-800">{{ group.name }}</span>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <Badge variant="primary" size="sm">{{ dist.brand?.name || '-' }}</Badge>
+                        <span class="font-medium text-surface-800">{{ dist.name }}</span>
+                        <Badge variant="default" size="sm">{{ dist.size?.abbreviation || '-' }}</Badge>
                         <span class="text-surface-400">—</span>
-                        <span>{{ group.tailor?.name || '-' }}</span>
+                        <span>{{ dist.tailor?.name || '-' }}</span>
                       </div>
-                      <Badge :variant="group.total_remaining > 0 ? 'success' : 'danger'" size="sm">{{ t('common.rem') }}: {{ group.total_remaining }}</Badge>
-                    </div>
-                    <div class="mt-1 flex flex-wrap gap-1">
-                      <Badge v-for="d in group.entries" :key="d.id" variant="default" size="sm">{{ d.size?.abbreviation || '-' }}: {{ d.deposit_remaining ?? d.total_cutting }}</Badge>
+                      <Badge :variant="(dist.deposit_remaining ?? dist.total_cutting) > 0 ? 'success' : 'danger'" size="sm">
+                        {{ t('common.rem') }}: {{ dist.deposit_remaining ?? dist.total_cutting }}
+                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -438,11 +428,11 @@ function positionDistPicker() {
             {{ selectedDistribution?.name || '-' }} — {{ selectedDistribution?.tailor?.name || '' }}
           </div>
         </div>
-        <div v-if="!editing && selectedDistGroup" class="p-3 bg-surface-50 rounded-lg space-y-1 text-sm">
-          <p><span class="font-medium">{{ t('common.brand') }}:</span> {{ selectedDistGroup.brand?.name || '-' }}</p>
-          <p><span class="font-medium">{{ t('common.tailor') }}:</span> {{ selectedDistGroup.tailor?.name || '-' }}</p>
-          <p><span class="font-medium">{{ t('deposits.totalDistributed') }}:</span> {{ selectedDistGroup.total_distributed }}</p>
-          <p><span class="font-medium">{{ t('deposits.totalRemaining') }}:</span> <span :class="selectedDistGroup.total_remaining > 0 ? 'text-green-600' : 'text-red-600'" class="font-medium">{{ selectedDistGroup.total_remaining }}</span></p>
+        <div v-if="!editing && selectedDist" class="p-3 bg-surface-50 rounded-lg space-y-1 text-sm">
+          <p><span class="font-medium">{{ t('common.brand') }}:</span> {{ selectedDist.brand?.name || '-' }}</p>
+          <p><span class="font-medium">{{ t('common.tailor') }}:</span> {{ selectedDist.tailor?.name || '-' }}</p>
+          <p><span class="font-medium">{{ t('deposits.totalDistributed') }}:</span> {{ selectedDist.total_cutting }}</p>
+          <p><span class="font-medium">{{ t('deposits.totalRemaining') }}:</span> <span :class="(selectedDist.deposit_remaining ?? 0) > 0 ? 'text-green-600' : 'text-red-600'" class="font-medium">{{ selectedDist.deposit_remaining ?? 0 }}</span></p>
         </div>
         <div v-if="editing && selectedDistribution" class="p-3 bg-surface-50 rounded-lg space-y-1 text-sm">
           <p><span class="font-medium">{{ t('common.preOrder') }}:</span> {{ selectedDistribution.cutting_result?.pre_order?.name || selectedDistribution.cutting_result?.name || '-' }}</p>
@@ -467,6 +457,22 @@ function positionDistPicker() {
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input v-model="form.deposit_date" :label="t('deposits.depositDate')" type="date" required />
+        </div>
+        <div v-if="daysDelay > 0 && daysDelay < 11" class="grid grid-cols-1 gap-4">
+          <Input
+            v-model="form.default_charge_per_pcs"
+            :label="t('deposits.defaultChargePerPcs')"
+            type="number"
+            :placeholder="t('deposits.defaultChargePlaceholder')"
+            min="0"
+          />
+          <p class="text-xs text-surface-500 -mt-3">{{ t('deposits.defaultChargeHint') }}</p>
+        </div>
+        <div v-if="daysDelay > 0" class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+          <p class="text-amber-800">{{ t('deposits.daysDelayHint', { days: daysDelay }) }}</p>
+          <p class="text-amber-800 font-medium mt-1">
+            {{ t('deposits.charge') }}: {{ calculatedChargePercent ? calculatedChargePercent + '%' : formatCurrency(calculatedCharge / (Number(form.total_sewing_result) || 1)) + '/pcs' }} = {{ formatCurrency(calculatedCharge) }}
+          </p>
         </div>
         <Input v-model="form.quality_notes" :label="t('deposits.qualityNotes')" type="textarea" :placeholder="t('deposits.optionalQualityNotes')" />
         <Input v-model="form.notes" :label="t('common.notes')" type="textarea" />

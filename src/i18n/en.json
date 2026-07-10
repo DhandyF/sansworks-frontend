@@ -350,7 +350,12 @@
     "noDistributions": "No available distributions",
     "article": "Article",
     "deleteTitle": "Delete Deposit",
-    "remaining": "Remaining"
+    "remaining": "Remaining",
+    "charge": "Charge",
+    "daysDelayHint": "{days} days past deadline",
+    "defaultChargePerPcs": "Default Charge per Pcs",
+    "defaultChargePlaceholder": "Enter default charge amount per pcs",
+    "defaultChargeHint": "Applied for 1–3 days late. 4–10 days = double. 11+ days = 100% of cutting price."
   },
   "payslip": {
     "title": "Payslip",
@@ -392,7 +397,9 @@
     "compensationAmount": "Compensation Amount",
     "compensationReason": "Compensation Reason",
     "compensationReasonPlaceholder": "e.g. Delay from office",
-    "compensation": "Compensation"
+    "compensation": "Compensation",
+    "repairCharge": "Repair Charge",
+    "cuttingCharge": "Cutting Charge"
   },
   "repairs": {
     "title": "Repairs (QC)",

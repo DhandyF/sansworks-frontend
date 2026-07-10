@@ -75,14 +75,15 @@ function printPayslip() {
   const cols = p.columns || []
   const colCount = cols.length
   const totalCompensation = compensations.value.reduce((sum, c) => sum + Number(c.amount), 0)
-  const netEarnings = p.summary.earnings - p.summary.repair_charges + totalCompensation
+  const netEarnings = p.summary.earnings - p.summary.repair_charges - (p.summary.cutting_deposit_charges ?? 0) + totalCompensation
 
   const rows = p.items.map(item => {
     const cells = cols.map(c => {
       const val = item.columns[c.key] || 0
       return `<td class="px-2 py-1.5 text-center border border-surface-300">${val > 0 ? val : '-'}</td>`
     }).join('')
-    const deductions = item.repair_charges > 0 ? formatCurrency(item.repair_charges) : '-'
+    const repairDeductions = item.repair_charges > 0 ? formatCurrency(item.repair_charges) : '-'
+    const cuttingDeductions = item.cutting_deposit_charges > 0 ? formatCurrency(item.cutting_deposit_charges) : '-'
     return `<tr>
       <td class="px-3 py-1.5 text-sm font-medium border border-surface-300">${item.article_name}</td>
       ${cells}
@@ -91,7 +92,8 @@ function printPayslip() {
       <td class="px-2 py-1.5 text-sm text-right font-bold border border-surface-300">${item.total_qty}</td>
       <td class="px-3 py-1.5 text-sm text-right border border-surface-300">${formatCurrency(item.price_per_pcs)}</td>
       <td class="px-3 py-1.5 text-sm text-right font-semibold border border-surface-300">${formatCurrency(item.earnings)}</td>
-      <td class="px-3 py-1.5 text-sm text-right font-semibold border border-surface-300">${deductions}</td>
+      <td class="px-3 py-1.5 text-sm text-right font-semibold border border-surface-300">${repairDeductions}</td>
+      <td class="px-3 py-1.5 text-sm text-right font-semibold border border-surface-300">${cuttingDeductions}</td>
     </tr>`
   }).join('')
 
@@ -110,6 +112,7 @@ function printPayslip() {
     return `<tr>
       <td class="px-3 py-1.5 text-sm border border-surface-300" colspan="${colCount + 2}">${comp.reason || 'Kompensasi'}</td>
       <td class="px-3 py-1.5 text-sm text-right border border-surface-300 text-green-600">+${formatCurrency(comp.amount)}</td>
+      <td class="px-3 py-1.5 text-sm border border-surface-300"></td>
       <td class="px-3 py-1.5 text-sm border border-surface-300"></td>
       <td class="px-3 py-1.5 text-sm border border-surface-300"></td>
     </tr>`
@@ -187,7 +190,8 @@ function printPayslip() {
           ${qtyHeaders}
           <th class="col-price" style="width:10%">${t('payslip.pricePcs')}</th>
           <th class="col-total" style="width:12%">${t('payslip.earnings')}</th>
-          <th class="col-total" style="width:12%">${t('payslip.deductions')}</th>
+          <th class="col-total" style="width:10%">${t('payslip.repairCharge')}</th>
+          <th class="col-total" style="width:10%">${t('payslip.cuttingCharge')}</th>
         </tr>
       </thead>
       <tbody>
@@ -203,14 +207,15 @@ function printPayslip() {
           <td></td>
           <td class="col-total" style="font-size:13px">${formatCurrency(p.summary.earnings)}</td>
           <td class="col-total" style="font-size:13px">${p.summary.repair_charges > 0 ? formatCurrency(p.summary.repair_charges) : '-'}</td>
+          <td class="col-total" style="font-size:13px">${(p.summary.cutting_deposit_charges ?? 0) > 0 ? formatCurrency(p.summary.cutting_deposit_charges) : '-'}</td>
         </tr>
         ${compensations.value.length > 0 ? `<tr>
           <td colspan="${colCount + 2}" class="text-right font-bold">${t('payslip.compensation')}</td>
-          <td colspan="3" class="col-total font-bold text-green-600" style="font-size:13px">+${formatCurrency(totalCompensation)}</td>
+          <td colspan="4" class="col-total font-bold text-green-600" style="font-size:13px">+${formatCurrency(totalCompensation)}</td>
         </tr>` : ''}
         <tr>
           <td colspan="${colCount + 2}" class="text-right font-bold">${t('payslip.netTotal')}</td>
-          <td colspan="3" class="col-total font-bold" style="font-size:13px">${formatCurrency(netEarnings)}</td>
+          <td colspan="4" class="col-total font-bold" style="font-size:13px">${formatCurrency(netEarnings)}</td>
         </tr>
       </tfoot>
     </table>
@@ -274,7 +279,10 @@ function removeCompensation(id) {
 function getNetEarnings() {
   if (!payslip.value) return 0
   const totalCompensation = compensations.value.reduce((sum, c) => sum + Number(c.amount), 0)
-  return payslip.value.summary.earnings - payslip.value.summary.repair_charges + totalCompensation
+  return payslip.value.summary.earnings
+    - payslip.value.summary.repair_charges
+    - payslip.value.summary.cutting_deposit_charges
+    + totalCompensation
 }
 
 function getTotalCompensation() {
@@ -370,7 +378,8 @@ function getTotalCompensation() {
                 <th class="px-2 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.totalQty') }}</th>
                 <th class="px-3 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.pricePcs') }}</th>
                 <th class="px-4 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.earnings') }}</th>
-                <th class="px-4 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.deductions') }}</th>
+                <th class="px-4 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.repairCharge') }}</th>
+                <th class="px-4 py-2.5 text-right font-semibold text-surface-700">{{ t('payslip.cuttingCharge') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -389,6 +398,7 @@ function getTotalCompensation() {
                 <td class="px-3 py-2.5 text-right">{{ formatCurrency(item.price_per_pcs) }}</td>
                 <td class="px-4 py-2.5 text-right font-semibold text-green-600">{{ formatCurrency(item.earnings) }}</td>
                 <td class="px-4 py-2.5 text-right font-semibold text-red-600">{{ item.repair_charges > 0 ? formatCurrency(item.repair_charges) : '-' }}</td>
+                <td class="px-4 py-2.5 text-right font-semibold text-red-600">{{ item.cutting_deposit_charges > 0 ? formatCurrency(item.cutting_deposit_charges) : '-' }}</td>
               </tr>
               <!-- Compensation rows -->
               <tr v-for="comp in compensations" :key="comp.id" class="border-b border-surface-100 bg-green-50">
@@ -404,6 +414,7 @@ function getTotalCompensation() {
                   </button>
                 </td>
                 <td class="px-4 py-2.5"></td>
+                <td class="px-4 py-2.5"></td>
               </tr>
             </tbody>
             <tfoot>
@@ -415,14 +426,15 @@ function getTotalCompensation() {
                 <td class="px-3 py-3"></td>
                 <td class="px-4 py-3 text-right font-bold text-lg text-green-600">{{ formatCurrency(payslip.summary.earnings) }}</td>
                 <td class="px-4 py-3 text-right font-bold text-lg text-red-600">{{ payslip.summary.repair_charges > 0 ? formatCurrency(payslip.summary.repair_charges) : '-' }}</td>
+                <td class="px-4 py-3 text-right font-bold text-lg text-red-600">{{ payslip.summary.cutting_deposit_charges > 0 ? formatCurrency(payslip.summary.cutting_deposit_charges) : '-' }}</td>
               </tr>
               <tr v-if="compensations.length > 0" class="bg-surface-50">
                 <td :colspan="payslip.columns.length + 4" class="px-4 py-2 text-right font-bold text-surface-900">{{ t('payslip.compensation') }}</td>
-                <td colspan="3" class="px-4 py-2 text-right font-bold text-lg text-green-600">+{{ formatCurrency(getTotalCompensation()) }}</td>
+                <td colspan="4" class="px-4 py-2 text-right font-bold text-lg text-green-600">+{{ formatCurrency(getTotalCompensation()) }}</td>
               </tr>
               <tr class="bg-surface-100">
                 <td :colspan="payslip.columns.length + 4" class="px-4 py-2 text-right font-bold text-surface-900">{{ t('payslip.netTotal') }}</td>
-                <td colspan="3" class="px-4 py-2 text-right font-bold text-lg text-surface-900">{{ formatCurrency(getNetEarnings()) }}</td>
+                <td colspan="4" class="px-4 py-2 text-right font-bold text-lg text-surface-900">{{ formatCurrency(getNetEarnings()) }}</td>
               </tr>
             </tfoot>
           </table>
