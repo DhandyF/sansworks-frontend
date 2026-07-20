@@ -461,7 +461,7 @@ watch(() => form.value.brand_id, (newBrandId) => {
   form.value.articles.forEach(a => a.article_id = '')
   fetchArticles(newBrandId)
   if (!editing.value && newBrandId) {
-    request(`/pre-orders/next-name?brand_id=${newBrandId}`).then(res => { nextName.value = res.name }).catch(() => {})
+    request(`/pre-orders/next-name?brand_id=${newBrandId}`).then(res => { nextName.value = res.name; form.value.name = res.name }).catch(() => {})
   }
 })
 
@@ -813,8 +813,7 @@ async function handleDelete() {
             :placeholder="t('common.selectBrand')"
             required
           />
-          <Input v-if="editing" :model-value="editing.name" :label="t('preOrders.preOrderName')" disabled />
-          <Input v-else :model-value="nextName" :label="t('preOrders.preOrderName')" disabled :placeholder="t('preOrders.selectBrandFirst')" />
+          <Input v-model="form.name" :label="t('preOrders.preOrderName')" :placeholder="t('preOrders.selectBrandFirst')" required />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
