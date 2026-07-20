@@ -172,7 +172,10 @@
     "cuttingDone": "Cutting Done",
     "distributed": "Distributed",
     "deposited": "Deposited",
-    "progress": "Progress"
+    "progress": "Progress",
+    "shipmentProgress": "Shipment Progress",
+    "shipped": "Shipped",
+    "shipmentRemaining": "Shipment Remaining"
   },
   "preOrders": {
     "title": "Pre-Orders",

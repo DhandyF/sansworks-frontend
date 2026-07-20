@@ -19,18 +19,33 @@ const loading = ref(true)
 const brand = ref(null)
 const preOrders = ref([])
 
-const columns = [
-  { key: 'name', label: t('common.name'), sortable: true },
-  { key: 'total_pcs', label: t('common.totalPcs'), sortable: true },
-  { key: 'cut_qty', label: t('brandDetail.cuttingDone'), sortable: true },
-  { key: 'distributed_qty', label: t('brandDetail.distributed'), sortable: true },
-  { key: 'deposited_qty', label: t('brandDetail.deposited'), sortable: true },
-  { key: 'progress', label: t('brandDetail.progress') },
-  { key: 'pre_order_date', label: t('brandDetail.orderDate') },
-  { key: 'deadline_date', label: t('brandDetail.deadline') },
-  { key: 'completed_date', label: t('common.completedDate') },
-  { key: 'status', label: t('brandDetail.status') },
-]
+const columns = computed(() => {
+  if (isClient.value) {
+    return [
+      { key: 'name', label: t('common.name'), sortable: true },
+      { key: 'total_pcs', label: t('common.totalPcs'), sortable: true },
+      { key: 'shipped_qty', label: t('brandDetail.shipped'), sortable: true },
+      { key: 'shipment_remaining', label: t('brandDetail.shipmentRemaining') },
+      { key: 'shipment_progress', label: t('brandDetail.shipmentProgress') },
+      { key: 'pre_order_date', label: t('brandDetail.orderDate') },
+      { key: 'deadline_date', label: t('brandDetail.deadline') },
+      { key: 'completed_date', label: t('common.completedDate') },
+      { key: 'status', label: t('brandDetail.status') },
+    ]
+  }
+  return [
+    { key: 'name', label: t('common.name'), sortable: true },
+    { key: 'total_pcs', label: t('common.totalPcs'), sortable: true },
+    { key: 'cut_qty', label: t('brandDetail.cuttingDone'), sortable: true },
+    { key: 'distributed_qty', label: t('brandDetail.distributed'), sortable: true },
+    { key: 'deposited_qty', label: t('brandDetail.deposited'), sortable: true },
+    { key: 'progress', label: t('brandDetail.progress') },
+    { key: 'pre_order_date', label: t('brandDetail.orderDate') },
+    { key: 'deadline_date', label: t('brandDetail.deadline') },
+    { key: 'completed_date', label: t('common.completedDate') },
+    { key: 'status', label: t('brandDetail.status') },
+  ]
+})
 
 onMounted(async () => {
   try {
@@ -63,6 +78,11 @@ const formatDate = (date) => {
 const getProgress = (row) => {
   if (!row.total_pcs || row.total_pcs === 0) return 0
   return Math.round((row.deposited_qty || 0) / row.total_pcs * 100)
+}
+
+const getShipmentProgress = (row) => {
+  if (!row.total_pcs || row.total_pcs === 0) return 0
+  return Math.round((row.shipped_qty || 0) / row.total_pcs * 100)
 }
 
 function goToPreOrder(row) {
@@ -154,6 +174,16 @@ const showBrandSelector = computed(() => {
           <template #completed_date="{ value }">
             <span v-if="value" class="whitespace-nowrap text-green-600 font-medium">{{ formatDate(value) }}</span>
             <span v-else class="text-surface-400">-</span>
+          </template>
+          <template #shipped_qty="{ value }"><span class="block text-right">{{ value ?? 0 }}</span></template>
+          <template #shipment_remaining="{ row }"><span class="block text-right">{{ row.total_pcs - (row.shipped_qty || 0) }}</span></template>
+          <template #shipment_progress="{ row }">
+            <div class="flex items-center gap-2">
+              <div style="width: 60px; height: 6px; background: #e5e7eb; border-radius: 9999px; overflow: hidden;">
+                <div :style="{ width: `${getShipmentProgress(row)}%`, height: '100%', background: '#3b82f6', borderRadius: '9999px' }"></div>
+              </div>
+              <span style="font-size: 11px; font-weight: 500; color: #374151;">{{ getShipmentProgress(row) }}%</span>
+            </div>
           </template>
           <template #status="{ value }"><Badge :variant="statusBadge(value)" size="sm">{{ statusLabel(value) }}</Badge></template>
         </Table>

@@ -172,7 +172,10 @@
     "cuttingDone": "Potong Selesai",
     "distributed": "Didistribusikan",
     "deposited": "Disetor",
-    "progress": "Progres"
+    "progress": "Progres",
+    "shipmentProgress": "Progres Pengiriman",
+    "shipped": "Terkirim",
+    "shipmentRemaining": "Sisa Pengiriman"
   },
   "preOrders": {
     "title": "Pre-Order",
