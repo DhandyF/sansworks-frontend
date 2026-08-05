@@ -258,6 +258,9 @@ const showTrashModal = ref(false)
 const trashedItems = ref([])
 const loadingTrashed = ref(false)
 const restoringId = ref(null)
+const purgingId = ref(null)
+const showPurgeModal = ref(false)
+const purgingItemId = ref(null)
 const trashedPage = ref(1)
 const trashedLastPage = ref(1)
 const trashedTotal = ref(0)
@@ -298,6 +301,25 @@ async function restoreItem(id) {
   } catch { /* ignore */ } finally {
     restoringId.value = null
   }
+}
+
+function openPurgeModal(id) {
+  purgingItemId.value = id
+  showPurgeModal.value = true
+}
+
+async function confirmPurge() {
+  const id = purgingItemId.value
+  if (!id) return
+  purgingId.value = id
+  showPurgeModal.value = false
+  try {
+    await request(`/cutting-distributions/${id}/purge`, { method: 'POST' })
+    const page = trashedItems.value.length === 1 && trashedPage.value > 1 ? trashedPage.value - 1 : trashedPage.value
+    await fetchTrashed(page)
+  } catch { /* ignore */ }
+  purgingId.value = null
+  purgingItemId.value = null
 }
 
 const trashedColumns = computed(() => [
@@ -534,9 +556,20 @@ function positionCrPicker() {
         <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
         <template #deleted_at="{ value }">{{ value ? new Date(value).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' }}</template>
         <template #actions="{ row }">
-          <Button size="sm" :loading="restoringId === row.id" @click="restoreItem(row.id)">
-            {{ restoringId === row.id ? t('cuttingDistributions.restoring') : t('cuttingDistributions.restore') }}
-          </Button>
+          <div class="flex items-center gap-2">
+            <Button size="sm" :loading="restoringId === row.id" @click="restoreItem(row.id)">
+              {{ restoringId === row.id ? t('cuttingDistributions.restoring') : t('cuttingDistributions.restore') }}
+            </Button>
+            <button
+              :disabled="purgingId === row.id"
+              class="p-1 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+              :title="t('cuttingDistributions.purge')"
+              @click="openPurgeModal(row.id)"
+            >
+              <svg v-if="purgingId === row.id" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+              <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
         </template>
       </Table>
       <div v-if="trashedLastPage > 1" class="flex items-center justify-between mt-3 text-sm">
@@ -553,6 +586,16 @@ function positionCrPicker() {
       <template #footer>
         <div class="flex justify-end">
           <Button variant="outline" @click="showTrashModal = false">{{ t('common.close') }}</Button>
+        </div>
+      </template>
+    </Modal>
+
+    <Modal v-model="showPurgeModal" :title="t('cuttingDistributions.purge')" size="sm" :closeOnOverlay="false">
+      <p class="text-surface-700">{{ t('cuttingDistributions.confirmPurge') }}</p>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <Button variant="outline" @click="showPurgeModal = false">{{ t('common.cancel') }}</Button>
+          <Button variant="danger" @click="confirmPurge">{{ t('cuttingDistributions.purge') }}</Button>
         </div>
       </template>
     </Modal>

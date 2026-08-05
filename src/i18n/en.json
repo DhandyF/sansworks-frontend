@@ -202,6 +202,9 @@
     "restoring": "Restoring...",
     "viewTrash": "Trash",
     "deletedAt": "Deleted",
+    "purge": "Purge",
+    "purging": "Purging...",
+    "confirmPurge": "Are you sure you want to purge this item from the trash? It will be hidden from the trash list.",
     "addCuttingResult": "Add cutting result",
     "remainingAvailable": "Remaining available:",
     "cuttingQtyRequired": "Cutting date is required",
@@ -332,7 +335,10 @@
     "restore": "Restore",
     "restoring": "Restoring...",
     "viewTrash": "Trash",
-    "deletedAt": "Deleted"
+    "deletedAt": "Deleted",
+    "purge": "Purge",
+    "purging": "Purging...",
+    "confirmPurge": "Are you sure you want to purge this item from the trash? It will be hidden from the trash list."
   },
   "deposits": {
     "noResults": "No deposits found",

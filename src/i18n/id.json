@@ -202,6 +202,9 @@
     "restoring": "Memulihkan...",
     "viewTrash": "Sampah",
     "deletedAt": "Dihapus",
+    "purge": "Bersihkan",
+    "purging": "Membersihkan...",
+    "confirmPurge": "Yakin ingin membersihkan item ini dari sampah? Item akan disembunyikan dari daftar sampah.",
     "addCuttingResult": "Tambah hasil potong",
     "remainingAvailable": "Sisa tersedia:",
     "cuttingQtyRequired": "Tanggal potong wajib diisi",
@@ -334,7 +337,10 @@
     "restore": "Pulihkan",
     "restoring": "Memulihkan...",
     "viewTrash": "Sampah",
-    "deletedAt": "Dihapus"
+    "deletedAt": "Dihapus",
+    "purge": "Bersihkan",
+    "purging": "Membersihkan...",
+    "confirmPurge": "Yakin ingin membersihkan item ini dari sampah? Item akan disembunyikan dari daftar sampah."
   },
   "deposits": {
     "noResults": "Setoran tidak ditemukan",
