@@ -3,9 +3,11 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useMasterData } from '@/composables/useMasterData'
+import { useDebounce } from '@/composables/useDebounce'
 import { Button, Card, Table, Badge, Input, Modal, SearchableDropdown } from 'ui-assets'
 
 const { t } = useI18n()
+const { debounce } = useDebounce(300)
 
 const props = defineProps({
   search: String,
@@ -260,11 +262,16 @@ const trashedPage = ref(1)
 const trashedLastPage = ref(1)
 const trashedTotal = ref(0)
 const trashedPerPage = 10
+const trashedSearch = ref('')
+
+watch(trashedSearch, () => debounce(() => fetchTrashed(1)))
 
 async function fetchTrashed(page = 1) {
   loadingTrashed.value = true
   try {
-    const res = await request(`/cutting-distributions/trashed?page=${page}&per_page=${trashedPerPage}`)
+    const params = new URLSearchParams({ page, per_page: trashedPerPage })
+    if (trashedSearch.value) params.append('search', trashedSearch.value)
+    const res = await request(`/cutting-distributions/trashed?${params}`)
     trashedItems.value = res.data
     trashedPage.value = res.meta.current_page
     trashedLastPage.value = res.meta.last_page
@@ -277,6 +284,7 @@ async function fetchTrashed(page = 1) {
 async function openTrashModal() {
   showTrashModal.value = true
   trashedPage.value = 1
+  trashedSearch.value = ''
   fetchTrashed(1)
 }
 
@@ -508,6 +516,9 @@ function positionCrPicker() {
     </Modal>
 
     <Modal v-model="showTrashModal" :title="t('cuttingDistributions.trashTitle')" size="xl" :closeOnOverlay="false">
+      <div class="mb-4">
+        <Input v-model="trashedSearch" :placeholder="t('common.search')" />
+      </div>
       <div v-if="loadingTrashed" class="flex items-center justify-center py-8">
         <svg class="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />

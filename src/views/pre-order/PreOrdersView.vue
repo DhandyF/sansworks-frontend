@@ -413,6 +413,9 @@ const trashedPage = ref(1)
 const trashedLastPage = ref(1)
 const trashedTotal = ref(0)
 const trashedPerPage = 10
+const trashedSearch = ref('')
+
+watch(trashedSearch, () => debounce(() => fetchTrashed(1)))
 
 const trashedColumns = computed(() => [
   { key: 'brand', label: t('common.brand') },
@@ -427,7 +430,9 @@ const trashedColumns = computed(() => [
 async function fetchTrashed(page = 1) {
   loadingTrashed.value = true
   try {
-    const res = await request(`/pre-orders/trashed?page=${page}&per_page=${trashedPerPage}`)
+    const params = new URLSearchParams({ page, per_page: trashedPerPage })
+    if (trashedSearch.value) params.append('search', trashedSearch.value)
+    const res = await request(`/pre-orders/trashed?${params}`)
     trashedItems.value = res.data || []
     trashedPage.value = res.meta.current_page
     trashedLastPage.value = res.meta.last_page
@@ -442,6 +447,7 @@ async function fetchTrashed(page = 1) {
 async function openTrashModal() {
   showTrashModal.value = true
   trashedPage.value = 1
+  trashedSearch.value = ''
   fetchTrashed(1)
 }
 
@@ -925,6 +931,9 @@ async function handleDelete() {
     </Modal>
 
     <Modal v-model="showTrashModal" :title="t('preOrders.trashTitle')" size="xl" :closeOnOverlay="false">
+      <div class="mb-4">
+        <Input v-model="trashedSearch" :placeholder="t('common.search')" />
+      </div>
       <div v-if="loadingTrashed" class="flex items-center justify-center py-8">
         <svg class="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
