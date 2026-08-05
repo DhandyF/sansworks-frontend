@@ -256,28 +256,50 @@ const showTrashModal = ref(false)
 const trashedItems = ref([])
 const loadingTrashed = ref(false)
 const restoringId = ref(null)
+const trashedPage = ref(1)
+const trashedLastPage = ref(1)
+const trashedTotal = ref(0)
+const trashedPerPage = 10
 
-async function openTrashModal() {
-  showTrashModal.value = true
+async function fetchTrashed(page = 1) {
   loadingTrashed.value = true
   try {
-    const res = await request('/cutting-distributions/trashed')
+    const res = await request(`/cutting-distributions/trashed?page=${page}&per_page=${trashedPerPage}`)
     trashedItems.value = res.data
+    trashedPage.value = res.meta.current_page
+    trashedLastPage.value = res.meta.last_page
+    trashedTotal.value = res.meta.total
   } catch { /* ignore */ } finally {
     loadingTrashed.value = false
   }
+}
+
+async function openTrashModal() {
+  showTrashModal.value = true
+  trashedPage.value = 1
+  fetchTrashed(1)
 }
 
 async function restoreItem(id) {
   restoringId.value = id
   try {
     await request(`/cutting-distributions/${id}/restore`, { method: 'POST' })
-    trashedItems.value = trashedItems.value.filter(i => i.id !== id)
     fetchData(1)
+    const page = trashedItems.value.length === 1 && trashedPage.value > 1 ? trashedPage.value - 1 : trashedPage.value
+    await fetchTrashed(page)
   } catch { /* ignore */ } finally {
     restoringId.value = null
   }
 }
+
+const trashedColumns = computed(() => [
+  { key: 'brand', label: t('common.brand') },
+  { key: 'name', label: t('cuttingDistributions.name') },
+  { key: 'article', label: t('cuttingDistributions.article') },
+  { key: 'size', label: t('cuttingDistributions.size') },
+  { key: 'deleted_at', label: t('cuttingDistributions.deletedAt') },
+  { key: 'actions', label: '' },
+])
 
 function positionCrPicker() {
   if (!crTriggerRef.value) return
@@ -485,7 +507,7 @@ function positionCrPicker() {
       </template>
     </Modal>
 
-    <Modal v-model="showTrashModal" :title="t('cuttingDistributions.trashTitle')" size="lg" :closeOnOverlay="false">
+    <Modal v-model="showTrashModal" :title="t('cuttingDistributions.trashTitle')" size="xl" :closeOnOverlay="false">
       <div v-if="loadingTrashed" class="flex items-center justify-center py-8">
         <svg class="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -495,19 +517,26 @@ function positionCrPicker() {
       <div v-else-if="trashedItems.length === 0" class="text-center py-8 text-surface-500">
         {{ t('cuttingDistributions.noDeletedDistributions') }}
       </div>
-      <div v-else class="space-y-2">
-        <div v-for="item in trashedItems" :key="item.id" class="flex items-center justify-between p-3 bg-surface-50 rounded-lg">
-          <div class="text-sm">
-            <p class="font-medium text-surface-800">{{ item.name }}</p>
-            <p class="text-surface-500">
-              <Badge variant="primary" size="sm">{{ item.brand?.name || '-' }}</Badge>
-              &nbsp;{{ item.article?.name || '-' }} · {{ item.size?.abbreviation || '-' }}
-            </p>
-            <p class="text-xs text-surface-400 mt-0.5">{{ t('cuttingDistributions.deletedAt') }}: {{ item.deleted_at ? new Date(item.deleted_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' }}</p>
-          </div>
-          <Button size="sm" :loading="restoringId === item.id" @click="restoreItem(item.id)">
-            {{ restoringId === item.id ? t('cuttingDistributions.restoring') : t('cuttingDistributions.restore') }}
+      <Table v-else :columns="trashedColumns" :rows="trashedItems" showVerticalBorder>
+        <template #brand="{ value }"><Badge variant="primary" size="sm">{{ value?.name || '-' }}</Badge></template>
+        <template #article="{ value }">{{ value?.name || '-' }}</template>
+        <template #size="{ value }"><Badge variant="default" size="sm">{{ value?.abbreviation || '-' }}</Badge></template>
+        <template #deleted_at="{ value }">{{ value ? new Date(value).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' }}</template>
+        <template #actions="{ row }">
+          <Button size="sm" :loading="restoringId === row.id" @click="restoreItem(row.id)">
+            {{ restoringId === row.id ? t('cuttingDistributions.restoring') : t('cuttingDistributions.restore') }}
           </Button>
+        </template>
+      </Table>
+      <div v-if="trashedLastPage > 1" class="flex items-center justify-between mt-3 text-sm">
+        <span class="text-surface-500">
+          {{ (trashedPage - 1) * trashedPerPage + 1 }} - {{ Math.min(trashedPage * trashedPerPage, trashedTotal) }}
+          {{ t('common.of') }} {{ t('common.total') }} {{ trashedTotal }} {{ t('common.items') }}
+        </span>
+        <div class="flex items-center gap-2">
+          <Button size="sm" variant="outline" :disabled="trashedPage <= 1" @click="fetchTrashed(trashedPage - 1)">‹</Button>
+          <span class="text-surface-600">{{ trashedPage }} / {{ trashedLastPage }}</span>
+          <Button size="sm" variant="outline" :disabled="trashedPage >= trashedLastPage" @click="fetchTrashed(trashedPage + 1)">›</Button>
         </div>
       </div>
       <template #footer>
