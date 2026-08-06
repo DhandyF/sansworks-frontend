@@ -312,7 +312,9 @@ async function fetchArticles(brandId) {
   } catch { /* ignore */ }
 }
 
-const groupedOrders = computed(() => {
+const groupedOrders = ref([])
+
+function buildGroupedOrders() {
   const map = new Map()
   for (const item of items.value) {
     if (!map.has(item.name)) {
@@ -354,7 +356,12 @@ const groupedOrders = computed(() => {
     }
     return group
   })
-})
+}
+
+watch(items, () => {
+  const newData = buildGroupedOrders()
+  groupedOrders.value.splice(0, groupedOrders.value.length, ...newData)
+}, { deep: true, immediate: true })
 
 const columns = computed(() => [
   { key: 'brand', label: t('common.brand') },
