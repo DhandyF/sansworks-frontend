@@ -258,7 +258,9 @@ function closeDeleteModal() {
   deletingShipmentId.value = null
 }
 
-const groupedOrders = computed(() => {
+const groupedOrders = ref([])
+
+function buildGroupedOrders() {
   const map = new Map()
   for (const item of items.value) {
     if (!map.has(item.name)) {
@@ -286,11 +288,11 @@ const groupedOrders = computed(() => {
     const shipped = item.shipments?.reduce((sum, s) => sum + s.total_shipment, 0) ?? 0
     const remainingShip = item.total_pcs - shipped
 
-    articleGroup.entries.push({ 
-      id: item.id, 
-      size: item.size, 
-      size_id: item.size_id, 
-      total_pcs: item.total_pcs, 
+    articleGroup.entries.push({
+      id: item.id,
+      size: item.size,
+      size_id: item.size_id,
+      total_pcs: item.total_pcs,
       deposited_qty: deposited,
       shipped: shipped,
       remaining_ship: remainingShip,
@@ -300,7 +302,12 @@ const groupedOrders = computed(() => {
     group.rawIds.push(item.id)
   }
   return Array.from(map.values())
-})
+}
+
+watch(items, () => {
+  const newData = buildGroupedOrders()
+  groupedOrders.value.splice(0, groupedOrders.value.length, ...newData)
+}, { deep: true, immediate: true })
 
 const columns = computed(() => [
   { key: 'brand', label: t('common.brand') },
