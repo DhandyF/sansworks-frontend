@@ -229,7 +229,21 @@ async function updateShipment() {
         total_shipment: Number(f.total_shipment),
       }),
     })
-    await fetchData(1)
+    const preOrderId = shipmentDetailForm.value.pre_order_id
+    const group = groupedOrders.value.find(g => g.articles.some(a => a.entries.some(e => e.id === preOrderId)))
+    if (group) {
+      const entry = group.articles.flatMap(a => a.entries).find(e => e.id === preOrderId)
+      if (entry) {
+        const shipment = entry.shipments.find(s => s.id === f.id)
+        if (shipment) {
+          shipment.total_shipment = Number(f.total_shipment)
+          shipment.shipment_date = f.shipment_date
+        }
+        const totalShipped = entry.shipments.reduce((sum, s) => sum + s.total_shipment, 0)
+        entry.shipped = totalShipped
+        entry.remaining_ship = entry.total_pcs - totalShipped
+      }
+    }
     closeShipmentDetailForm()
   } catch (e) {
     shipmentDetailError.value = e.message
@@ -247,7 +261,17 @@ async function confirmDelete() {
   if (!deletingShipmentId.value) return
   try {
     await request(`/shipments/${deletingShipmentId.value}`, { method: 'DELETE' })
-    await fetchData(1)
+    const preOrderId = shipmentDetailForm.value.pre_order_id
+    const group = groupedOrders.value.find(g => g.articles.some(a => a.entries.some(e => e.id === preOrderId)))
+    if (group) {
+      const entry = group.articles.flatMap(a => a.entries).find(e => e.id === preOrderId)
+      if (entry) {
+        entry.shipments = entry.shipments.filter(s => s.id !== deletingShipmentId.value)
+        const totalShipped = entry.shipments.reduce((sum, s) => sum + s.total_shipment, 0)
+        entry.shipped = totalShipped
+        entry.remaining_ship = entry.total_pcs - totalShipped
+      }
+    }
     closeShipmentDetailForm()
     showDeleteModal.value = false
   } catch { /* ignore */ }
