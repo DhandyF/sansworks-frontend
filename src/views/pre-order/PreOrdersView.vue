@@ -178,7 +178,26 @@ async function updateCutting() {
         excess_cutting: excess,
       }),
     })
-    await fetchData(1)
+    const preOrderId = cuttingDetailForm.value.pre_order_id
+    const group = groupedOrders.value.find(g => g.articles.some(a => a.entries.some(e => e.id === preOrderId)))
+    if (group) {
+      const entry = group.articles.flatMap(a => a.entries).find(e => e.id === preOrderId)
+      if (entry) {
+        const cutting = entry.cutting_results.find(c => c.id === f.id)
+        if (cutting) {
+          cutting.total_cutting = Number(f.total_cutting)
+          cutting.cutting_date = f.cutting_date
+          cutting.excess_cutting = excess
+        }
+        const totalCut = entry.cutting_results.reduce((sum, c) => sum + c.total_cutting, 0)
+        const totalExcess = entry.cutting_results.reduce((sum, c) => sum + (c.excess_cutting || 0), 0)
+        entry.cut_qty = totalCut
+        entry.excess_cutting = totalExcess
+        entry.remaining = Math.max(0, entry.total_pcs - totalCut)
+      }
+      group.total_remaining = group.articles.reduce((sum, ag) => sum + ag.entries.reduce((s, e) => s + (e.remaining ?? 0), 0), 0)
+      group.total_excess_cutting = group.articles.reduce((sum, ag) => sum + ag.entries.reduce((s, e) => s + (e.excess_cutting ?? 0), 0), 0)
+    }
     closeCuttingDetailForm()
   } catch (e) {
     cuttingDetailError.value = e.message
@@ -198,7 +217,21 @@ async function confirmDeleteCutting() {
   if (!deletingCuttingId.value) return
   try {
     await request(`/cutting-results/${deletingCuttingId.value}`, { method: 'DELETE' })
-    await fetchData(1)
+    const preOrderId = cuttingDetailForm.value.pre_order_id
+    const group = groupedOrders.value.find(g => g.articles.some(a => a.entries.some(e => e.id === preOrderId)))
+    if (group) {
+      const entry = group.articles.flatMap(a => a.entries).find(e => e.id === preOrderId)
+      if (entry) {
+        entry.cutting_results = entry.cutting_results.filter(c => c.id !== deletingCuttingId.value)
+        const totalCut = entry.cutting_results.reduce((sum, c) => sum + c.total_cutting, 0)
+        const totalExcess = entry.cutting_results.reduce((sum, c) => sum + (c.excess_cutting || 0), 0)
+        entry.cut_qty = totalCut
+        entry.excess_cutting = totalExcess
+        entry.remaining = Math.max(0, entry.total_pcs - totalCut)
+      }
+      group.total_remaining = group.articles.reduce((sum, ag) => sum + ag.entries.reduce((s, e) => s + (e.remaining ?? 0), 0), 0)
+      group.total_excess_cutting = group.articles.reduce((sum, ag) => sum + ag.entries.reduce((s, e) => s + (e.excess_cutting ?? 0), 0), 0)
+    }
     closeCuttingDetailForm()
     showCuttingDeleteModal.value = false
   } catch { /* ignore */ }
