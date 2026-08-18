@@ -277,7 +277,14 @@
     "totalShipped": "Total Shipped",
     "shipmentRemaining": "Shipment Remaining",
     "notSentYet": "Not sent yet",
-    "daysLeft": "Days Left"
+    "daysLeft": "Days Left",
+    "hideFromProduction": "Hide from Production",
+    "unhideFromProduction": "Show in Production",
+    "hideConfirm": "This pre-order will be hidden from Cutting Results, Cutting Distributions, and Deposit Cutting Results tabs. You can unhide it anytime.",
+    "unhideConfirm": "This pre-order will be shown again in all production tabs.",
+    "hiddenLabel": "Hidden from production",
+    "hiding": "Hiding...",
+    "unhiding": "Unhiding..."
   },
   "production": {
     "title": "Production",

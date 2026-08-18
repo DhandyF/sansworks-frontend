@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useApi } from '@/composables/useApi'
 import { useAuthStore } from '@/stores/auth'
 import { usePersistentFilters } from '@/composables/usePersistentFilters'
-import { Card, Badge, Table, Tabs } from 'ui-assets'
+import { Button, Card, Badge, Table, Tabs, Modal } from 'ui-assets'
 import { Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
 
@@ -188,6 +188,31 @@ const shipmentChartOptions = {
   animation: { animateRotate: true },
 }
 
+const toggling = ref(false)
+const showHideModal = ref(false)
+const hideError = ref('')
+
+function openHideModal() {
+  hideError.value = ''
+  showHideModal.value = true
+}
+
+async function confirmToggleHide() {
+  if (toggling.value) return
+  hideError.value = ''
+  const isHidden = !!preOrder.value.hidden_at
+
+  toggling.value = true
+  try {
+    const endpoint = isHidden ? 'unhide' : 'hide'
+    await request(`/pre-orders/${route.params.id}/${endpoint}`, { method: 'POST' })
+    preOrder.value.hidden_at = isHidden ? null : new Date().toISOString()
+    showHideModal.value = false
+  } catch (e) {
+    hideError.value = e.message || t('common.error')
+  } finally { toggling.value = false }
+}
+
 function groupByTailor(distributions) {
   if (!distributions || distributions.length === 0) return []
   const map = new Map()
@@ -216,13 +241,31 @@ function groupByTailor(distributions) {
       <button @click="router.back()" class="p-2 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer" :title="t('common.back')">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <div>
-        <h1 class="text-2xl font-bold text-surface-900">{{ preOrder?.name || t('preOrderDetail.title') }}</h1>
+      <div class="flex-1">
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl font-bold text-surface-900">{{ preOrder?.name || t('preOrderDetail.title') }}</h1>
+          <Badge v-if="preOrder?.hidden_at" variant="default" size="sm">{{ t('preOrderDetail.hiddenLabel') }}</Badge>
+        </div>
         <p class="mt-0.5 text-sm text-surface-500">
           {{ preOrder?.brand?.name || '' }}
           <span v-if="preOrder?.pre_order_date" class="ml-2">&middot; {{ formatDate(preOrder.pre_order_date) }}</span>
         </p>
       </div>
+      <Button
+        v-if="preOrder && !auth.isClient"
+        :variant="preOrder.hidden_at ? 'outline' : 'outline'"
+        size="sm"
+        :disabled="summary?.status !== 'done' && !preOrder.hidden_at"
+        :loading="toggling"
+        @click="openHideModal"
+      >
+        <template v-if="toggling">
+          {{ preOrder.hidden_at ? t('preOrderDetail.unhiding') : t('preOrderDetail.hiding') }}
+        </template>
+        <template v-else>
+          {{ preOrder.hidden_at ? t('preOrderDetail.unhideFromProduction') : t('preOrderDetail.hideFromProduction') }}
+        </template>
+      </Button>
     </div>
 
     <div v-if="loading" class="flex items-center justify-center py-20">
@@ -440,5 +483,18 @@ function groupByTailor(distributions) {
         </template>
       </Card>
     </template>
+
+    <Modal v-model="showHideModal" :title="preOrder?.hidden_at ? t('preOrderDetail.unhideFromProduction') : t('preOrderDetail.hideFromProduction')" size="md" :closeOnOverlay="false">
+      <div v-if="hideError" class="p-3 mb-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ hideError }}</div>
+      <p class="text-surface-700">{{ preOrder?.hidden_at ? t('preOrderDetail.unhideConfirm') : t('preOrderDetail.hideConfirm') }}</p>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <Button variant="outline" @click="showHideModal = false">{{ t('common.cancel') }}</Button>
+          <Button :loading="toggling" @click="confirmToggleHide">
+            {{ preOrder?.hidden_at ? t('preOrderDetail.unhideFromProduction') : t('preOrderDetail.hideFromProduction') }}
+          </Button>
+        </div>
+      </template>
+    </Modal>
   </div>
 </template>

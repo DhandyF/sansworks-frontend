@@ -279,7 +279,14 @@
     "totalShipped": "Total Terkirim",
     "shipmentRemaining": "Sisa Pengiriman",
     "notSentYet": "Belum dikirim",
-    "daysLeft": "Hari Tersisa"
+    "daysLeft": "Hari Tersisa",
+    "hideFromProduction": "Sembunyikan dari Produksi",
+    "unhideFromProduction": "Tampilkan di Produksi",
+    "hideConfirm": "Pre-order ini akan disembunyikan dari tab Hasil Cutting, Distribusi Cutting, dan Setor Hasil Cutting. Anda bisa menampilkannya kembali kapan saja.",
+    "unhideConfirm": "Pre-order ini akan ditampilkan kembali di semua tab produksi.",
+    "hiddenLabel": "Disembunyikan dari produksi",
+    "hiding": "Menyembunyikan...",
+    "unhiding": "Menampilkan..."
   },
   "production": {
     "title": "Produksi",
